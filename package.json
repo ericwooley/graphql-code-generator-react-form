@@ -12,7 +12,9 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "generate:examples": "graphql-codegen  --config ./examples/codegen.yml"
+    "examples:generate": "graphql-codegen  --config ./examples/codegen.yml",
+    "examples:dev": "cd examples && yarn dev",
+    "postinstall": "cd examples && yarn install"
   },
   "peerDependencies": {},
   "prettier": {
@@ -30,7 +32,6 @@
     "@graphql-codegen/typescript-operations": "^1.17.15",
     "@types/react": "^17.0.3",
     "formik": "^2.2.6",
-    "react": "^17.0.2",
     "tslib": "^2.2.0",
     "typescript": "^4.2.4"
   },
@@ -39,12 +40,9 @@
     "@graphql-codegen/visitor-plugin-common": "^1.19.1",
     "graphql": "^15.5.0",
     "prettier": "^2.2.1",
-    "react": "^16.11.0",
-    "react-dom": "^16.11.0",
     "typescript": "^3.7.2",
     "auto-bind": "4.0.0",
-    "change-case-all": "1.0.14",
-    "formik": "2.2.6"
+    "change-case-all": "1.0.14"
   },
   "alias": {
     "react-dom": "@hot-loader/react-dom"
