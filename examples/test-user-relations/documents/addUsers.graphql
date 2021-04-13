@@ -1,0 +1,11 @@
+mutation addUsers($users: [UserInput]!) {
+  addUsers(users: $users) {
+    id
+  }
+}
+
+query users {
+  allUsers {
+    id
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "generate:examples": "graphql-codegen  --config ./examples/codegen.yml"
+  },
+  "peerDependencies": {},
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "name": "grapqhl-code-gen-react-formik",
+  "author": "Eric Wooley",
+  "module": "dist/grapqhl-code-gen-react-formik.esm.js",
+  "devDependencies": {
+    "@graphql-codegen/cli": "^1.21.3",
+    "@graphql-codegen/typescript": "^1.21.1",
+    "@graphql-codegen/typescript-operations": "^1.17.15",
+    "@types/react": "^17.0.3",
+    "formik": "^2.2.6",
+    "react": "^17.0.2",
+    "tslib": "^2.2.0",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@graphql-codegen/plugin-helpers": "^1.18.4",
+    "@graphql-codegen/visitor-plugin-common": "^1.19.1",
+    "graphql": "^15.5.0",
+    "prettier": "^2.2.1",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "typescript": "^3.7.2",
+    "auto-bind": "4.0.0",
+    "change-case-all": "1.0.14",
+    "formik": "2.2.6"
+  },
+  "alias": {
+    "react-dom": "@hot-loader/react-dom"
+  }
+}

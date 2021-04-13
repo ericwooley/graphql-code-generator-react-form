@@ -1,0 +1,11 @@
+hooks:
+  afterAllFileWrite:
+    - prettier --write
+generates:
+  ./examples/test-user-relations/generated/formik.tsx:
+    schema: ./examples/test-user-relations/schemas/schema.graphql
+    documents: ./examples/test-user-relations/documents/**/*.graphql
+    plugins:
+      - typescript
+      - typescript-operations
+      - ./dist/index.js

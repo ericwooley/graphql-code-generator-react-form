@@ -1,0 +1,36 @@
+type User {
+  id: Int!
+  name: String!
+  email: String!
+  friends: [User]!
+}
+
+input UserInput {
+  id: Int!
+  name: String!
+  email: String!
+  mother: UserInput
+  father: UserInput
+  friends: [UserInput]!
+}
+
+type QueryRoot {
+  allUsers: [User]!
+  userById(id: Int!): User
+
+  # Generates a new answer for the guessing game
+  answer: [Int!]!
+}
+type MutationRoot {
+  addUsers(users: [UserInput]!): [User]
+}
+
+type SubscriptionRoot {
+  newUser: User
+}
+
+schema {
+  query: QueryRoot
+  subscription: SubscriptionRoot
+  mutation: MutationRoot
+}
