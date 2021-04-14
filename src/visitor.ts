@@ -100,11 +100,18 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
   }
 
   renderFormElement(metaData: TypeNodeMetaData): string {
-    if (metaData.children)
-      return `<div><h4>${metaData.name}</h4>${metaData.children
-        .map(this.renderFormElement)
-        .join('\n  ')}</div>`;
-    return `<label><h5>${metaData.name}</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
+    // if (metaData.children)
+    //   return `<div><h4>${metaData.name} ></h4>${metaData.children
+    //     .map(this.renderFormElement)
+    //     .join('\n  ')}</div>`;
+    // if (metaData.asList)
+    //   return `<label><h5>${metaData.name} as list</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
+    // return `<label><h5>${metaData.name}</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
+    return `<pre>{JSON.stringify(${JSON.stringify(
+      metaData,
+      null,
+      2
+    )}, null, 2)}</pre>`;
   }
   public get sdkContent(): string {
     return (

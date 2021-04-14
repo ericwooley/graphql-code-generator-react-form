@@ -82,7 +82,7 @@ export const addUsersDefaultValues = {
 };
 
 export interface AddUsersFormVariables {
-  users: UserInput[];
+  users: UserInput;
 }
 export const AddUsersForm = ({
   initialValues,
@@ -96,33 +96,84 @@ export const AddUsersForm = ({
       {...formikProps}
     >
       <Form>
-        <div>
-          <h4>users</h4>
-          <label>
-            <h5>users.id</h5>
-            <input name="users.id" type="Scalars.Int" />
-          </label>
-          <label>
-            <h5>users.name</h5>
-            <input name="users.name" type="Scalars.String" />
-          </label>
-          <label>
-            <h5>users.email</h5>
-            <input name="users.email" type="Scalars.String" />
-          </label>
-          <label>
-            <h5>users.mother</h5>
-            <input name="users.mother" type="UserInput" />
-          </label>
-          <label>
-            <h5>users.father</h5>
-            <input name="users.father" type="UserInput" />
-          </label>
-          <label>
-            <h5>users.friends</h5>
-            <input name="users.friends" type="UserInput" />
-          </label>
-        </div>
+        <pre>
+          {JSON.stringify(
+            {
+              accessChain: ['UserInput'],
+              endedFromCycle: false,
+              scalarName: 'UserInput',
+              name: 'users',
+              tsType: 'UserInput',
+              defaultVal: '"undefined"',
+              optional: false,
+              children: [
+                {
+                  accessChain: ['UserInput', 'Int'],
+                  endedFromCycle: false,
+                  scalarName: 'Int',
+                  name: 'users.id',
+                  tsType: 'Scalars.Int',
+                  defaultVal: '0',
+                  optional: true,
+                  children: null,
+                },
+                {
+                  accessChain: ['UserInput', 'String'],
+                  endedFromCycle: false,
+                  scalarName: 'String',
+                  name: 'users.name',
+                  tsType: 'Scalars.String',
+                  defaultVal: '""',
+                  optional: true,
+                  children: null,
+                },
+                {
+                  accessChain: ['UserInput', 'String'],
+                  endedFromCycle: false,
+                  scalarName: 'String',
+                  name: 'users.email',
+                  tsType: 'Scalars.String',
+                  defaultVal: '""',
+                  optional: true,
+                  children: null,
+                },
+                {
+                  accessChain: ['UserInput', 'UserInput'],
+                  endedFromCycle: true,
+                  scalarName: 'UserInput',
+                  name: 'users.mother',
+                  tsType: 'UserInput',
+                  defaultVal: '"undefined"',
+                  optional: true,
+                  children: null,
+                },
+                {
+                  accessChain: ['UserInput', 'UserInput'],
+                  endedFromCycle: true,
+                  scalarName: 'UserInput',
+                  name: 'users.father',
+                  tsType: 'UserInput',
+                  defaultVal: '"undefined"',
+                  optional: true,
+                  children: null,
+                },
+                {
+                  accessChain: ['UserInput', 'UserInput'],
+                  endedFromCycle: true,
+                  scalarName: 'UserInput',
+                  name: 'users.friends',
+                  tsType: 'UserInput',
+                  defaultVal: '"undefined"',
+                  optional: true,
+                  children: null,
+                  asList: true,
+                },
+              ],
+            },
+            null,
+            2
+          )}
+        </pre>
       </Form>
     </Formik>
   );

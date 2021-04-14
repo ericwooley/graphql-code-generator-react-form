@@ -21,10 +21,17 @@ export default function Home() {
         </p>
 
         <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
+          <div className={styles.card}>
             <h3>Add Users</h3>
-            <AddUsersForm />
-          </a>
+            <AddUsersForm
+              initialValues={{
+                users: [],
+              }}
+              onSubmit={addUsersData => {
+                console.log('Add Users Form Submit', addUsersData);
+              }}
+            />
+          </div>
 
           <a href="https://nextjs.org/learn" className={styles.card}>
             <h3>Learn &rarr;</h3>
