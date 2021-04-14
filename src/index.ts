@@ -3,6 +3,7 @@ import {
   PluginValidateFn,
   PluginFunction,
 } from '@graphql-codegen/plugin-helpers';
+
 import {
   visit,
   GraphQLSchema,

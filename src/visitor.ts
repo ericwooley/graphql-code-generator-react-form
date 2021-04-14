@@ -100,18 +100,13 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
   }
 
   renderFormElement(metaData: TypeNodeMetaData): string {
-    // if (metaData.children)
-    //   return `<div><h4>${metaData.name} ></h4>${metaData.children
-    //     .map(this.renderFormElement)
-    //     .join('\n  ')}</div>`;
-    // if (metaData.asList)
-    //   return `<label><h5>${metaData.name} as list</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
-    // return `<label><h5>${metaData.name}</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
-    return `<pre>{JSON.stringify(${JSON.stringify(
-      metaData,
-      null,
-      2
-    )}, null, 2)}</pre>`;
+    if (metaData.children)
+      return `<div><h4>${metaData.name}</h4>${metaData.children
+        .map(this.renderFormElement)
+        .join('\n  ')}</div>`;
+    if (metaData.asList)
+      return `<label><h5>${metaData.name} as list</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
+    return `<label><h5>${metaData.name}</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
   }
   public get sdkContent(): string {
     return (
@@ -119,6 +114,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
 /****************************
  * Formik Forms
  * *************************/
+export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
 ` +
       this._mutations
         .map(m => {
@@ -135,6 +131,9 @@ export interface ${baseName}Variables {
     .map(v => `${v.name}${v.optional ? '?' : ''}: ${v.tsType}`)
     .join(',\n')}
 }
+
+
+
 export const ${baseName} = ({  initialValues, onSubmit, ...formikProps}: FormikConfig<${baseName}Variables>) => {
   return (<Formik onSubmit={onSubmit} initialValues={{...${camelCase(
     m.name + 'DefaultValues'
@@ -142,7 +141,8 @@ export const ${baseName} = ({  initialValues, onSubmit, ...formikProps}: FormikC
     <Form>
     ${m.variables.map(v => this.renderFormElement(v)).join('\n    ')}
     </Form>
-  </Formik>)
+  </Formik>
+  )
 };
     `;
         })
@@ -175,7 +175,7 @@ interface TypeNodeMetaData {
   defaultVal: string;
   optional: boolean;
   children?: Array<TypeNodeMetaData> | null;
-  asList?: boolean;
+  asList: boolean;
 }
 
 export function namedTypeToTypeNodeMetaData(
@@ -235,6 +235,7 @@ export function namedTypeToTypeNodeMetaData(
     tsType,
     defaultVal,
     optional,
+    asList: false,
     children,
   };
 }
@@ -373,7 +374,6 @@ export function getTypeNodeMeta(
   const optional = true;
   let children: TypeNodeMetaData[] | null = null;
   let scalarName = '';
-  let childrenAsList = false;
   if (type.kind === 'NamedType') {
     scalarName = type.name.value;
     tsType = type.name.value;
@@ -396,9 +396,9 @@ export function getTypeNodeMeta(
         parentTree
       );
     return {
-      accessChain: [],
+      accessChain: parentTree,
       endedFromCycle: false,
-      asList: childrenAsList,
+      asList: false,
       scalarName,
       name,
       tsType,
@@ -415,16 +415,25 @@ export function getTypeNodeMeta(
       depth + 1,
       parentTree
     );
-    children = [child];
-    tsType = child.tsType + '[]';
-    defaultVal = JSON.stringify([]);
-    scalarName = child.scalarName;
-    childrenAsList = true;
+
+    return {
+      accessChain: parentTree,
+      endedFromCycle: false,
+      name,
+      optional: true,
+      children: [child],
+      tsType: child.tsType + '[]',
+      defaultVal: JSON.stringify([]),
+      scalarName: child.scalarName,
+      asList: true,
+    };
+  } else if (type.kind === 'NonNullType') {
+    return {
+      ...getTypeNodeMeta(type.type, name, types, depth + 1, parentTree),
+      optional: false,
+    };
   }
-  return {
-    ...getTypeNodeMeta(type.type, name, types, depth + 1, parentTree),
-    optional: false,
-  };
+  throw new Error('unknown kind');
 }
 
 export interface GraphqlEnumValues {

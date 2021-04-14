@@ -1,0 +1,133 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`React Apollo Forms should generate a Form 1`] = `
+"
+/****************************
+ * Formik Forms
+ * *************************/
+
+export const addUsersDefaultValues = {
+  users: undefined
+};
+
+export interface AddUsersFormVariables {
+  users: UserInput[]
+}
+export const AddUsersForm = ({  initialValues, onSubmit, ...formikProps}: FormikConfig<AddUsersFormVariables>) => {
+  return (<Formik onSubmit={onSubmit} initialValues={{...addUsersDefaultValues, ...initialValues}} {...formikProps}>
+    <Form>
+    <pre>{JSON.stringify({
+  \\"accessChain\\": [],
+  \\"endedFromCycle\\": false,
+  \\"name\\": \\"users\\",
+  \\"optional\\": false,
+  \\"children\\": [
+    {
+      \\"accessChain\\": [
+        \\"UserInput\\"
+      ],
+      \\"endedFromCycle\\": false,
+      \\"scalarName\\": \\"UserInput\\",
+      \\"name\\": \\"users\\",
+      \\"tsType\\": \\"UserInput\\",
+      \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+      \\"optional\\": true,
+      \\"asList\\": false,
+      \\"children\\": [
+        {
+          \\"accessChain\\": [
+            \\"UserInput\\",
+            \\"Int\\"
+          ],
+          \\"endedFromCycle\\": false,
+          \\"scalarName\\": \\"Int\\",
+          \\"name\\": \\"users.id\\",
+          \\"tsType\\": \\"Scalars.Int\\",
+          \\"defaultVal\\": \\"0\\",
+          \\"optional\\": true,
+          \\"asList\\": false,
+          \\"children\\": null
+        },
+        {
+          \\"accessChain\\": [
+            \\"UserInput\\",
+            \\"String\\"
+          ],
+          \\"endedFromCycle\\": false,
+          \\"scalarName\\": \\"String\\",
+          \\"name\\": \\"users.name\\",
+          \\"tsType\\": \\"Scalars.String\\",
+          \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
+          \\"optional\\": true,
+          \\"asList\\": false,
+          \\"children\\": null
+        },
+        {
+          \\"accessChain\\": [
+            \\"UserInput\\",
+            \\"String\\"
+          ],
+          \\"endedFromCycle\\": false,
+          \\"scalarName\\": \\"String\\",
+          \\"name\\": \\"users.email\\",
+          \\"tsType\\": \\"Scalars.String\\",
+          \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
+          \\"optional\\": true,
+          \\"asList\\": false,
+          \\"children\\": null
+        },
+        {
+          \\"accessChain\\": [
+            \\"UserInput\\",
+            \\"UserInput\\"
+          ],
+          \\"endedFromCycle\\": true,
+          \\"scalarName\\": \\"UserInput\\",
+          \\"name\\": \\"users.mother\\",
+          \\"tsType\\": \\"UserInput\\",
+          \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+          \\"optional\\": true,
+          \\"asList\\": false,
+          \\"children\\": null
+        },
+        {
+          \\"accessChain\\": [
+            \\"UserInput\\",
+            \\"UserInput\\"
+          ],
+          \\"endedFromCycle\\": true,
+          \\"scalarName\\": \\"UserInput\\",
+          \\"name\\": \\"users.father\\",
+          \\"tsType\\": \\"UserInput\\",
+          \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+          \\"optional\\": true,
+          \\"asList\\": false,
+          \\"children\\": null
+        },
+        {
+          \\"accessChain\\": [
+            \\"UserInput\\",
+            \\"UserInput\\"
+          ],
+          \\"endedFromCycle\\": true,
+          \\"scalarName\\": \\"UserInput\\",
+          \\"name\\": \\"users.friends\\",
+          \\"tsType\\": \\"UserInput\\",
+          \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+          \\"optional\\": true,
+          \\"asList\\": true,
+          \\"children\\": null
+        }
+      ]
+    }
+  ],
+  \\"tsType\\": \\"UserInput[]\\",
+  \\"defaultVal\\": \\"[]\\",
+  \\"scalarName\\": \\"UserInput\\",
+  \\"asList\\": true
+}, null, 2)}</pre>
+    </Form>
+  </Formik>)
+};
+    "
+`;
