@@ -2,6 +2,16 @@ import Head from 'next/head';
 import { AddUsersForm, mutationsMetaData } from '../generated/formik';
 import styles from '../styles/Home.module.css';
 import JSONTree from 'react-json-tree';
+import { ErrorBoundary } from 'react-error-boundary';
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Try again</button>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
@@ -24,14 +34,16 @@ export default function Home() {
         <div className={styles.grid}>
           <div className={styles.card}>
             <h3>Add Users</h3>
-            <AddUsersForm
-              initialValues={{
-                users: [],
-              }}
-              onSubmit={(addUsersData) => {
-                console.log('Add Users Form Submit', addUsersData);
-              }}
-            />
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <AddUsersForm
+                initialValues={{
+                  users: [],
+                }}
+                onSubmit={(addUsersData) => {
+                  console.log('Add Users Form Submit', addUsersData);
+                }}
+              />
+            </ErrorBoundary>
           </div>
 
           <div

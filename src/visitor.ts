@@ -32,6 +32,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
   private _operationsToInclude: {
     node: OperationDefinitionNode;
   }[] = [];
+  private defaultScalarValues: { [key: string]: string } = {};
   private _typeComponentMap: {
     [key: string]: string;
   } = {};
@@ -55,8 +56,18 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
   public formikImports() {
     return [
       `import * as React from 'react';`,
-      `import { Formik, Form, FormikConfig } from 'formik'`,
+      `import { Formik, Form, FormikConfig, FieldArray } from 'formik'`,
     ];
+  }
+
+  public scalarComponents() {
+    return `
+/******************************
+ * Scalar Components
+ * ****************************/
+
+
+    ${Object.values(this._typeComponentMap).join('\n\n')}`;
   }
 
   protected buildOperation(
@@ -70,7 +81,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
     const mutationData = {
       name: node.name?.value || 'unknown',
       variables:
-        node.variableDefinitions?.map(v =>
+        node.variableDefinitions?.map((v) =>
           varDefToVar(v, this.schema.getTypeMap())
         ) || [],
     };
@@ -81,82 +92,227 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
 
     return '';
   }
-
-  getComponentFor(metaData: TypeNodeMetaData) {
-    const componentKey = metaData.scalarName + metaData.asList ? 'AsList' : '';
-    if (this._typeComponentMap[componentKey])
-      return this._typeComponentMap[componentKey];
-    if (metaData.asList) return `${metaData} list`;
-    if (metaData.endedFromCycle) return `touch to load more`;
-    if (metaData.children)
-      return `<div><h4>${metaData.name}</h4>${metaData.children
-        .map(this.renderFormElement)
-        .join('\n  ')}</div>`;
-    const component = `const () => {
-      return <input type="${metaData.scalarName}" name="${metaData.name}">
+  getDefaultValueStringForTypeNodeMetaData(
+    metaData: TypeNodeMetaData,
+    undefinedIfOptionalScalarName = ''
+  ) {
+    if (
+      metaData.optional &&
+      undefinedIfOptionalScalarName === metaData.scalarName
+    )
+      return 'undefined';
+    if (metaData.asList) return '[]';
+    if (PrimitiveMaps[metaData.scalarName])
+      return PrimitiveMaps[metaData.scalarName].defaultVal;
+    const scalarDefaultName = camelCase(`default ${metaData.scalarName}`);
+    if (this.defaultScalarValues[scalarDefaultName])
+      return this.defaultScalarValues[scalarDefaultName];
+    const value = [
+      '{',
+      ...(metaData.children || []).map(
+        (c) => `
+      get ${c.name} (): ${c.tsType}${c.asList ? '[]' : ''}${
+          c.optional ? '|undefined' : ''
+        } {
+        return ${this.getDefaultValueStringForTypeNodeMetaData(
+          c,
+          undefinedIfOptionalScalarName || metaData.scalarName
+        )}
+      },
+    `
+      ),
+      '}',
+    ].join('\n');
+    this.defaultScalarValues[scalarDefaultName] = value;
+    return scalarDefaultName;
+  }
+  renderComponentFor(
+    metaData: TypeNodeMetaData,
+    props: { [key: string]: string } & { value: string }
+  ): string {
+    const componentKey = pascalCase(
+      metaData.scalarName + 'FormInput' + (metaData.asList ? 'AsList' : '')
+    );
+    const componentRenderString = `<${componentKey} optional={${
+      metaData.optional
+    }} ${Object.entries(props).map(
+      ([propName, propValue]) => `${propName}={${propValue}}`
+    )} />`;
+    if (this._typeComponentMap[componentKey]) return componentRenderString;
+    const componentPropTypes = `export interface ${componentKey}PropTypes {
+      optional: boolean,
+      value: ${metaData.tsType}
     }`;
+    const componentDefinitionHead = `export const ${componentKey} = (props: ${componentKey}PropTypes) => {`;
+    let componentPreBody = [
+      `let [shouldRender, setShouldRender] = React.useState(false)`,
+      `const {value = ${this.getDefaultValueStringForTypeNodeMetaData(
+        metaData
+      )}} = props`,
+    ];
+    let componentBody = [
+      `
+      if(props.optional){
+        return <div>${metaData.name}<button>Add ${pascalCase(
+        metaData.scalarName
+      )}</button></div>
+      }`,
+    ];
+    const componentDefinitionTail = `}`;
+    if (metaData.asList) {
+      componentPreBody = [
+        `const {value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
+          metaData
+        )}} = props`,
+        `const [value, setValue] = React.useState(initialValue)`,
+        `const addItem=() => setValue(old => [...old, ])`,
+      ];
+      componentBody = [
+        `return (
+    <>
+      <h3>${pascalCase(metaData.scalarName)} as list</h3>
+
+      <div>
+        {value.length > 0 ? (
+          value.map((item, index) => (
+            <div key={index}>
+            ${
+              metaData.children
+                ?.map((md) => this.renderComponentFor(md, { value: 'item' }))
+                .join('\n  ') || ''
+            }
+
+              <button
+                type="button"
+                onClick={() => console.log('add at index')} // remove a friend from the list
+              >
+                -
+              </button>
+
+              <button
+                type="button"
+                onClick={() => console.log('insert at ' + index)} // insert an empty string at a position
+              >
+                +
+              </button>
+            </div>
+          ))
+        ) : (
+          <button type="button" onClick={() => console.log('add new')}>
+          +
+          </button>
+        )}
+      </div>
+    </>
+    )`,
+      ];
+    } else if (metaData.endedFromCycle) {
+      componentBody.push(
+        `return <div><strong>${
+          metaData.name
+        }</strong>: <button>Add ${pascalCase(
+          metaData.scalarName
+        )}</button></div>`
+      );
+    } else if (metaData.children) {
+      componentBody.push(
+        `return <div><h4>${
+          metaData.name
+        } with children</h4>${metaData.children
+          .map((md) =>
+            this.renderComponentFor(md, { value: 'value.' + md.name })
+          )
+          .join('\n  ')}</div>`
+      );
+    } else {
+      componentBody = [
+        `return <div>edit ${metaData.name} {JSON.stringify(props)}</div>`,
+      ];
+    }
+    const component = `
+    ${componentPropTypes}
+        ${componentDefinitionHead}
+          ${componentPreBody.join('\n')}
+          ${componentBody.join('\n')}
+        ${componentDefinitionTail}
+    `;
     this._typeComponentMap[componentKey] = component;
-    return component;
+    return componentRenderString;
   }
 
-  renderFormElement(metaData: TypeNodeMetaData): string {
-    if (metaData.children)
-      return `<div><h4>${metaData.name}</h4>${metaData.children
-        .map(this.renderFormElement)
-        .join('\n  ')}</div>`;
-    if (metaData.asList)
-      return `<label><h5>${metaData.name} as list</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
-    return `<label><h5>${metaData.name}</h5><input name="${metaData.name}" type="${metaData.tsType}" /></label>`;
-  }
   public get sdkContent(): string {
-    return (
+    const forms =
       `
+
+
 /****************************
  * Formik Forms
  * *************************/
 export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
 ` +
       this._mutations
-        .map(m => {
+        .map((m) => {
           const baseName = `${pascalCase(m.name)}Form`;
           return `
 export const ${camelCase(m.name + 'DefaultValues')} = {
   ${m.variables
-    .map(v => `${v.name}${v.optional ? '?' : ''}: undefined`)
+    .map(
+      (v) =>
+        `${v.name}${
+          v.optional ? '?' : ''
+        }: ${this.getDefaultValueStringForTypeNodeMetaData(v)}`
+    )
     .join(',\n')}
 };
 
 export interface ${baseName}Variables {
   ${m.variables
-    .map(v => `${v.name}${v.optional ? '?' : ''}: ${v.tsType}`)
+    .map((v) => `${v.name}${v.optional ? '?' : ''}: ${v.tsType}`)
     .join(',\n')}
 }
 
 
 
-export const ${baseName} = ({  initialValues, onSubmit, ...formikProps}: FormikConfig<${baseName}Variables>) => {
-  return (<Formik onSubmit={onSubmit} initialValues={{...${camelCase(
-    m.name + 'DefaultValues'
-  )}, ...initialValues}} {...formikProps}>
-    <Form>
-    ${m.variables.map(v => this.renderFormElement(v)).join('\n    ')}
-    </Form>
-  </Formik>
+export const ${baseName} = (
+  {
+    initialValues = ${camelCase(m.name + 'DefaultValues')},
+    onSubmit,
+    ...formProps} : React.DetailedHTMLProps<
+  React.FormHTMLAttributes<HTMLFormElement>,
+  HTMLFormElement
+> & { initialValues?: ${baseName}Variables }) => {
+  return (<form onSubmit={onSubmit} {...formProps}>
+    ${m.variables
+      .map((v) =>
+        this.renderComponentFor(v, { value: `initialValues.${v.name}` })
+      )
+      .join('\n    ')}
+  </form>
   )
 };
     `;
         })
-        .join('\n')
-    );
+        .join('\n');
+
+    return `
+/**********************
+ * Default Values
+ * *******************/
+  ${Object.entries(this.defaultScalarValues)
+    .map(([name, entry]) => `export const ${name} = ${entry}`)
+    .join('\n')}
+  ${this.scalarComponents()}
+  ${forms}
+  `;
   }
 }
 
 const PrimitiveMaps: { [k: string]: { type: string; defaultVal: string } } = {
-  Int: { type: 'Scalars.Int', defaultVal: JSON.stringify(0) },
-  Float: { type: 'Scalars.Float', defaultVal: JSON.stringify(0) },
-  String: { type: 'Scalars.String', defaultVal: JSON.stringify('') },
-  Boolean: { type: 'Scalars.Boolean:', defaultVal: JSON.stringify(false) },
-  ID: { type: 'Scalars.ID', defaultVal: JSON.stringify('') },
+  Int: { type: 'Scalars["Int"]', defaultVal: JSON.stringify(0) },
+  Float: { type: 'Scalars["Float"]', defaultVal: JSON.stringify(0) },
+  String: { type: 'Scalars["String"]', defaultVal: JSON.stringify('') },
+  Boolean: { type: 'Scalars["Boolean"]:', defaultVal: JSON.stringify(false) },
+  ID: { type: 'Scalars["ID"]', defaultVal: JSON.stringify('') },
 };
 
 export function varDefToVar(
@@ -212,13 +368,10 @@ export function namedTypeToTypeNodeMetaData(
         .map(([childName, child]) => {
           return [
             childName,
-            scalarTypeConfigToNodeMetaData(
-              child,
-              `${name}.${childName}`,
-              types,
-              depth + 1,
-              [...parentTree, typeDef.name]
-            ),
+            scalarTypeConfigToNodeMetaData(child, childName, types, depth + 1, [
+              ...parentTree,
+              typeDef.name,
+            ]),
           ];
         })
     );

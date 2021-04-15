@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Formik, Form, FormikConfig } from 'formik';
+import { Formik, Form, FormikConfig, FieldArray } from 'formik';
 export type Maybe<T> = T | null;
 export type Exact<T extends { [key: string]: unknown }> = {
   [K in keyof T]: T[K];
@@ -73,6 +73,132 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
   allUsers: Array<Maybe<{ __typename?: 'User' } & Pick<User, 'id'>>>;
 };
 
+/**********************
+ * Default Values
+ * *******************/
+export const defaultUserInput = {
+  get id(): Scalars['Int'] | undefined {
+    return 0;
+  },
+
+  get name(): Scalars['String'] | undefined {
+    return '';
+  },
+
+  get email(): Scalars['String'] | undefined {
+    return '';
+  },
+
+  get mother(): UserInput | undefined {
+    return undefined;
+  },
+
+  get father(): UserInput | undefined {
+    return undefined;
+  },
+
+  get friends(): UserInput[] | undefined {
+    return undefined;
+  },
+};
+
+/******************************
+ * Scalar Components
+ * ****************************/
+
+export interface IntFormInputPropTypes {
+  optional: boolean;
+  value: Scalars['Int'];
+}
+export const IntFormInput = (props: IntFormInputPropTypes) => {
+  let [shouldRender, setShouldRender] = React.useState(false);
+  const { value = 0 } = props;
+  return <div>edit id {JSON.stringify(props)}</div>;
+};
+
+export interface StringFormInputPropTypes {
+  optional: boolean;
+  value: Scalars['String'];
+}
+export const StringFormInput = (props: StringFormInputPropTypes) => {
+  let [shouldRender, setShouldRender] = React.useState(false);
+  const { value = '' } = props;
+  return <div>edit name {JSON.stringify(props)}</div>;
+};
+
+export interface UserInputFormInputPropTypes {
+  optional: boolean;
+  value: UserInput;
+}
+export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
+  let [shouldRender, setShouldRender] = React.useState(false);
+  const { value = defaultUserInput } = props;
+
+  if (props.optional) {
+    return (
+      <div>
+        users<button>Add UserInput</button>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <h4>users with children</h4>
+      <IntFormInput optional={true} value={value.id} />
+      <StringFormInput optional={true} value={value.name} />
+      <StringFormInput optional={true} value={value.email} />
+      <UserInputFormInput optional={true} value={value.mother} />
+      <UserInputFormInput optional={true} value={value.father} />
+      <UserInputFormInputAsList optional={true} value={value.friends} />
+    </div>
+  );
+};
+
+export interface UserInputFormInputAsListPropTypes {
+  optional: boolean;
+  value: UserInput[];
+}
+export const UserInputFormInputAsList = (
+  props: UserInputFormInputAsListPropTypes
+) => {
+  const { value: initialValue = [] } = props;
+  const [value, setValue] = React.useState(initialValue);
+  const addItem = () => setValue((old) => [...old]);
+  return (
+    <>
+      <h3>UserInput as list</h3>
+
+      <div>
+        {value.length > 0 ? (
+          value.map((item, index) => (
+            <div key={index}>
+              <UserInputFormInput optional={true} value={item} />
+
+              <button
+                type="button"
+                onClick={() => console.log('add at index')} // remove a friend from the list
+              >
+                -
+              </button>
+
+              <button
+                type="button"
+                onClick={() => console.log('insert at ' + index)} // insert an empty string at a position
+              >
+                +
+              </button>
+            </div>
+          ))
+        ) : (
+          <button type="button" onClick={() => console.log('add new')}>
+            +
+          </button>
+        )}
+      </div>
+    </>
+  );
+};
+
 /****************************
  * Formik Forms
  * *************************/
@@ -100,8 +226,8 @@ export const mutationsMetaData = [
                 accessChain: ['UserInput', 'Int'],
                 endedFromCycle: false,
                 scalarName: 'Int',
-                name: 'users.id',
-                tsType: 'Scalars.Int',
+                name: 'id',
+                tsType: 'Scalars["Int"]',
                 defaultVal: '0',
                 optional: true,
                 asList: false,
@@ -111,8 +237,8 @@ export const mutationsMetaData = [
                 accessChain: ['UserInput', 'String'],
                 endedFromCycle: false,
                 scalarName: 'String',
-                name: 'users.name',
-                tsType: 'Scalars.String',
+                name: 'name',
+                tsType: 'Scalars["String"]',
                 defaultVal: '""',
                 optional: true,
                 asList: false,
@@ -122,8 +248,8 @@ export const mutationsMetaData = [
                 accessChain: ['UserInput', 'String'],
                 endedFromCycle: false,
                 scalarName: 'String',
-                name: 'users.email',
-                tsType: 'Scalars.String',
+                name: 'email',
+                tsType: 'Scalars["String"]',
                 defaultVal: '""',
                 optional: true,
                 asList: false,
@@ -133,7 +259,7 @@ export const mutationsMetaData = [
                 accessChain: ['UserInput', 'UserInput'],
                 endedFromCycle: true,
                 scalarName: 'UserInput',
-                name: 'users.mother',
+                name: 'mother',
                 tsType: 'UserInput',
                 defaultVal: '"undefined"',
                 optional: true,
@@ -144,7 +270,7 @@ export const mutationsMetaData = [
                 accessChain: ['UserInput', 'UserInput'],
                 endedFromCycle: true,
                 scalarName: 'UserInput',
-                name: 'users.father',
+                name: 'father',
                 tsType: 'UserInput',
                 defaultVal: '"undefined"',
                 optional: true,
@@ -155,7 +281,7 @@ export const mutationsMetaData = [
                 accessChain: ['UserInput', 'UserInput'],
                 endedFromCycle: true,
                 scalarName: 'UserInput',
-                name: 'users.friends',
+                name: 'friends',
                 tsType: 'UserInput',
                 defaultVal: '"undefined"',
                 optional: true,
@@ -175,7 +301,7 @@ export const mutationsMetaData = [
 ];
 
 export const addUsersDefaultValues = {
-  users: undefined,
+  users: [],
 };
 
 export interface AddUsersFormVariables {
@@ -183,48 +309,16 @@ export interface AddUsersFormVariables {
 }
 
 export const AddUsersForm = ({
-  initialValues,
+  initialValues = addUsersDefaultValues,
   onSubmit,
-  ...formikProps
-}: FormikConfig<AddUsersFormVariables>) => {
+  ...formProps
+}: React.DetailedHTMLProps<
+  React.FormHTMLAttributes<HTMLFormElement>,
+  HTMLFormElement
+> & { initialValues?: AddUsersFormVariables }) => {
   return (
-    <Formik
-      onSubmit={onSubmit}
-      initialValues={{ ...addUsersDefaultValues, ...initialValues }}
-      {...formikProps}
-    >
-      <Form>
-        <div>
-          <h4>users</h4>
-          <div>
-            <h4>users</h4>
-            <label>
-              <h5>users.id</h5>
-              <input name="users.id" type="Scalars.Int" />
-            </label>
-            <label>
-              <h5>users.name</h5>
-              <input name="users.name" type="Scalars.String" />
-            </label>
-            <label>
-              <h5>users.email</h5>
-              <input name="users.email" type="Scalars.String" />
-            </label>
-            <label>
-              <h5>users.mother</h5>
-              <input name="users.mother" type="UserInput" />
-            </label>
-            <label>
-              <h5>users.father</h5>
-              <input name="users.father" type="UserInput" />
-            </label>
-            <label>
-              <h5>users.friends as list</h5>
-              <input name="users.friends" type="UserInput" />
-            </label>
-          </div>
-        </div>
-      </Form>
-    </Formik>
+    <form onSubmit={onSubmit} {...formProps}>
+      <UserInputFormInputAsList optional={false} value={initialValues.users} />
+    </form>
   );
 };

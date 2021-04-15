@@ -24,12 +24,12 @@ export const plugin: PluginFunction<
   documents: Types.DocumentFile[],
   config: ReactFormikRawPluginConfig
 ) => {
-  const allAst = concatAST(documents.map(v => v.document as any));
+  const allAst = concatAST(documents.map((v) => v.document as any));
 
   const allFragments: LoadedFragment[] = [
     ...(allAst.definitions.filter(
-      d => d.kind === Kind.FRAGMENT_DEFINITION
-    ) as FragmentDefinitionNode[]).map(fragmentDef => ({
+      (d) => d.kind === Kind.FRAGMENT_DEFINITION
+    ) as FragmentDefinitionNode[]).map((fragmentDef) => ({
       node: fragmentDef,
       name: fragmentDef.name.value,
       onType: fragmentDef.typeCondition.name.value,
