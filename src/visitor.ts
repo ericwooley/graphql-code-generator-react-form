@@ -104,9 +104,8 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
     if (metaData.asList) return '[]';
     if (PrimitiveMaps[metaData.scalarName])
       return PrimitiveMaps[metaData.scalarName].defaultVal;
-    const scalarDefaultName = camelCase(`default ${metaData.scalarName}`);
-    if (this.defaultScalarValues[scalarDefaultName])
-      return this.defaultScalarValues[scalarDefaultName];
+    const scalarDefaultName = camelCase(`default ${metaData.scalarName}Scalar`);
+    if (this.defaultScalarValues[scalarDefaultName]) return scalarDefaultName;
     const value = [
       '{',
       ...(metaData.children || []).map(
@@ -152,20 +151,32 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
     ];
     let componentBody = [
       `
-      if(props.optional){
-        return <div>${metaData.name}<button>Add ${pascalCase(
-        metaData.scalarName
-      )}</button></div>
+      if(props.optional && !shouldRender){
+        return <div>${metaData.name} <button onClick={(e) => {
+          e.preventDefault();
+          setShouldRender(true)
+        }}>Add ${pascalCase(metaData.scalarName)}</button></div>
       }`,
     ];
     const componentDefinitionTail = `}`;
     if (metaData.asList) {
+      const actualScalarMetaData = metaData.children?.[0]
+        ? metaData.children?.[0]
+        : { ...metaData, asList: false };
       componentPreBody = [
         `const {value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
           metaData
         )}} = props`,
         `const [value, setValue] = React.useState(initialValue)`,
-        `const addItem=() => setValue(old => [...old, ])`,
+        `const addItem=() => setValue(old => [...old, ${this.getDefaultValueStringForTypeNodeMetaData(
+          actualScalarMetaData
+        )} ])`,
+        `const insertItem=(index: number) => setValue(old => [...old.slice(0, index), ${this.getDefaultValueStringForTypeNodeMetaData(
+          actualScalarMetaData
+        )}, ...old.slice(index) ])`,
+        `const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ${this.getDefaultValueStringForTypeNodeMetaData(
+          actualScalarMetaData
+        )}, ...old.slice(index) ])`,
       ];
       componentBody = [
         `return (
@@ -184,21 +195,21 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
 
               <button
                 type="button"
-                onClick={() => console.log('add at index')} // remove a friend from the list
+                onClick={() => removeItem(index)} // remove a friend from the list
               >
                 -
               </button>
 
               <button
                 type="button"
-                onClick={() => console.log('insert at ' + index)} // insert an empty string at a position
+                onClick={() => insertItem(index)} // insert an empty string at a position
               >
                 +
               </button>
             </div>
           ))
         ) : (
-          <button type="button" onClick={() => console.log('add new')}>
+          <button type="button" onClick={addItem}>
           +
           </button>
         )}

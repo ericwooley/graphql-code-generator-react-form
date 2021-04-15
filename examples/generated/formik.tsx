@@ -76,7 +76,7 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
 /**********************
  * Default Values
  * *******************/
-export const defaultUserInput = {
+export const defaultUserInputScalar = {
   get id(): Scalars['Int'] | undefined {
     return 0;
   },
@@ -132,12 +132,20 @@ export interface UserInputFormInputPropTypes {
 }
 export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
   let [shouldRender, setShouldRender] = React.useState(false);
-  const { value = defaultUserInput } = props;
+  const { value = defaultUserInputScalar } = props;
 
-  if (props.optional) {
+  if (props.optional && !shouldRender) {
     return (
       <div>
-        users<button>Add UserInput</button>
+        users{' '}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            setShouldRender(true);
+          }}
+        >
+          Add UserInput
+        </button>
       </div>
     );
   }
@@ -163,7 +171,19 @@ export const UserInputFormInputAsList = (
 ) => {
   const { value: initialValue = [] } = props;
   const [value, setValue] = React.useState(initialValue);
-  const addItem = () => setValue((old) => [...old]);
+  const addItem = () => setValue((old) => [...old, defaultUserInputScalar]);
+  const insertItem = (index: number) =>
+    setValue((old) => [
+      ...old.slice(0, index),
+      defaultUserInputScalar,
+      ...old.slice(index),
+    ]);
+  const removeItem = (index: number) =>
+    setValue((old) => [
+      ...old.slice(0, index),
+      defaultUserInputScalar,
+      ...old.slice(index),
+    ]);
   return (
     <>
       <h3>UserInput as list</h3>
@@ -176,21 +196,21 @@ export const UserInputFormInputAsList = (
 
               <button
                 type="button"
-                onClick={() => console.log('add at index')} // remove a friend from the list
+                onClick={() => removeItem(index)} // remove a friend from the list
               >
                 -
               </button>
 
               <button
                 type="button"
-                onClick={() => console.log('insert at ' + index)} // insert an empty string at a position
+                onClick={() => insertItem(index)} // insert an empty string at a position
               >
                 +
               </button>
             </div>
           ))
         ) : (
-          <button type="button" onClick={() => console.log('add new')}>
+          <button type="button" onClick={addItem}>
             +
           </button>
         )}
