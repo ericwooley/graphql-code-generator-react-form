@@ -63,7 +63,7 @@ describe('React Apollo', () => {
   };
 
   describe('Imports', () => {
-    it('should import React and Formik dependencies', async () => {
+    it('should import React and forms dependencies', async () => {
       const docs = [{ location: '', document: basicDoc }];
       const content = (await plugin(
         schema,
@@ -76,7 +76,7 @@ describe('React Apollo', () => {
 
       expect(content.prepend).toContain(`import * as React from 'react';`);
       expect(content.prepend).toContain(
-        `import { Formik, Form, FormikConfig } from 'formik'`
+        `import { forms, Form, formsConfig } from 'forms'`
       );
       await validateTypeScript(content, schema, docs, {});
     });

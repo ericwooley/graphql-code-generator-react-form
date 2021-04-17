@@ -1,5 +1,5 @@
 import React from 'react';
-import { AddUsersForm } from '../generated/formik';
+import { AddUsersForm } from '../generated/forms';
 import addUsersDocument from '../documents/addUsers.graphql';
 import { ExampleContent } from './exampleContent';
 export const RecursiveUserExample = () => {

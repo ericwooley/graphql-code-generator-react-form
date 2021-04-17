@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from '@material-ui/core';
 import React from 'react';
 import JSONTree from 'react-json-tree';
-import { mutationsMetaData } from '../generated/formik';
+import { mutationsMetaData } from '../generated/forms';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({

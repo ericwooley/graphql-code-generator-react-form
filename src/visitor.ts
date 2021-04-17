@@ -3,7 +3,7 @@ import {
   ClientSideBasePluginConfig,
   LoadedFragment,
 } from '@graphql-codegen/visitor-plugin-common';
-import { ReactFormikRawPluginConfig } from './config';
+import { ReactformsRawPluginConfig } from './config';
 import autoBind from 'auto-bind';
 import {
   GraphQLNamedType,
@@ -23,11 +23,11 @@ import { Types } from '@graphql-codegen/plugin-helpers';
 import { camelCase, pascalCase, sentenceCase } from 'change-case-all';
 import { TypeMap } from 'graphql/type/schema';
 
-export interface ReactFormikConfig extends ClientSideBasePluginConfig {}
+export interface ReactformsConfig extends ClientSideBasePluginConfig {}
 
-export class ReactFormikVisitor extends ClientSideBaseVisitor<
-  ReactFormikRawPluginConfig,
-  ReactFormikConfig
+export class ReactformsVisitor extends ClientSideBaseVisitor<
+  ReactformsRawPluginConfig,
+  ReactformsConfig
 > {
   private _operationsToInclude: {
     node: OperationDefinitionNode;
@@ -44,7 +44,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
   constructor(
     schema: GraphQLSchema,
     fragments: LoadedFragment[],
-    protected rawConfig: ReactFormikRawPluginConfig,
+    protected rawConfig: ReactformsRawPluginConfig,
     documents: Types.DocumentFile[]
   ) {
     super(schema, fragments, rawConfig, {});
@@ -53,10 +53,10 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
     autoBind(this);
   }
 
-  public formikImports() {
+  public formsImports() {
     return [
       `import * as React from 'react';`,
-      `import { Formik, Form, FormikConfig, FieldArray } from 'formik'`,
+      `import { forms, Form, formsConfig, FieldArray } from 'forms'`,
     ];
   }
 
@@ -282,7 +282,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
 
 
 /****************************
- * Formik Forms
+ * forms Forms
  * *************************/
 export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
 ` +
@@ -322,7 +322,8 @@ export const ${baseName} = (
 > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
   return (<form onSubmit={(e) => {
     e.preventDefault()
-    onSubmit(initialValues)
+    // TODO: This needs to be real values from the form
+    onSubmit(initialValues as any)
   }} {...formProps}>
     ${m.variables
       .map((v) =>

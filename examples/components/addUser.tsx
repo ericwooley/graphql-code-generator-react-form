@@ -1,5 +1,5 @@
 import React from 'react';
-import { AddUserForm } from '../generated/formik';
+import { AddUserForm } from '../generated/forms';
 import addUserDocument from '../documents/addUser.graphql';
 import { ExampleContent } from './exampleContent';
 export const AddUser = () => {

@@ -2,7 +2,7 @@ hooks:
   afterAllFileWrite:
     - prettier --write
 generates:
-  ./examples/generated/formik.tsx:
+  ./examples/generated/forms.tsx:
     schema: ./examples/schemas/schema.graphql
     documents: ./examples/documents/**/*.graphql
     plugins:

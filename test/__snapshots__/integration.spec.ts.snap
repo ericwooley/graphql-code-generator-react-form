@@ -3,7 +3,7 @@
 exports[`React Apollo Forms should generate a Form 1`] = `
 "
 /****************************
- * Formik Forms
+ * forms Forms
  * *************************/
 
 export const addUsersDefaultValues = {
@@ -13,8 +13,8 @@ export const addUsersDefaultValues = {
 export interface AddUsersFormVariables {
   users: UserInput[]
 }
-export const AddUsersForm = ({  initialValues, onSubmit, ...formikProps}: FormikConfig<AddUsersFormVariables>) => {
-  return (<Formik onSubmit={onSubmit} initialValues={{...addUsersDefaultValues, ...initialValues}} {...formikProps}>
+export const AddUsersForm = ({  initialValues, onSubmit, ...formsProps}: formsConfig<AddUsersFormVariables>) => {
+  return (<forms onSubmit={onSubmit} initialValues={{...addUsersDefaultValues, ...initialValues}} {...formsProps}>
     <Form>
     <pre>{JSON.stringify({
   \\"accessChain\\": [],
@@ -127,7 +127,7 @@ export const AddUsersForm = ({  initialValues, onSubmit, ...formikProps}: Formik
   \\"asList\\": true
 }, null, 2)}</pre>
     </Form>
-  </Formik>)
+  </forms>)
 };
     "
 `;
