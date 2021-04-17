@@ -162,7 +162,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
     const componentPropTypes = `export interface ${componentKey}PropTypes {
       optional: boolean,
       label: string,
-      value: ${metaData.tsType},
+      value: ${metaData.tsType}${metaData.asList ? '[]' : ''},
       scalarName: string,
       name: string
     }`;
@@ -177,10 +177,10 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
     let componentBody = [
       `
       if(props.optional && !shouldRender){
-        return <div>{label} <button onClick={(e) => {
+        return <div><button onClick={(e) => {
           e.preventDefault();
           setShouldRender(true)
-        }}>Add ${pascalCase(metaData.scalarName)}</button></div>
+        }}>Add {label}</button></div>
       }`,
     ];
     const componentDefinitionTail = `}`;
@@ -195,39 +195,31 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
         `const insertItem=(index: number) => setValue(old => [...old.slice(0, index), ${this.getDefaultValueStringForTypeNodeMetaData(
           actualScalarMetaData
         )}, ...old.slice(index) ])`,
-        `const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ${this.getDefaultValueStringForTypeNodeMetaData(
-          actualScalarMetaData
-        )}, ...old.slice(index+1) ])`
+        `const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ...old.slice(index+1) ])`
       );
       componentBody = [
         `return (
     <div className="${[this.nestedFormClassName, this.FormListClassName].join(
       ' '
     )}">
-    <h3>{label}</h3>
+    {label && <h3>{label}</h3>}
     <ol>
         {value.length > 0 ? (
           value.map((item, index) => (
-            <div key={index}>
-            ${
-              metaData.children
-                ?.map(
-                  (md) =>
-                    `<li>${this.renderComponentFor(
-                      { ...md, optional: false },
-                      {
-                        optional: JSON.stringify(false),
-                        label: JSON.stringify(
-                          pascalCase(sentenceCase(md.name))
-                        ),
-                        value: 'item',
-                        ...this.asPropString(md, ['optional']),
-                      }
-                    )}</li>`
+            <li key={index}>
+              ${metaData.children
+                ?.map((md) =>
+                  this.renderComponentFor(
+                    { ...md, optional: false, asList: false },
+                    {
+                      optional: JSON.stringify(false),
+                      label: JSON.stringify(''),
+                      value: 'item',
+                      ...this.asPropString(md, ['optional']),
+                    }
+                  )
                 )
-                .join('\n  ') || ''
-            }
-
+                .join('\n')}
               <button
                 type="button"
                 onClick={() => removeItem(index)} // remove a friend from the list
@@ -241,18 +233,18 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
               >
                 +
               </button>
-            </div>
+            </li>
           ))
         ) : (
           <button type="button" onClick={addItem}>
-          Add {label}
+          +
           </button>
         )}
     </ol>
     </div>
     )`,
       ];
-    } else if (metaData.endedFromCycle) {
+    } else if (metaData.endedFromCycle && !metaData.asList) {
       componentBody.push(
         `return <div><strong>{label}</strong>: <button>Add {label}</button></div>`
       );
@@ -263,7 +255,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
         ${metaData.children
           .map((md) =>
             this.renderComponentFor(md, {
-              value: 'value.' + md.name,
+              value: `value.${md.name}`,
               ...this.asPropString(md),
               label: JSON.stringify(sentenceCase(md.name)),
             })
@@ -271,8 +263,10 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
           .join('\n  ')}</div>`
       );
     } else {
+      // TODO: type this properly
       componentBody = [
-        `return <div><strong>{label}</strong><input value={value} onChange={(e) => setValue(e.target.value)} /></div>`,
+        `return <div><label><strong>{label}</strong><br /><input value={value} onChange={(e) =>
+          setValue(e.target.value as any)} /></label></div>`,
       ];
     }
     const component = `
@@ -313,7 +307,10 @@ export const ${camelCase(m.name + 'DefaultValues')} = {
 
 export interface ${baseName}Variables {
   ${m.variables
-    .map((v) => `${v.name}${v.optional ? '?' : ''}: ${v.tsType}`)
+    .map(
+      (v) =>
+        `${v.name}${v.optional ? '?' : ''}: ${v.tsType}${v.asList ? '[]' : ''}`
+    )
     .join(',\n')}
 }
 
@@ -326,7 +323,7 @@ export const ${baseName} = (
     ...formProps} : React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: ${baseName}Variables }) => {
+> & { initialValues?: Partial<${baseName}Variables> }) => {
   return (<form onSubmit={onSubmit} {...formProps}>
     ${m.variables
       .map((v) =>
@@ -625,7 +622,7 @@ export function getTypeNodeMeta(
       name,
       optional: true,
       children: [child],
-      tsType: child.tsType + '[]',
+      tsType: child.tsType,
       defaultVal: JSON.stringify([]),
       scalarName: child.scalarName,
       asList: true,

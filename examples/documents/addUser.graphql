@@ -1,5 +1,5 @@
-mutation addUser($user: UserInput!) {
-  addUser(user: $user) {
+mutation addUser($email: String!, $name: String!) {
+  addUser(user: { friends: [], email: $email, name: $name }) {
     id
   }
 }

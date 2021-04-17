@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { RecursiveUserExample } from './recursiveUser';
 import { AddUser } from './addUser';
+import { AddUserFromObject } from './addUserFromObject';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -49,6 +50,20 @@ export default function Examples() {
         </AccordionSummary>
         <AccordionDetails>
           <RecursiveUserExample />
+        </AccordionDetails>
+      </Accordion>
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel2a-content"
+          id="panel2a-header"
+        >
+          <Typography className={classes.heading}>
+            Add User From Object
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <AddUserFromObject />
         </AccordionDetails>
       </Accordion>
     </div>

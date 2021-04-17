@@ -1,0 +1,5 @@
+mutation addUserFromObject($user: UserInput!) {
+  addUser(user: $user) {
+    id
+  }
+}

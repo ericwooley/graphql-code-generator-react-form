@@ -65,10 +65,19 @@ export type UserInput = {
 };
 
 export type AddUserMutationVariables = Exact<{
-  user: UserInput;
+  email: Scalars['String'];
+  name: Scalars['String'];
 }>;
 
 export type AddUserMutation = { __typename?: 'MutationRoot' } & {
+  addUser?: Maybe<{ __typename?: 'User' } & Pick<User, 'id'>>;
+};
+
+export type AddUserFromObjectMutationVariables = Exact<{
+  user: UserInput;
+}>;
+
+export type AddUserFromObjectMutation = { __typename?: 'MutationRoot' } & {
   addUser?: Maybe<{ __typename?: 'User' } & Pick<User, 'id'>>;
 };
 
@@ -119,25 +128,6 @@ export const defaultUserInputScalar = {
  * Scalar Components
  * ****************************/
 
-export interface IntFormInputPropTypes {
-  optional: boolean;
-  label: string;
-  value: Scalars['Int'];
-  scalarName: string;
-  name: string;
-}
-export const IntFormInput = (props: IntFormInputPropTypes) => {
-  let [shouldRender, setShouldRender] = React.useState(false);
-  const { label, value: initialValue = 0 } = props;
-  const [value, setValue] = React.useState(initialValue);
-  return (
-    <div>
-      <strong>{label}</strong>
-      <input value={value} onChange={(e) => setValue(e.target.value)} />
-    </div>
-  );
-};
-
 export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
@@ -151,8 +141,39 @@ export const StringFormInput = (props: StringFormInputPropTypes) => {
   const [value, setValue] = React.useState(initialValue);
   return (
     <div>
-      <strong>{label}</strong>
-      <input value={value} onChange={(e) => setValue(e.target.value)} />
+      <label>
+        <strong>{label}</strong>
+        <br />
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value as any)}
+        />
+      </label>
+    </div>
+  );
+};
+
+export interface IntFormInputPropTypes {
+  optional: boolean;
+  label: string;
+  value: Scalars['Int'];
+  scalarName: string;
+  name: string;
+}
+export const IntFormInput = (props: IntFormInputPropTypes) => {
+  let [shouldRender, setShouldRender] = React.useState(false);
+  const { label, value: initialValue = 0 } = props;
+  const [value, setValue] = React.useState(initialValue);
+  return (
+    <div>
+      <label>
+        <strong>{label}</strong>
+        <br />
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value as any)}
+        />
+      </label>
     </div>
   );
 };
@@ -172,14 +193,13 @@ export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
   if (props.optional && !shouldRender) {
     return (
       <div>
-        {label}{' '}
         <button
           onClick={(e) => {
             e.preventDefault();
             setShouldRender(true);
           }}
         >
-          Add UserInput
+          Add {label}
         </button>
       </div>
     );
@@ -236,7 +256,7 @@ export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
-  value: UserInput;
+  value: UserInput[];
   scalarName: string;
   name: string;
 }
@@ -254,36 +274,32 @@ export const UserInputFormInputAsList = (
       ...old.slice(index),
     ]);
   const removeItem = (index: number) =>
-    setValue((old) => [
-      ...old.slice(0, index),
-      defaultUserInputScalar,
-      ...old.slice(index + 1),
-    ]);
+    setValue((old) => [...old.slice(0, index), ...old.slice(index + 1)]);
   return (
     <div className="mutationFormNested mutationFormList">
-      <h3>{label}</h3>
+      {label && <h3>{label}</h3>}
       <ol>
         {value.length > 0 ? (
           value.map((item, index) => (
-            <div key={index}>
+            <li key={index}>
+              undefined
               <button
                 type="button"
                 onClick={() => removeItem(index)} // remove a friend from the list
               >
                 -
               </button>
-
               <button
                 type="button"
                 onClick={() => insertItem(index)} // insert an empty string at a position
               >
                 +
               </button>
-            </div>
+            </li>
           ))
         ) : (
           <button type="button" onClick={addItem}>
-            Add {label}
+            +
           </button>
         )}
       </ol>
@@ -297,6 +313,33 @@ export const UserInputFormInputAsList = (
 export const mutationsMetaData = [
   {
     name: 'addUser',
+    variables: [
+      {
+        accessChain: ['String'],
+        endedFromCycle: false,
+        scalarName: 'String',
+        name: 'email',
+        tsType: 'Scalars["String"]',
+        defaultVal: '""',
+        optional: false,
+        asList: false,
+        children: null,
+      },
+      {
+        accessChain: ['String'],
+        endedFromCycle: false,
+        scalarName: 'String',
+        name: 'name',
+        tsType: 'Scalars["String"]',
+        defaultVal: '""',
+        optional: false,
+        asList: false,
+        children: null,
+      },
+    ],
+  },
+  {
+    name: 'addUserFromObject',
     variables: [
       {
         accessChain: ['UserInput'],
@@ -466,7 +509,7 @@ export const mutationsMetaData = [
             ],
           },
         ],
-        tsType: 'UserInput[]',
+        tsType: 'UserInput',
         defaultVal: '[]',
         scalarName: 'UserInput',
         asList: true,
@@ -476,11 +519,13 @@ export const mutationsMetaData = [
 ];
 
 export const addUserDefaultValues = {
-  user: defaultUserInputScalar,
+  email: '',
+  name: '',
 };
 
 export interface AddUserFormVariables {
-  user: UserInput;
+  email: Scalars['String'];
+  name: Scalars['String'];
 }
 
 export const AddUserForm = ({
@@ -490,7 +535,43 @@ export const AddUserForm = ({
 }: React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: AddUserFormVariables }) => {
+> & { initialValues?: Partial<AddUserFormVariables> }) => {
+  return (
+    <form onSubmit={onSubmit} {...formProps}>
+      <StringFormInput
+        value={initialValues.email}
+        label={'Email'}
+        scalarName={'String'}
+        name={'email'}
+        optional={false}
+      />
+      <StringFormInput
+        value={initialValues.name}
+        label={'Name'}
+        scalarName={'String'}
+        name={'name'}
+        optional={false}
+      />
+    </form>
+  );
+};
+
+export const addUserFromObjectDefaultValues = {
+  user: defaultUserInputScalar,
+};
+
+export interface AddUserFromObjectFormVariables {
+  user: UserInput;
+}
+
+export const AddUserFromObjectForm = ({
+  initialValues = addUserFromObjectDefaultValues,
+  onSubmit,
+  ...formProps
+}: React.DetailedHTMLProps<
+  React.FormHTMLAttributes<HTMLFormElement>,
+  HTMLFormElement
+> & { initialValues?: Partial<AddUserFromObjectFormVariables> }) => {
   return (
     <form onSubmit={onSubmit} {...formProps}>
       <UserInputFormInput
@@ -519,7 +600,7 @@ export const AddUsersForm = ({
 }: React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: AddUsersFormVariables }) => {
+> & { initialValues?: Partial<AddUsersFormVariables> }) => {
   return (
     <form onSubmit={onSubmit} {...formProps}>
       <UserInputFormInputAsList
