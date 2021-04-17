@@ -1,3 +1,10 @@
+
+* [Graphql Code Generator React Form Plugin](#graphql-code-generator-react-form-plugin)
+    * [Examples](#examples)
+    * [Installation](#installation)
+    * [Development](#development)
+      * [Testing](#testing)
+
 # Graphql Code Generator React Form Plugin
 
 React form plugin for Graphql Code Generator
@@ -20,3 +27,4 @@ A next js app should be available on port 3000, go there for live reloading exam
 The source of the plugin is in `./src`.
 
 #### Testing
+This plugin uses jest with snapshot testing. Use `yarn test` or `yarn test --watch`
