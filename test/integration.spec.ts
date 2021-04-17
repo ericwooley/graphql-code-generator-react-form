@@ -75,9 +75,6 @@ describe('React Apollo', () => {
       )) as Types.ComplexPluginOutput;
 
       expect(content.prepend).toContain(`import * as React from 'react';`);
-      expect(content.prepend).toContain(
-        `import { forms, Form, formsConfig } from 'forms'`
-      );
       await validateTypeScript(content, schema, docs, {});
     });
   });

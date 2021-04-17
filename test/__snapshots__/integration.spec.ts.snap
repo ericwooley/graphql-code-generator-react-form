@@ -2,132 +2,306 @@
 
 exports[`React Apollo Forms should generate a Form 1`] = `
 "
+/**********************
+ * Default Values
+ * *******************/
+  export const defaultUserInputScalar = {
+
+      get id (): Scalars[\\"Int\\"]|undefined {
+        return 0
+      },
+    
+
+      get name (): Scalars[\\"String\\"]|undefined {
+        return \\"\\"
+      },
+    
+
+      get email (): Scalars[\\"String\\"]|undefined {
+        return \\"\\"
+      },
+    
+
+      get mother (): UserInput|undefined {
+        return undefined
+      },
+    
+
+      get father (): UserInput|undefined {
+        return undefined
+      },
+    
+
+      get friends (): UserInput[]|undefined {
+        return undefined
+      },
+    
+}
+  
+/******************************
+ * Scalar Components
+ * ****************************/
+
+
+    
+    export interface IntFormInputPropTypes {
+      optional: boolean,
+      label: string,
+      value: Scalars[\\"Int\\"],
+      scalarName: string,
+      name: string
+    }
+        export const IntFormInput = (props: IntFormInputPropTypes) => {
+          let [shouldRender, setShouldRender] = React.useState(false)
+const {label, value: initialValue = 0} = props
+const [value, setValue] = React.useState(initialValue)
+          return <div><label><strong>{label}</strong><br /><input value={value} onChange={(e) =>
+          setValue(e.target.value as any)} /></label></div>
+        }
+    
+
+
+    export interface StringFormInputPropTypes {
+      optional: boolean,
+      label: string,
+      value: Scalars[\\"String\\"],
+      scalarName: string,
+      name: string
+    }
+        export const StringFormInput = (props: StringFormInputPropTypes) => {
+          let [shouldRender, setShouldRender] = React.useState(false)
+const {label, value: initialValue = \\"\\"} = props
+const [value, setValue] = React.useState(initialValue)
+          return <div><label><strong>{label}</strong><br /><input value={value} onChange={(e) =>
+          setValue(e.target.value as any)} /></label></div>
+        }
+    
+
+
+    export interface UserInputFormInputPropTypes {
+      optional: boolean,
+      label: string,
+      value: UserInput,
+      scalarName: string,
+      name: string
+    }
+        export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
+          let [shouldRender, setShouldRender] = React.useState(false)
+const {label, value: initialValue = defaultUserInputScalar} = props
+const [value, setValue] = React.useState(initialValue)
+          
+      if(props.optional && !shouldRender){
+        return <div><button onClick={(e) => {
+          e.preventDefault();
+          setShouldRender(true)
+        }}>Add {label}</button></div>
+      }
+return <div className=\\"mutationFormNested\\">
+        <h4>{label}</h4>
+        <UserInputFormInput value={value.users} scalarName={\\"UserInput\\"} name={\\"users\\"} optional={true} label={\\"Users\\"} /></div>
+        }
+    
+
+
+    export interface UserInputFormInputAsListPropTypes {
+      optional: boolean,
+      label: string,
+      value: UserInput[],
+      scalarName: string,
+      name: string
+    }
+        export const UserInputFormInputAsList = (props: UserInputFormInputAsListPropTypes) => {
+          let [shouldRender, setShouldRender] = React.useState(false)
+const {label, value: initialValue = []} = props
+const [value, setValue] = React.useState(initialValue)
+const addItem=() => setValue(old => [...old, defaultUserInputScalar ])
+const insertItem=(index: number) => setValue(old => [...old.slice(0, index), defaultUserInputScalar, ...old.slice(index) ])
+const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ...old.slice(index+1) ])
+          return (
+    <div className=\\"mutationFormNested mutationFormList\\">
+    {label && <h3>{label}</h3>}
+    <ol>
+        {value.length > 0 ? (
+          value.map((item, index) => (
+            <li key={index}>
+              <UserInputFormInput optional={false} label={\\"\\"} value={item} name={\\"users\\"} scalarName={\\"UserInput\\"} />
+              <button
+                type=\\"button\\"
+                onClick={() => removeItem(index)} // remove a friend from the list
+              >
+                -
+              </button>
+
+              <button
+                type=\\"button\\"
+                onClick={() => insertItem(index)} // insert an empty string at a position
+              >
+                +
+              </button>
+            </li>
+          ))
+        ) : (
+          <button type=\\"button\\" onClick={addItem}>
+          +
+          </button>
+        )}
+    </ol>
+    </div>
+    )
+        }
+    
+  
+
+
 /****************************
  * forms Forms
  * *************************/
+export const mutationsMetaData = [
+  {
+    \\"name\\": \\"addUsers\\",
+    \\"variables\\": [
+      {
+        \\"accessChain\\": [],
+        \\"endedFromCycle\\": false,
+        \\"name\\": \\"users\\",
+        \\"optional\\": false,
+        \\"children\\": [
+          {
+            \\"accessChain\\": [
+              \\"UserInput\\"
+            ],
+            \\"endedFromCycle\\": false,
+            \\"scalarName\\": \\"UserInput\\",
+            \\"name\\": \\"users\\",
+            \\"tsType\\": \\"UserInput\\",
+            \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+            \\"optional\\": true,
+            \\"asList\\": false,
+            \\"children\\": [
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"Int\\"
+                ],
+                \\"endedFromCycle\\": false,
+                \\"scalarName\\": \\"Int\\",
+                \\"name\\": \\"id\\",
+                \\"tsType\\": \\"Scalars[\\\\\\"Int\\\\\\"]\\",
+                \\"defaultVal\\": \\"0\\",
+                \\"optional\\": true,
+                \\"asList\\": false,
+                \\"children\\": null
+              },
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"String\\"
+                ],
+                \\"endedFromCycle\\": false,
+                \\"scalarName\\": \\"String\\",
+                \\"name\\": \\"name\\",
+                \\"tsType\\": \\"Scalars[\\\\\\"String\\\\\\"]\\",
+                \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
+                \\"optional\\": true,
+                \\"asList\\": false,
+                \\"children\\": null
+              },
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"String\\"
+                ],
+                \\"endedFromCycle\\": false,
+                \\"scalarName\\": \\"String\\",
+                \\"name\\": \\"email\\",
+                \\"tsType\\": \\"Scalars[\\\\\\"String\\\\\\"]\\",
+                \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
+                \\"optional\\": true,
+                \\"asList\\": false,
+                \\"children\\": null
+              },
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"UserInput\\"
+                ],
+                \\"endedFromCycle\\": true,
+                \\"scalarName\\": \\"UserInput\\",
+                \\"name\\": \\"mother\\",
+                \\"tsType\\": \\"UserInput\\",
+                \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+                \\"optional\\": true,
+                \\"asList\\": false,
+                \\"children\\": null
+              },
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"UserInput\\"
+                ],
+                \\"endedFromCycle\\": true,
+                \\"scalarName\\": \\"UserInput\\",
+                \\"name\\": \\"father\\",
+                \\"tsType\\": \\"UserInput\\",
+                \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+                \\"optional\\": true,
+                \\"asList\\": false,
+                \\"children\\": null
+              },
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"UserInput\\"
+                ],
+                \\"endedFromCycle\\": true,
+                \\"scalarName\\": \\"UserInput\\",
+                \\"name\\": \\"friends\\",
+                \\"tsType\\": \\"UserInput\\",
+                \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
+                \\"optional\\": true,
+                \\"asList\\": true,
+                \\"children\\": null
+              }
+            ]
+          }
+        ],
+        \\"tsType\\": \\"UserInput\\",
+        \\"defaultVal\\": \\"[]\\",
+        \\"scalarName\\": \\"UserInput\\",
+        \\"asList\\": true
+      }
+    ]
+  }
+]
 
 export const addUsersDefaultValues = {
-  users: undefined
+  users: []
 };
 
 export interface AddUsersFormVariables {
   users: UserInput[]
 }
-export const AddUsersForm = ({  initialValues, onSubmit, ...formsProps}: formsConfig<AddUsersFormVariables>) => {
-  return (<forms onSubmit={onSubmit} initialValues={{...addUsersDefaultValues, ...initialValues}} {...formsProps}>
-    <Form>
-    <pre>{JSON.stringify({
-  \\"accessChain\\": [],
-  \\"endedFromCycle\\": false,
-  \\"name\\": \\"users\\",
-  \\"optional\\": false,
-  \\"children\\": [
-    {
-      \\"accessChain\\": [
-        \\"UserInput\\"
-      ],
-      \\"endedFromCycle\\": false,
-      \\"scalarName\\": \\"UserInput\\",
-      \\"name\\": \\"users\\",
-      \\"tsType\\": \\"UserInput\\",
-      \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
-      \\"optional\\": true,
-      \\"asList\\": false,
-      \\"children\\": [
-        {
-          \\"accessChain\\": [
-            \\"UserInput\\",
-            \\"Int\\"
-          ],
-          \\"endedFromCycle\\": false,
-          \\"scalarName\\": \\"Int\\",
-          \\"name\\": \\"users.id\\",
-          \\"tsType\\": \\"Scalars.Int\\",
-          \\"defaultVal\\": \\"0\\",
-          \\"optional\\": true,
-          \\"asList\\": false,
-          \\"children\\": null
-        },
-        {
-          \\"accessChain\\": [
-            \\"UserInput\\",
-            \\"String\\"
-          ],
-          \\"endedFromCycle\\": false,
-          \\"scalarName\\": \\"String\\",
-          \\"name\\": \\"users.name\\",
-          \\"tsType\\": \\"Scalars.String\\",
-          \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
-          \\"optional\\": true,
-          \\"asList\\": false,
-          \\"children\\": null
-        },
-        {
-          \\"accessChain\\": [
-            \\"UserInput\\",
-            \\"String\\"
-          ],
-          \\"endedFromCycle\\": false,
-          \\"scalarName\\": \\"String\\",
-          \\"name\\": \\"users.email\\",
-          \\"tsType\\": \\"Scalars.String\\",
-          \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
-          \\"optional\\": true,
-          \\"asList\\": false,
-          \\"children\\": null
-        },
-        {
-          \\"accessChain\\": [
-            \\"UserInput\\",
-            \\"UserInput\\"
-          ],
-          \\"endedFromCycle\\": true,
-          \\"scalarName\\": \\"UserInput\\",
-          \\"name\\": \\"users.mother\\",
-          \\"tsType\\": \\"UserInput\\",
-          \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
-          \\"optional\\": true,
-          \\"asList\\": false,
-          \\"children\\": null
-        },
-        {
-          \\"accessChain\\": [
-            \\"UserInput\\",
-            \\"UserInput\\"
-          ],
-          \\"endedFromCycle\\": true,
-          \\"scalarName\\": \\"UserInput\\",
-          \\"name\\": \\"users.father\\",
-          \\"tsType\\": \\"UserInput\\",
-          \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
-          \\"optional\\": true,
-          \\"asList\\": false,
-          \\"children\\": null
-        },
-        {
-          \\"accessChain\\": [
-            \\"UserInput\\",
-            \\"UserInput\\"
-          ],
-          \\"endedFromCycle\\": true,
-          \\"scalarName\\": \\"UserInput\\",
-          \\"name\\": \\"users.friends\\",
-          \\"tsType\\": \\"UserInput\\",
-          \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
-          \\"optional\\": true,
-          \\"asList\\": true,
-          \\"children\\": null
-        }
-      ]
-    }
-  ],
-  \\"tsType\\": \\"UserInput[]\\",
-  \\"defaultVal\\": \\"[]\\",
-  \\"scalarName\\": \\"UserInput\\",
-  \\"asList\\": true
-}, null, 2)}</pre>
-    </Form>
-  </forms>)
+
+
+
+export const AddUsersForm = (
+  {
+    initialValues = addUsersDefaultValues,
+    onSubmit,
+    ...formProps} : React.DetailedHTMLProps<
+  React.FormHTMLAttributes<HTMLFormElement>,
+  HTMLFormElement
+> & { initialValues?: Partial<AddUsersFormVariables>, onSubmit: (values: AddUsersFormVariables)=> unknown }) => {
+  return (<form onSubmit={(e) => {
+    e.preventDefault()
+    // TODO: This needs to be real values from the form
+    onSubmit(initialValues as any)
+  }} {...formProps}>
+    <UserInputFormInputAsList value={initialValues.users} label={\\"Users\\"} name={\\"users\\"} optional={false} scalarName={\\"UserInput\\"} />
+    <input type=\\"submit\\" value=\\"submit\\" />
+  </form>
+  )
 };
-    "
+    
+  "
 `;
