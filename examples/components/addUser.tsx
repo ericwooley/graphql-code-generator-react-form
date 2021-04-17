@@ -1,28 +1,19 @@
 import React from 'react';
-import { ErrorBoundary } from './errorBoundary';
 import { AddUserForm } from '../generated/formik';
 import addUserDocument from '../documents/addUser.graphql';
-import { Grid } from '@material-ui/core';
-import { GraphqlCode } from './graphqlCode';
+import { ExampleContent } from './exampleContent';
 export const AddUser = () => {
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={12} md={7}>
-        <GraphqlCode>{addUserDocument}</GraphqlCode>
-      </Grid>
-      <Grid item xs={12} md={5}>
-        <ErrorBoundary>
-          <AddUserForm
-            initialValues={{
-              email: 'bob@gmail.com',
-              name: 'test name',
-            }}
-            onSubmit={(addUsersData) => {
-              console.log('Add Users Form Submit', addUsersData);
-            }}
-          />
-        </ErrorBoundary>
-      </Grid>
-    </Grid>
+    <ExampleContent document={addUserDocument}>
+      {({ onSubmit }) => (
+        <AddUserForm
+          initialValues={{
+            email: 'bob@gmail.com',
+            name: 'test name',
+          }}
+          onSubmit={onSubmit}
+        />
+      )}
+    </ExampleContent>
   );
 };

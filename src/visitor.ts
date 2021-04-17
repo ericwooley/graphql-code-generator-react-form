@@ -319,8 +319,11 @@ export const ${baseName} = (
     ...formProps} : React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: Partial<${baseName}Variables> }) => {
-  return (<form onSubmit={onSubmit} {...formProps}>
+> & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
+  return (<form onSubmit={(e) => {
+    e.preventDefault()
+    onSubmit(initialValues)
+  }} {...formProps}>
     ${m.variables
       .map((v) =>
         this.renderComponentFor(v, {
@@ -330,6 +333,7 @@ export const ${baseName} = (
         })
       )
       .join('\n    ')}
+    <input type="submit" value="submit" />
   </form>
   )
 };

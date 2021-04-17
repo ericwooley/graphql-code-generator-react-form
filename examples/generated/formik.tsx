@@ -542,9 +542,18 @@ export const AddUserForm = ({
 }: React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: Partial<AddUserFormVariables> }) => {
+> & {
+  initialValues?: Partial<AddUserFormVariables>;
+  onSubmit: (values: AddUserFormVariables) => unknown;
+}) => {
   return (
-    <form onSubmit={onSubmit} {...formProps}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(initialValues);
+      }}
+      {...formProps}
+    >
       <StringFormInput
         value={initialValues.email}
         label={'Email'}
@@ -559,6 +568,7 @@ export const AddUserForm = ({
         name={'name'}
         optional={false}
       />
+      <input type="submit" value="submit" />
     </form>
   );
 };
@@ -578,9 +588,18 @@ export const AddUserFromObjectForm = ({
 }: React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: Partial<AddUserFromObjectFormVariables> }) => {
+> & {
+  initialValues?: Partial<AddUserFromObjectFormVariables>;
+  onSubmit: (values: AddUserFromObjectFormVariables) => unknown;
+}) => {
   return (
-    <form onSubmit={onSubmit} {...formProps}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(initialValues);
+      }}
+      {...formProps}
+    >
       <UserInputFormInput
         value={initialValues.user}
         label={'User'}
@@ -588,6 +607,7 @@ export const AddUserFromObjectForm = ({
         name={'user'}
         optional={false}
       />
+      <input type="submit" value="submit" />
     </form>
   );
 };
@@ -607,9 +627,18 @@ export const AddUsersForm = ({
 }: React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: Partial<AddUsersFormVariables> }) => {
+> & {
+  initialValues?: Partial<AddUsersFormVariables>;
+  onSubmit: (values: AddUsersFormVariables) => unknown;
+}) => {
   return (
-    <form onSubmit={onSubmit} {...formProps}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(initialValues);
+      }}
+      {...formProps}
+    >
       <UserInputFormInputAsList
         value={initialValues.users}
         label={'Users'}
@@ -617,6 +646,7 @@ export const AddUsersForm = ({
         optional={false}
         scalarName={'UserInput'}
       />
+      <input type="submit" value="submit" />
     </form>
   );
 };
