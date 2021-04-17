@@ -1,22 +1,55 @@
-import { RecursiveUserExample } from '../components/recursiveUser';
-import { Container, CssBaseline, Grid } from '@material-ui/core';
-import { MutationsMetaData } from '../components/mutationsMetaData';
+import { Container, Grid, makeStyles, Typography } from '@material-ui/core';
+import DataTabs from '../components/DataTabs';
+import Examples from '../components/examples';
+import Image from 'next/image';
 
+const useStyles = makeStyles((theme) => ({
+  header: {
+    textAlign: 'center',
+    paddingBottom: theme.spacing(4),
+    paddingTop: theme.spacing(8),
+  },
+  content: {
+    paddingRight: theme.spacing(4),
+    paddingLeft: theme.spacing(4),
+  },
+  title: {
+    // color: '#32485c',
+    color: theme.palette.secondary.light,
+    fontWeight: 700,
+  },
+}));
 export default function Home() {
+  const classes = useStyles();
   return (
-    <Container maxWidth="xl">
-      <main>
-        <h1>Welcome to Graphql React Form Generator</h1>
-
+    <main>
+      <div className={classes.header}>
+        <div style={{ maxWidth: 734, margin: '0 auto' }}>
+          <Image
+            src="/gql-codegen-cover.png"
+            layout="responsive"
+            alt="Graphql Code Generator logo"
+            width={934}
+            height={864}
+          />
+        </div>
+        <Typography variant="h3" component="h1" className={classes.title}>
+          React Form Plugin
+        </Typography>
+        <Typography variant="h4" className={classes.title}>
+          Work in Progress
+        </Typography>
+      </div>
+      <div className={classes.content}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <RecursiveUserExample />
+          <Grid item xs={12} md={8}>
+            <Examples />
           </Grid>
-          <Grid item xs={12}>
-            <MutationsMetaData />
+          <Grid item xs={12} md={4}>
+            <DataTabs />
           </Grid>
         </Grid>
-      </main>
-    </Container>
+      </div>
+    </main>
   );
 }

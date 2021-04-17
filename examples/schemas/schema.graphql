@@ -6,7 +6,7 @@ type User {
 }
 
 input UserInput {
-  id: Int!
+  id: Int
   name: String!
   email: String!
   mother: UserInput
@@ -23,6 +23,7 @@ type QueryRoot {
 }
 type MutationRoot {
   addUsers(users: [UserInput]!): [User]
+  addUser(user: UserInput!): User
 }
 
 type SubscriptionRoot {
