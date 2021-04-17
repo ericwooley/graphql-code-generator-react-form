@@ -54,10 +54,7 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
   }
 
   public formsImports() {
-    return [
-      `import * as React from 'react';`,
-      `import { forms, Form, formsConfig, FieldArray } from 'forms'`,
-    ];
+    return [`import * as React from 'react';`];
   }
 
   public get nestedFormClassName() {
