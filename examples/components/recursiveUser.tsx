@@ -5,18 +5,13 @@ import addUsersDocument from '../documents/addUsers.graphql';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { Card, CardContent, CardHeader, Divider } from '@material-ui/core';
+import { GraphqlCode } from './graphqlCode';
 export const RecursiveUserExample = () => {
   return (
     <Card>
       <CardHeader title="Add Users Recursive"></CardHeader>
       <CardContent>
-        <SyntaxHighlighter
-          language="graphql"
-          style={dark}
-          customStyle={{ backgroundColor: '#002b35', border: 0 }}
-        >
-          {addUsersDocument}
-        </SyntaxHighlighter>
+        <GraphqlCode>{addUsersDocument}</GraphqlCode>
         <Divider />
         <ErrorBoundary>
           <AddUsersForm
