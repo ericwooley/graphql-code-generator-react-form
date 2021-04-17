@@ -14,3 +14,8 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.mutationFormNested {
+  padding: 5px;
+  border: 2px solid rgb(200, 200, 200);
+}

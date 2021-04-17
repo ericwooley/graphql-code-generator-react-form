@@ -20,7 +20,7 @@ import {
   isNamedType,
 } from 'graphql';
 import { Types } from '@graphql-codegen/plugin-helpers';
-import { camelCase, pascalCase } from 'change-case-all';
+import { camelCase, pascalCase, sentenceCase } from 'change-case-all';
 import { TypeMap } from 'graphql/type/schema';
 
 export interface ReactFormikConfig extends ClientSideBasePluginConfig {}
@@ -58,6 +58,13 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
       `import * as React from 'react';`,
       `import { Formik, Form, FormikConfig, FieldArray } from 'formik'`,
     ];
+  }
+
+  public get nestedFormClassName() {
+    return 'mutationFormNested';
+  }
+  public get FormListClassName() {
+    return `mutationFormList`;
   }
 
   public scalarComponents() {
@@ -125,34 +132,52 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
     this.defaultScalarValues[scalarDefaultName] = value;
     return scalarDefaultName;
   }
+  asPropString(metaData: TypeNodeMetaData, extraBlackList: string[] = []) {
+    const blackList = [
+      'children',
+      'tsType',
+      'accessChain',
+      'endedFromCycle',
+      'defaultVal',
+      'asList',
+      ...extraBlackList,
+    ];
+    return Object.fromEntries(
+      Object.entries(metaData)
+        .filter(([name]) => !blackList.includes(name))
+        .map(([name, value]) => [name, JSON.stringify(value)])
+    );
+  }
   renderComponentFor(
     metaData: TypeNodeMetaData,
-    props: { [key: string]: string } & { value: string }
+    props: { [key: string]: string } & { value: string; label: string }
   ): string {
     const componentKey = pascalCase(
       metaData.scalarName + 'FormInput' + (metaData.asList ? 'AsList' : '')
     );
-    const componentRenderString = `<${componentKey} optional={${
-      metaData.optional
-    }} ${Object.entries(props).map(
-      ([propName, propValue]) => `${propName}={${propValue}}`
-    )} />`;
+    const componentRenderString = `<${componentKey} ${Object.entries(props)
+      .map(([propName, propValue]) => `${propName}={${propValue}}`)
+      .join(' ')} />`;
     if (this._typeComponentMap[componentKey]) return componentRenderString;
     const componentPropTypes = `export interface ${componentKey}PropTypes {
       optional: boolean,
-      value: ${metaData.tsType}
+      label: string,
+      value: ${metaData.tsType},
+      scalarName: string,
+      name: string
     }`;
     const componentDefinitionHead = `export const ${componentKey} = (props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
       `let [shouldRender, setShouldRender] = React.useState(false)`,
-      `const {value = ${this.getDefaultValueStringForTypeNodeMetaData(
+      `const {label, value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
         metaData
       )}} = props`,
+      `const [value, setValue] = React.useState(initialValue)`,
     ];
     let componentBody = [
       `
       if(props.optional && !shouldRender){
-        return <div>${metaData.name} <button onClick={(e) => {
+        return <div>{label} <button onClick={(e) => {
           e.preventDefault();
           setShouldRender(true)
         }}>Add ${pascalCase(metaData.scalarName)}</button></div>
@@ -163,11 +188,7 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
       const actualScalarMetaData = metaData.children?.[0]
         ? metaData.children?.[0]
         : { ...metaData, asList: false };
-      componentPreBody = [
-        `const {value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
-          metaData
-        )}} = props`,
-        `const [value, setValue] = React.useState(initialValue)`,
+      componentPreBody.push(
         `const addItem=() => setValue(old => [...old, ${this.getDefaultValueStringForTypeNodeMetaData(
           actualScalarMetaData
         )} ])`,
@@ -176,20 +197,34 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
         )}, ...old.slice(index) ])`,
         `const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ${this.getDefaultValueStringForTypeNodeMetaData(
           actualScalarMetaData
-        )}, ...old.slice(index) ])`,
-      ];
+        )}, ...old.slice(index+1) ])`
+      );
       componentBody = [
         `return (
-    <>
-      <h3>${pascalCase(metaData.scalarName)} as list</h3>
-
-      <div>
+    <div className="${[this.nestedFormClassName, this.FormListClassName].join(
+      ' '
+    )}">
+    <h3>{label}</h3>
+    <ol>
         {value.length > 0 ? (
           value.map((item, index) => (
             <div key={index}>
             ${
               metaData.children
-                ?.map((md) => this.renderComponentFor(md, { value: 'item' }))
+                ?.map(
+                  (md) =>
+                    `<li>${this.renderComponentFor(
+                      { ...md, optional: false },
+                      {
+                        optional: JSON.stringify(false),
+                        label: JSON.stringify(
+                          pascalCase(sentenceCase(md.name))
+                        ),
+                        value: 'item',
+                        ...this.asPropString(md, ['optional']),
+                      }
+                    )}</li>`
+                )
                 .join('\n  ') || ''
             }
 
@@ -210,34 +245,34 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
           ))
         ) : (
           <button type="button" onClick={addItem}>
-          +
+          Add {label}
           </button>
         )}
-      </div>
-    </>
+    </ol>
+    </div>
     )`,
       ];
     } else if (metaData.endedFromCycle) {
       componentBody.push(
-        `return <div><strong>${
-          metaData.name
-        }</strong>: <button>Add ${pascalCase(
-          metaData.scalarName
-        )}</button></div>`
+        `return <div><strong>{label}</strong>: <button>Add {label}</button></div>`
       );
     } else if (metaData.children) {
       componentBody.push(
-        `return <div><h4>${
-          metaData.name
-        } with children</h4>${metaData.children
+        `return <div className="${this.nestedFormClassName}">
+        <h4>{label}</h4>
+        ${metaData.children
           .map((md) =>
-            this.renderComponentFor(md, { value: 'value.' + md.name })
+            this.renderComponentFor(md, {
+              value: 'value.' + md.name,
+              ...this.asPropString(md),
+              label: JSON.stringify(sentenceCase(md.name)),
+            })
           )
           .join('\n  ')}</div>`
       );
     } else {
       componentBody = [
-        `return <div>edit ${metaData.name} {JSON.stringify(props)}</div>`,
+        `return <div><strong>{label}</strong><input value={value} onChange={(e) => setValue(e.target.value)} /></div>`,
       ];
     }
     const component = `
@@ -295,7 +330,11 @@ export const ${baseName} = (
   return (<form onSubmit={onSubmit} {...formProps}>
     ${m.variables
       .map((v) =>
-        this.renderComponentFor(v, { value: `initialValues.${v.name}` })
+        this.renderComponentFor(v, {
+          value: `initialValues.${v.name}`,
+          label: JSON.stringify(sentenceCase(v.name)),
+          ...this.asPropString(v),
+        })
       )
       .join('\n    ')}
   </form>

@@ -108,36 +108,58 @@ export const defaultUserInputScalar = {
 
 export interface IntFormInputPropTypes {
   optional: boolean;
+  label: string;
   value: Scalars['Int'];
+  scalarName: string;
+  name: string;
 }
 export const IntFormInput = (props: IntFormInputPropTypes) => {
   let [shouldRender, setShouldRender] = React.useState(false);
-  const { value = 0 } = props;
-  return <div>edit id {JSON.stringify(props)}</div>;
+  const { label, value: initialValue = 0 } = props;
+  const [value, setValue] = React.useState(initialValue);
+  return (
+    <div>
+      <strong>{label}</strong>
+      <input value={value} onChange={(e) => setValue(e.target.value)} />
+    </div>
+  );
 };
 
 export interface StringFormInputPropTypes {
   optional: boolean;
+  label: string;
   value: Scalars['String'];
+  scalarName: string;
+  name: string;
 }
 export const StringFormInput = (props: StringFormInputPropTypes) => {
   let [shouldRender, setShouldRender] = React.useState(false);
-  const { value = '' } = props;
-  return <div>edit name {JSON.stringify(props)}</div>;
+  const { label, value: initialValue = '' } = props;
+  const [value, setValue] = React.useState(initialValue);
+  return (
+    <div>
+      <strong>{label}</strong>
+      <input value={value} onChange={(e) => setValue(e.target.value)} />
+    </div>
+  );
 };
 
 export interface UserInputFormInputPropTypes {
   optional: boolean;
+  label: string;
   value: UserInput;
+  scalarName: string;
+  name: string;
 }
 export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
   let [shouldRender, setShouldRender] = React.useState(false);
-  const { value = defaultUserInputScalar } = props;
+  const { label, value: initialValue = defaultUserInputScalar } = props;
+  const [value, setValue] = React.useState(initialValue);
 
   if (props.optional && !shouldRender) {
     return (
       <div>
-        users{' '}
+        {label}{' '}
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -150,26 +172,66 @@ export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
     );
   }
   return (
-    <div>
-      <h4>users with children</h4>
-      <IntFormInput optional={true} value={value.id} />
-      <StringFormInput optional={true} value={value.name} />
-      <StringFormInput optional={true} value={value.email} />
-      <UserInputFormInput optional={true} value={value.mother} />
-      <UserInputFormInput optional={true} value={value.father} />
-      <UserInputFormInputAsList optional={true} value={value.friends} />
+    <div className="mutationFormNested">
+      <h4>{label}</h4>
+      <IntFormInput
+        value={value.id}
+        scalarName={'Int'}
+        name={'id'}
+        optional={true}
+        label={'Id'}
+      />
+      <StringFormInput
+        value={value.name}
+        scalarName={'String'}
+        name={'name'}
+        optional={true}
+        label={'Name'}
+      />
+      <StringFormInput
+        value={value.email}
+        scalarName={'String'}
+        name={'email'}
+        optional={true}
+        label={'Email'}
+      />
+      <UserInputFormInput
+        value={value.mother}
+        scalarName={'UserInput'}
+        name={'mother'}
+        optional={true}
+        label={'Mother'}
+      />
+      <UserInputFormInput
+        value={value.father}
+        scalarName={'UserInput'}
+        name={'father'}
+        optional={true}
+        label={'Father'}
+      />
+      <UserInputFormInputAsList
+        value={value.friends}
+        scalarName={'UserInput'}
+        name={'friends'}
+        optional={true}
+        label={'Friends'}
+      />
     </div>
   );
 };
 
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
+  label: string;
   value: UserInput[];
+  scalarName: string;
+  name: string;
 }
 export const UserInputFormInputAsList = (
   props: UserInputFormInputAsListPropTypes
 ) => {
-  const { value: initialValue = [] } = props;
+  let [shouldRender, setShouldRender] = React.useState(false);
+  const { label, value: initialValue = [] } = props;
   const [value, setValue] = React.useState(initialValue);
   const addItem = () => setValue((old) => [...old, defaultUserInputScalar]);
   const insertItem = (index: number) =>
@@ -182,17 +244,24 @@ export const UserInputFormInputAsList = (
     setValue((old) => [
       ...old.slice(0, index),
       defaultUserInputScalar,
-      ...old.slice(index),
+      ...old.slice(index + 1),
     ]);
   return (
-    <>
-      <h3>UserInput as list</h3>
-
-      <div>
+    <div className="mutationFormNested mutationFormList">
+      <h3>{label}</h3>
+      <ol>
         {value.length > 0 ? (
           value.map((item, index) => (
             <div key={index}>
-              <UserInputFormInput optional={true} value={item} />
+              <li>
+                <UserInputFormInput
+                  optional={false}
+                  label={'Users'}
+                  value={item}
+                  scalarName={'UserInput'}
+                  name={'users'}
+                />
+              </li>
 
               <button
                 type="button"
@@ -211,11 +280,11 @@ export const UserInputFormInputAsList = (
           ))
         ) : (
           <button type="button" onClick={addItem}>
-            +
+            Add {label}
           </button>
         )}
-      </div>
-    </>
+      </ol>
+    </div>
   );
 };
 
@@ -338,7 +407,13 @@ export const AddUsersForm = ({
 > & { initialValues?: AddUsersFormVariables }) => {
   return (
     <form onSubmit={onSubmit} {...formProps}>
-      <UserInputFormInputAsList optional={false} value={initialValues.users} />
+      <UserInputFormInputAsList
+        value={initialValues.users}
+        label={'Users'}
+        name={'users'}
+        optional={false}
+        scalarName={'UserInput'}
+      />
     </form>
   );
 };
