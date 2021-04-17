@@ -1,0 +1,4 @@
+{
+  "plugins": ["babel-plugin-inline-import"],
+  "presets": ["next/babel"]
+}
