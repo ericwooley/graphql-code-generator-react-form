@@ -7,6 +7,7 @@ import { makeStyles } from '@material-ui/core/styles';
 const useStyles = makeStyles((theme) => ({
   content: {
     background: '#002b35',
+    padding: theme.spacing(2),
   },
 }));
 export const MutationsMetaData = () => {
