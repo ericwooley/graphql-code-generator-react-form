@@ -282,13 +282,20 @@ export const UserInputFormInputAsList = (
         {value.length > 0 ? (
           value.map((item, index) => (
             <li key={index}>
-              undefined
+              <UserInputFormInput
+                optional={false}
+                label={''}
+                value={item}
+                scalarName={'UserInput'}
+                name={'friends'}
+              />
               <button
                 type="button"
                 onClick={() => removeItem(index)} // remove a friend from the list
               >
                 -
               </button>
+
               <button
                 type="button"
                 onClick={() => insertItem(index)} // insert an empty string at a position

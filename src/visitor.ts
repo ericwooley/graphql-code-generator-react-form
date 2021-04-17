@@ -207,19 +207,15 @@ export class ReactFormikVisitor extends ClientSideBaseVisitor<
         {value.length > 0 ? (
           value.map((item, index) => (
             <li key={index}>
-              ${metaData.children
-                ?.map((md) =>
-                  this.renderComponentFor(
-                    { ...md, optional: false, asList: false },
-                    {
-                      optional: JSON.stringify(false),
-                      label: JSON.stringify(''),
-                      value: 'item',
-                      ...this.asPropString(md, ['optional']),
-                    }
-                  )
-                )
-                .join('\n')}
+              ${this.renderComponentFor(
+                { ...metaData, optional: false, asList: false },
+                {
+                  optional: JSON.stringify(false),
+                  label: JSON.stringify(''),
+                  value: 'item',
+                  ...this.asPropString(metaData, ['optional']),
+                }
+              )}
               <button
                 type="button"
                 onClick={() => removeItem(index)} // remove a friend from the list
