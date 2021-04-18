@@ -10,8 +10,8 @@ const useStyles = makeStyles((theme: Theme) =>
     root: {
       width: '100%',
       maxWidth: 360,
-      color: theme.palette.secondary.main,
       margin: '0 auto',
+      padding: theme.spacing(2),
     },
   })
 );
@@ -21,8 +21,8 @@ export default function Todo() {
 
   return (
     <div className={classes.root}>
-      <Typography variant="h5">Work in Progress</Typography>
-      <Typography>
+      <Typography variant="h5">Road Map To Release</Typography>
+      <Typography color="textPrimary">
         follow{' '}
         <Link
           href="http://twitter.com/ericwooley"
