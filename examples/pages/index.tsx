@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <Layout title="Examples">
       <div className={classes.header}>
-        <div style={{ maxWidth: 734, margin: '0 auto' }}>
+        <div style={{ maxWidth: 440, margin: '0 auto' }}>
           <a href="https://www.graphql-code-generator.com/">
             <Image
               src="/gql-codegen-cover.png"
