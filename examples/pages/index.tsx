@@ -51,13 +51,15 @@ export default function Home() {
     <Layout title="Examples">
       <div className={classes.header}>
         <div style={{ maxWidth: 734, margin: '0 auto' }}>
-          <Image
-            src="/gql-codegen-cover.png"
-            layout="responsive"
-            alt="Graphql Code Generator logo"
-            width={934}
-            height={864}
-          />
+          <a href="https://www.graphql-code-generator.com/">
+            <Image
+              src="/gql-codegen-cover.png"
+              layout="responsive"
+              alt="Graphql Code Generator logo"
+              width={934}
+              height={864}
+            />
+          </a>
         </div>
         <Typography variant="h3" component="h1" className={classes.title}>
           React Form Plugin
