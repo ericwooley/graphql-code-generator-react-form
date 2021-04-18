@@ -118,7 +118,10 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
   }
   getDefaultValueStringForTypeNodeMetaData(
     metaData: TypeNodeMetaData,
-    undefinedIfOptionalScalarName = ''
+    undefinedIfOptionalScalarName = '',
+    // stringify and parsing allows you to remove getters and setters, just deal
+    // with the actual values
+    stringifyAndParse = true
   ) {
     if (
       metaData.optional &&
@@ -129,25 +132,32 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     if (PrimitiveMaps[metaData.scalarName])
       return PrimitiveMaps[metaData.scalarName].defaultVal;
     const scalarDefaultName = camelCase(`default ${metaData.scalarName}Scalar`);
-    if (this.defaultScalarValues[scalarDefaultName]) return scalarDefaultName;
+    if (this.defaultScalarValues[scalarDefaultName]) {
+      if (!stringifyAndParse) return scalarDefaultName;
+      return `JSON.parse(JSON.stringify(${scalarDefaultName}))`;
+    }
     const value = [
       '{',
-      ...(metaData.children || []).map(
-        (c) => `
-      get ${c.name} (): ${c.tsType}${c.asList ? '[]' : ''}${
+      ...(metaData.children || []).map((c) => {
+        const type = `${c.tsType}${c.asList ? '[]' : ''}${
           c.optional ? '|undefined' : ''
-        } {
-        return ${this.getDefaultValueStringForTypeNodeMetaData(
+        }`;
+        return `
+      get ${c.name} (): ${type} {
+        const val = ${this.getDefaultValueStringForTypeNodeMetaData(
           c,
           undefinedIfOptionalScalarName || metaData.scalarName
-        )}
+        )};
+        if(val === undefined) return val
+        return JSON.parse(JSON.stringify(val))
       },
-    `
-      ),
+    `;
+      }),
       '}',
     ].join('\n');
     this.defaultScalarValues[scalarDefaultName] = value;
-    return scalarDefaultName;
+    if (!stringifyAndParse) return scalarDefaultName;
+    return `JSON.parse(JSON.stringify(${scalarDefaultName}))`;
   }
   asPropString(metaData: TypeNodeMetaData, extraBlackList: string[] = []) {
     const blackList = [
@@ -197,9 +207,14 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     ];
     let componentBody = [
       `
+      React.useEffect(() => {
+        if(!props.optional)
+          setValue(() =>  initialValue)
+      }, [])
       if(props.optional && !shouldRender){
         return <div><button onClick={(e) => {
           e.preventDefault();
+          setValue(() => initialValue)
           setShouldRender(true)
         }}>Add {label}</button></div>
       }`,
@@ -213,6 +228,11 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
         `const [value, setValue] = useFormValue(path, (initialValue||[]).map(v => ({id: uniqueId(${JSON.stringify(
           metaData.name
         )}), value: v})))`,
+        `React.useEffect(() => {
+          if(!initialValue) {
+            setValue(() => [])
+          }
+        }, [])`,
         `const addItem=() => setValue(old => [...old, {id: uniqueId(${JSON.stringify(
           metaData.name
         )}), value: ${this.getDefaultValueStringForTypeNodeMetaData(
@@ -242,7 +262,8 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
                   label: JSON.stringify(''),
                   value: 'item.value',
                   ...this.asPropString(metaData, ['optional']),
-                  parentPath: `[path, String(index)].join('.')`,
+                  parentPath: `path`,
+                  name: `String(index)`,
                 }
               )}
               <button
@@ -269,9 +290,16 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     </div>
     )`,
       ];
-    } else if (metaData.endedFromCycle && !metaData.asList) {
+    } else if (metaData.endedFromCycle) {
       componentPreBody.push(
-        `const [value, setValue] = useFormValue(path, initialValue)`
+        `const [value, setValue] = useFormValue(path, initialValue)`,
+        `React.useEffect(() => {
+          if(!initialValue) {
+            setValue(() => ${this.getDefaultValueStringForTypeNodeMetaData(
+              metaData
+            )})
+          }
+        }, [])`
       );
       componentBody.push(
         `return <div><strong>{label}</strong>: <button>Add {label}</button></div>`
@@ -322,10 +350,8 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
 /****************************
  * forms Forms
  * *************************/
-function shallowClone <T>(input: T): T {
-  if(Array.isArray(input)) return [...(input as any)] as any
-  if(typeof input === 'object') return {...input as any} as any
-  return input
+function clone <T>(input: T): T {
+  return JSON.parse(JSON.stringify(input))
 }
 export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
 ` +
@@ -364,7 +390,8 @@ export const ${baseName} = (
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
-  const values = React.useRef(initialValues)
+  const [_initialValue] = React.useState(() => JSON.parse(JSON.stringify(initialValues)))
+  const values = React.useRef(_initialValue)
   return (
 
     <FormValueContext.Provider value={{
@@ -372,9 +399,10 @@ export const ${baseName} = (
         // 0 index is just "root"
         const updatePath = path.split('.').slice(1)
         let lastObj: any = values.current
+        console.log('updating path', updatePath)
         for(let p of updatePath.slice(0, -1)){
-          console.log('->', p)
           lastObj = lastObj[p]
+          console.log('->', p, lastObj)
         }
         lastObj[updatePath[updatePath.length -1]] = value
         console.log('currentValue', values.current)
@@ -383,7 +411,7 @@ export const ${baseName} = (
     }}>
       <form onSubmit={(e) => {
         e.preventDefault()
-        onSubmit(shallowClone(values.current) as any)
+        onSubmit(clone(values.current) as any)
       }} {...formProps}>
         ${m.variables
           .map((v) =>

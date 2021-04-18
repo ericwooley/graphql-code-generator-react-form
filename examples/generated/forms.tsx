@@ -99,27 +99,39 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
  * *******************/
 export const defaultUserInputScalar = {
   get id(): Scalars['Int'] | undefined {
-    return 0;
+    const val = 0;
+    if (val === undefined) return val;
+    return JSON.parse(JSON.stringify(val));
   },
 
   get name(): Scalars['String'] | undefined {
-    return '';
+    const val = '';
+    if (val === undefined) return val;
+    return JSON.parse(JSON.stringify(val));
   },
 
   get email(): Scalars['String'] | undefined {
-    return '';
+    const val = '';
+    if (val === undefined) return val;
+    return JSON.parse(JSON.stringify(val));
   },
 
   get mother(): UserInput | undefined {
-    return undefined;
+    const val = undefined;
+    if (val === undefined) return val;
+    return JSON.parse(JSON.stringify(val));
   },
 
   get father(): UserInput | undefined {
-    return undefined;
+    const val = undefined;
+    if (val === undefined) return val;
+    return JSON.parse(JSON.stringify(val));
   },
 
   get friends(): UserInput[] | undefined {
-    return undefined;
+    const val = undefined;
+    if (val === undefined) return val;
+    return JSON.parse(JSON.stringify(val));
   },
 };
 
@@ -219,18 +231,22 @@ export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
     parentPath,
     label,
     name,
-    value: initialValue = defaultUserInputScalar,
+    value: initialValue = JSON.parse(JSON.stringify(defaultUserInputScalar)),
   } = props;
   const path = [parentPath, name].join('.');
   let [shouldRender, setShouldRender] = React.useState(false);
   const [value, setValue] = useFormValue(path, initialValue);
 
+  React.useEffect(() => {
+    if (!props.optional) setValue(() => initialValue);
+  }, []);
   if (props.optional && !shouldRender) {
     return (
       <div>
         <button
           onClick={(e) => {
             e.preventDefault();
+            setValue(() => initialValue);
             setShouldRender(true);
           }}
         >
@@ -311,15 +327,26 @@ export const UserInputFormInputAsList = (
     path,
     (initialValue || []).map((v) => ({ id: uniqueId('friends'), value: v }))
   );
+  React.useEffect(() => {
+    if (!initialValue) {
+      setValue(() => []);
+    }
+  }, []);
   const addItem = () =>
     setValue((old) => [
       ...old,
-      { id: uniqueId('friends'), value: defaultUserInputScalar },
+      {
+        id: uniqueId('friends'),
+        value: JSON.parse(JSON.stringify(defaultUserInputScalar)),
+      },
     ]);
   const insertItem = (index: number) =>
     setValue((old) => [
       ...old.slice(0, index),
-      { id: uniqueId('friends'), value: defaultUserInputScalar },
+      {
+        id: uniqueId('friends'),
+        value: JSON.parse(JSON.stringify(defaultUserInputScalar)),
+      },
       ...old.slice(index),
     ]);
   const removeItem = (index: number) =>
@@ -340,8 +367,8 @@ export const UserInputFormInputAsList = (
                 label={''}
                 value={item.value}
                 scalarName={'UserInput'}
-                name={'friends'}
-                parentPath={[path, String(index)].join('.')}
+                name={String(index)}
+                parentPath={path}
               />
               <button
                 type="button"
@@ -371,10 +398,8 @@ export const UserInputFormInputAsList = (
 /****************************
  * forms Forms
  * *************************/
-function shallowClone<T>(input: T): T {
-  if (Array.isArray(input)) return [...(input as any)] as any;
-  if (typeof input === 'object') return { ...(input as any) } as any;
-  return input;
+function clone<T>(input: T): T {
+  return JSON.parse(JSON.stringify(input));
 }
 export const mutationsMetaData = [
   {
@@ -605,7 +630,10 @@ export const AddUserForm = ({
   initialValues?: Partial<AddUserFormVariables>;
   onSubmit: (values: AddUserFormVariables) => unknown;
 }) => {
-  const values = React.useRef(initialValues);
+  const [_initialValue] = React.useState(() =>
+    JSON.parse(JSON.stringify(initialValues))
+  );
+  const values = React.useRef(_initialValue);
   return (
     <FormValueContext.Provider
       value={{
@@ -613,9 +641,10 @@ export const AddUserForm = ({
           // 0 index is just "root"
           const updatePath = path.split('.').slice(1);
           let lastObj: any = values.current;
+          console.log('updating path', updatePath);
           for (let p of updatePath.slice(0, -1)) {
-            console.log('->', p);
             lastObj = lastObj[p];
+            console.log('->', p, lastObj);
           }
           lastObj[updatePath[updatePath.length - 1]] = value;
           console.log('currentValue', values.current);
@@ -626,7 +655,7 @@ export const AddUserForm = ({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit(shallowClone(values.current) as any);
+          onSubmit(clone(values.current) as any);
         }}
         {...formProps}
       >
@@ -653,7 +682,7 @@ export const AddUserForm = ({
 };
 
 export const addUserFromObjectDefaultValues = {
-  user: defaultUserInputScalar,
+  user: JSON.parse(JSON.stringify(defaultUserInputScalar)),
 };
 
 export interface AddUserFromObjectFormVariables {
@@ -671,7 +700,10 @@ export const AddUserFromObjectForm = ({
   initialValues?: Partial<AddUserFromObjectFormVariables>;
   onSubmit: (values: AddUserFromObjectFormVariables) => unknown;
 }) => {
-  const values = React.useRef(initialValues);
+  const [_initialValue] = React.useState(() =>
+    JSON.parse(JSON.stringify(initialValues))
+  );
+  const values = React.useRef(_initialValue);
   return (
     <FormValueContext.Provider
       value={{
@@ -679,9 +711,10 @@ export const AddUserFromObjectForm = ({
           // 0 index is just "root"
           const updatePath = path.split('.').slice(1);
           let lastObj: any = values.current;
+          console.log('updating path', updatePath);
           for (let p of updatePath.slice(0, -1)) {
-            console.log('->', p);
             lastObj = lastObj[p];
+            console.log('->', p, lastObj);
           }
           lastObj[updatePath[updatePath.length - 1]] = value;
           console.log('currentValue', values.current);
@@ -692,7 +725,7 @@ export const AddUserFromObjectForm = ({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit(shallowClone(values.current) as any);
+          onSubmit(clone(values.current) as any);
         }}
         {...formProps}
       >
@@ -729,7 +762,10 @@ export const AddUsersForm = ({
   initialValues?: Partial<AddUsersFormVariables>;
   onSubmit: (values: AddUsersFormVariables) => unknown;
 }) => {
-  const values = React.useRef(initialValues);
+  const [_initialValue] = React.useState(() =>
+    JSON.parse(JSON.stringify(initialValues))
+  );
+  const values = React.useRef(_initialValue);
   return (
     <FormValueContext.Provider
       value={{
@@ -737,9 +773,10 @@ export const AddUsersForm = ({
           // 0 index is just "root"
           const updatePath = path.split('.').slice(1);
           let lastObj: any = values.current;
+          console.log('updating path', updatePath);
           for (let p of updatePath.slice(0, -1)) {
-            console.log('->', p);
             lastObj = lastObj[p];
+            console.log('->', p, lastObj);
           }
           lastObj[updatePath[updatePath.length - 1]] = value;
           console.log('currentValue', values.current);
@@ -750,7 +787,7 @@ export const AddUsersForm = ({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit(shallowClone(values.current) as any);
+          onSubmit(clone(values.current) as any);
         }}
         {...formProps}
       >

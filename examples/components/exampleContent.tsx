@@ -3,6 +3,7 @@ import { ErrorBoundary } from './errorBoundary';
 import { Divider, Grid, Typography } from '@material-ui/core';
 import { GraphqlCode } from './graphqlCode';
 import { JsonCode } from './jsonCode';
+import JSONTree from 'react-json-tree';
 export const ExampleContent: React.FunctionComponent<{
   document: string;
   children: (childProps: {
@@ -10,7 +11,6 @@ export const ExampleContent: React.FunctionComponent<{
   }) => JSX.Element | JSX.Element[];
 }> = ({ document, children }) => {
   const [result, setResult] = React.useState(null);
-  console.log('render result', result);
   return (
     <Grid container spacing={2}>
       <Grid item xs={12} md={7}>
@@ -21,7 +21,6 @@ export const ExampleContent: React.FunctionComponent<{
         <ErrorBoundary>
           {children({
             onSubmit: (r) => {
-              console.log('new result', r);
               setResult(() => r);
             },
           })}
@@ -30,9 +29,7 @@ export const ExampleContent: React.FunctionComponent<{
       <Grid item xs={12} md={5}>
         <Typography variant="h5">Form Result</Typography>
         {result ? (
-          <JsonCode key={JSON.stringify(result)}>
-            {JSON.stringify(result, null, 2)}
-          </JsonCode>
+          <JSONTree invertTheme={false} data={result} />
         ) : (
           <Typography>Submit the form to see the result</Typography>
         )}
