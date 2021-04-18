@@ -11,10 +11,7 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(4),
     paddingTop: theme.spacing(8),
   },
-  content: {
-    paddingRight: theme.spacing(4),
-    paddingLeft: theme.spacing(4),
-  },
+  content: {},
   title: {
     // color: '#32485c',
     color: theme.palette.secondary.light,
