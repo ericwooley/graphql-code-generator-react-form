@@ -1,4 +1,4 @@
-import { Container, Grid, makeStyles, Typography } from '@material-ui/core';
+import { Grid, makeStyles, Typography } from '@material-ui/core';
 import DataTabs from '../components/DataTabs';
 import Examples from '../components/examples';
 import Image from 'next/image';

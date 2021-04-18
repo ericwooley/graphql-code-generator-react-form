@@ -66,6 +66,13 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
 
   public scalarComponents() {
     return `
+const FormValueContext = React.createContext<{
+  setValue: (path: string, value: any) => unknown;
+}>({
+  setValue: (path: string, value: any) => ({}),
+});
+let idNonce = 0;
+const uniqueId = (inStr: string) => inStr+(idNonce++)
 /******************************
  * Scalar Components
  * ****************************/
@@ -169,7 +176,6 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
       `const {label, value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
         metaData
       )}} = props`,
-      `const [value, setValue] = React.useState(initialValue)`,
     ];
     let componentBody = [
       `
@@ -186,12 +192,19 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
         ? metaData.children?.[0]
         : { ...metaData, asList: false };
       componentPreBody.push(
-        `const addItem=() => setValue(old => [...old, ${this.getDefaultValueStringForTypeNodeMetaData(
+        `const [value, setValue] = React.useState((initialValue||[]).map(v => ({id: uniqueId(${JSON.stringify(
+          metaData.name
+        )}), value: v})))`,
+        `const addItem=() => setValue(old => [...old, {id: uniqueId(${JSON.stringify(
+          metaData.name
+        )}), value: ${this.getDefaultValueStringForTypeNodeMetaData(
           actualScalarMetaData
-        )} ])`,
-        `const insertItem=(index: number) => setValue(old => [...old.slice(0, index), ${this.getDefaultValueStringForTypeNodeMetaData(
+        )}} ])`,
+        `const insertItem=(index: number) => setValue(old => [...old.slice(0, index), {id: uniqueId(${JSON.stringify(
+          metaData.name
+        )}), value: ${this.getDefaultValueStringForTypeNodeMetaData(
           actualScalarMetaData
-        )}, ...old.slice(index) ])`,
+        )}}, ...old.slice(index) ])`,
         `const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ...old.slice(index+1) ])`
       );
       componentBody = [
@@ -203,13 +216,13 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
     <ol>
         {value.length > 0 ? (
           value.map((item, index) => (
-            <li key={index}>
+            <li key={item.id}>
               ${this.renderComponentFor(
                 { ...metaData, optional: false, asList: false },
                 {
                   optional: JSON.stringify(false),
                   label: JSON.stringify(''),
-                  value: 'item',
+                  value: 'item.value',
                   ...this.asPropString(metaData, ['optional']),
                 }
               )}
@@ -238,10 +251,16 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
     )`,
       ];
     } else if (metaData.endedFromCycle && !metaData.asList) {
+      componentPreBody.push(
+        `const [value, setValue] = React.useState(initialValue)`
+      );
       componentBody.push(
         `return <div><strong>{label}</strong>: <button>Add {label}</button></div>`
       );
     } else if (metaData.children) {
+      componentPreBody.push(
+        `const [value, setValue] = React.useState(initialValue)`
+      );
       componentBody.push(
         `return <div className="${this.nestedFormClassName}">
         <h4>{label}</h4>
@@ -256,6 +275,9 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
           .join('\n  ')}</div>`
       );
     } else {
+      componentPreBody.push(
+        `const [value, setValue] = React.useState(initialValue)`
+      );
       // TODO: type this properly
       componentBody = [
         `return <div><label><strong>{label}</strong><br /><input value={value} onChange={(e) =>
@@ -298,6 +320,7 @@ export const ${camelCase(m.name + 'DefaultValues')} = {
     .join(',\n')}
 };
 
+
 export interface ${baseName}Variables {
   ${m.variables
     .map(
@@ -317,22 +340,27 @@ export const ${baseName} = (
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
-  return (<form onSubmit={(e) => {
-    e.preventDefault()
-    // TODO: This needs to be real values from the form
-    onSubmit(initialValues as any)
-  }} {...formProps}>
-    ${m.variables
-      .map((v) =>
-        this.renderComponentFor(v, {
-          value: `initialValues.${v.name}`,
-          label: JSON.stringify(sentenceCase(v.name)),
-          ...this.asPropString(v),
-        })
-      )
-      .join('\n    ')}
-    <input type="submit" value="submit" />
-  </form>
+  return (
+    <FormValueContext.Provider value={{
+      setValue: (path: string, value: unknown) => console.log('set value', path, value)
+    }}>
+      <form onSubmit={(e) => {
+        e.preventDefault()
+        // TODO: This needs to be real values from the form
+        onSubmit(initialValues as any)
+      }} {...formProps}>
+        ${m.variables
+          .map((v) =>
+            this.renderComponentFor(v, {
+              value: `initialValues.${v.name}`,
+              label: JSON.stringify(sentenceCase(v.name)),
+              ...this.asPropString(v),
+            })
+          )
+          .join('\n    ')}
+        <input type="submit" value="submit" />
+      </form>
+    </FormValueContext.Provider>
   )
 };
     `;

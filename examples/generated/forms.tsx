@@ -123,6 +123,13 @@ export const defaultUserInputScalar = {
   },
 };
 
+const FormValueContext = React.createContext<{
+  setValue: (path: string, value: any) => unknown;
+}>({
+  setValue: (path: string, value: any) => ({}),
+});
+let idNonce = 0;
+const uniqueId = (inStr: string) => inStr + idNonce++;
 /******************************
  * Scalar Components
  * ****************************/
@@ -264,12 +271,18 @@ export const UserInputFormInputAsList = (
 ) => {
   let [shouldRender, setShouldRender] = React.useState(false);
   const { label, value: initialValue = [] } = props;
-  const [value, setValue] = React.useState(initialValue);
-  const addItem = () => setValue((old) => [...old, defaultUserInputScalar]);
+  const [value, setValue] = React.useState(
+    (initialValue || []).map((v) => ({ id: uniqueId('friends'), value: v }))
+  );
+  const addItem = () =>
+    setValue((old) => [
+      ...old,
+      { id: uniqueId('friends'), value: defaultUserInputScalar },
+    ]);
   const insertItem = (index: number) =>
     setValue((old) => [
       ...old.slice(0, index),
-      defaultUserInputScalar,
+      { id: uniqueId('friends'), value: defaultUserInputScalar },
       ...old.slice(index),
     ]);
   const removeItem = (index: number) =>
@@ -280,11 +293,11 @@ export const UserInputFormInputAsList = (
       <ol>
         {value.length > 0 ? (
           value.map((item, index) => (
-            <li key={index}>
+            <li key={item.id}>
               <UserInputFormInput
                 optional={false}
                 label={''}
-                value={item}
+                value={item.value}
                 scalarName={'UserInput'}
                 name={'friends'}
               />
@@ -546,30 +559,37 @@ export const AddUserForm = ({
   onSubmit: (values: AddUserFormVariables) => unknown;
 }) => {
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        // TODO: This needs to be real values from the form
-        onSubmit(initialValues as any);
+    <FormValueContext.Provider
+      value={{
+        setValue: (path: string, value: unknown) =>
+          console.log('set value', path, value),
       }}
-      {...formProps}
     >
-      <StringFormInput
-        value={initialValues.email}
-        label={'Email'}
-        scalarName={'String'}
-        name={'email'}
-        optional={false}
-      />
-      <StringFormInput
-        value={initialValues.name}
-        label={'Name'}
-        scalarName={'String'}
-        name={'name'}
-        optional={false}
-      />
-      <input type="submit" value="submit" />
-    </form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          // TODO: This needs to be real values from the form
+          onSubmit(initialValues as any);
+        }}
+        {...formProps}
+      >
+        <StringFormInput
+          value={initialValues.email}
+          label={'Email'}
+          scalarName={'String'}
+          name={'email'}
+          optional={false}
+        />
+        <StringFormInput
+          value={initialValues.name}
+          label={'Name'}
+          scalarName={'String'}
+          name={'name'}
+          optional={false}
+        />
+        <input type="submit" value="submit" />
+      </form>
+    </FormValueContext.Provider>
   );
 };
 
@@ -593,23 +613,30 @@ export const AddUserFromObjectForm = ({
   onSubmit: (values: AddUserFromObjectFormVariables) => unknown;
 }) => {
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        // TODO: This needs to be real values from the form
-        onSubmit(initialValues as any);
+    <FormValueContext.Provider
+      value={{
+        setValue: (path: string, value: unknown) =>
+          console.log('set value', path, value),
       }}
-      {...formProps}
     >
-      <UserInputFormInput
-        value={initialValues.user}
-        label={'User'}
-        scalarName={'UserInput'}
-        name={'user'}
-        optional={false}
-      />
-      <input type="submit" value="submit" />
-    </form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          // TODO: This needs to be real values from the form
+          onSubmit(initialValues as any);
+        }}
+        {...formProps}
+      >
+        <UserInputFormInput
+          value={initialValues.user}
+          label={'User'}
+          scalarName={'UserInput'}
+          name={'user'}
+          optional={false}
+        />
+        <input type="submit" value="submit" />
+      </form>
+    </FormValueContext.Provider>
   );
 };
 
@@ -633,22 +660,29 @@ export const AddUsersForm = ({
   onSubmit: (values: AddUsersFormVariables) => unknown;
 }) => {
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        // TODO: This needs to be real values from the form
-        onSubmit(initialValues as any);
+    <FormValueContext.Provider
+      value={{
+        setValue: (path: string, value: unknown) =>
+          console.log('set value', path, value),
       }}
-      {...formProps}
     >
-      <UserInputFormInputAsList
-        value={initialValues.users}
-        label={'Users'}
-        name={'users'}
-        optional={false}
-        scalarName={'UserInput'}
-      />
-      <input type="submit" value="submit" />
-    </form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          // TODO: This needs to be real values from the form
+          onSubmit(initialValues as any);
+        }}
+        {...formProps}
+      >
+        <UserInputFormInputAsList
+          value={initialValues.users}
+          label={'Users'}
+          name={'users'}
+          optional={false}
+          scalarName={'UserInput'}
+        />
+        <input type="submit" value="submit" />
+      </form>
+    </FormValueContext.Provider>
   );
 };
