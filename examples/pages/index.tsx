@@ -1,8 +1,19 @@
-import { Grid, makeStyles, Typography } from '@material-ui/core';
+import {
+  AppBar,
+  Button,
+  Grid,
+  IconButton,
+  makeStyles,
+  Toolbar,
+  Typography,
+} from '@material-ui/core';
 import DataTabs from '../components/DataTabs';
 import Examples from '../components/examples';
 import Image from 'next/image';
 import Todo from '../components/todo';
+import MenuIcon from '@material-ui/icons/Menu';
+import GithubIcon from '@material-ui/icons/GitHub';
+import { Layout } from '../components/layout';
 
 const useStyles = makeStyles((theme) => ({
   header: {
@@ -19,11 +30,25 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.secondary.light,
     fontWeight: 700,
   },
+  menuButton: {
+    marginRight: theme.spacing(2),
+  },
+  nav: {
+    background: 'white',
+  },
+  links: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  button: {
+    flex: 0,
+  },
 }));
 export default function Home() {
   const classes = useStyles();
   return (
-    <main>
+    <Layout title="Examples">
       <div className={classes.header}>
         <div style={{ maxWidth: 734, margin: '0 auto' }}>
           <Image
@@ -50,6 +75,6 @@ export default function Home() {
           </Grid>
         </Grid>
       </div>
-    </main>
+    </Layout>
   );
 }

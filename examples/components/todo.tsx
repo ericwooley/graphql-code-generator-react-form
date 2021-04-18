@@ -3,7 +3,7 @@ import { createStyles, Theme, makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem, { ListItemProps } from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import { Checkbox, ListItemIcon, Typography } from '@material-ui/core';
+import { Checkbox, Link, ListItemIcon, Typography } from '@material-ui/core';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -16,16 +16,23 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-function ListItemLink(props: ListItemProps<'a', { button?: true }>) {
-  return <ListItem button component="a" {...props} />;
-}
-
 export default function Todo() {
   const classes = useStyles();
 
   return (
     <div className={classes.root}>
       <Typography variant="h5">Work in Progress</Typography>
+      <Typography>
+        follow{' '}
+        <Link
+          href="http://twitter.com/ericwooley"
+          target="_blank"
+          rel="noopener"
+        >
+          @ericwooley
+        </Link>{' '}
+        for updates
+      </Typography>
       <List component="nav" aria-label="secondary mailbox folders">
         <ListItem>
           <ListItemIcon>
@@ -43,7 +50,7 @@ export default function Todo() {
           <ListItemIcon>
             <Checkbox edge="start" checked={false} tabIndex={-1} disabled />
           </ListItemIcon>
-          <ListItemText primary="React Native Support" />
+          <ListItemText primary="Optional React Native Support" />
         </ListItem>
       </List>
     </div>
