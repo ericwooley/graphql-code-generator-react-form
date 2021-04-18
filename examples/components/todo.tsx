@@ -39,6 +39,12 @@ export default function Todo() {
           </ListItemIcon>
           <ListItemText primary="Customization through context" />
         </ListItem>
+        <ListItem>
+          <ListItemIcon>
+            <Checkbox edge="start" checked={false} tabIndex={-1} disabled />
+          </ListItemIcon>
+          <ListItemText primary="React Native Support" />
+        </ListItem>
       </List>
     </div>
   );
