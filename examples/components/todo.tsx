@@ -1,7 +1,7 @@
 import React from 'react';
 import { createStyles, Theme, makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
-import ListItem, { ListItemProps } from '@material-ui/core/ListItem';
+import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { Checkbox, Link, ListItemIcon, Typography } from '@material-ui/core';
 
