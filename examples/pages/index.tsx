@@ -58,7 +58,7 @@ export default function Home() {
         <Todo />
       </div>
       <div className={classes.content}>
-        <Grid container spacing={2}>
+        <Grid container>
           <Grid item xs={12} md={8}>
             <Examples />
           </Grid>

@@ -13,6 +13,7 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
       width: '100%',
+      background: 'white',
     },
     heading: {
       fontSize: theme.typography.pxToRem(15),
