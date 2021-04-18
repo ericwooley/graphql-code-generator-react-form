@@ -1,4 +1,4 @@
-import { Grid, makeStyles, Typography } from '@material-ui/core';
+import { Grid, makeStyles, Paper, Typography } from '@material-ui/core';
 import DataTabs from '../components/DataTabs';
 import Examples from '../components/examples';
 import Image from 'next/image';
@@ -54,7 +54,7 @@ export default function Home() {
 
         <Todo />
       </div>
-      <div className={classes.content}>
+      <Paper elevation={3} className={classes.content}>
         <Grid container>
           <Grid item xs={12} md={8}>
             <Examples />
@@ -63,7 +63,7 @@ export default function Home() {
             <DataTabs />
           </Grid>
         </Grid>
-      </div>
+      </Paper>
     </Layout>
   );
 }
