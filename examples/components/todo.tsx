@@ -37,12 +37,12 @@ export default function Todo() {
       <List component="nav" aria-label="secondary mailbox folders">
         {[
           {
-            title: 'Make submit work with real values',
+            title: 'Customization through context',
             done: false,
             inProgress: true,
           },
           {
-            title: 'Customization through context',
+            title: 'Validation',
             done: false,
             inProgress: false,
           },
