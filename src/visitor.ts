@@ -69,8 +69,21 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
 const FormValueContext = React.createContext<{
   setValue: (path: string, value: any) => unknown;
 }>({
-  setValue: (path: string, value: any) => ({}),
+  setValue: () => ({}),
 });
+
+function useFormValue <T>(path: string, initialValue: T|undefined) {
+  const context = React.useContext(FormValueContext)
+  const [value, _setValue] = React.useState<T>(initialValue)
+  const setValue = React.useCallback((updateV: (oldVal: T) => T) => {
+    _setValue((oldVal) => {
+      const newVal = updateV(oldVal)
+      context.setValue(path, newVal);
+      return newVal
+    })
+  }, [context])
+  return [value, setValue] as const
+}
 let idNonce = 0;
 const uniqueId = (inStr: string) => inStr+(idNonce++)
 /******************************
@@ -154,7 +167,11 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
   }
   renderComponentFor(
     metaData: TypeNodeMetaData,
-    props: { [key: string]: string } & { value: string; label: string }
+    props: { [key: string]: string } & {
+      value: string;
+      label: string;
+      parentPath: string;
+    }
   ): string {
     const componentKey = pascalCase(
       metaData.scalarName + 'FormInput' + (metaData.asList ? 'AsList' : '')
@@ -168,14 +185,15 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
       label: string,
       value: ${metaData.tsType}${metaData.asList ? '[]' : ''},
       scalarName: string,
-      name: string
+      name: string,
+      parentPath: string
     }`;
     const componentDefinitionHead = `export const ${componentKey} = (props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
-      `let [shouldRender, setShouldRender] = React.useState(false)`,
-      `const {label, value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
+      `const {parentPath, label, name, value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
         metaData
       )}} = props`,
+      `const path = [parentPath, name].join('.')`,
     ];
     let componentBody = [
       `
@@ -192,7 +210,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
         ? metaData.children?.[0]
         : { ...metaData, asList: false };
       componentPreBody.push(
-        `const [value, setValue] = React.useState((initialValue||[]).map(v => ({id: uniqueId(${JSON.stringify(
+        `const [value, setValue] = useFormValue(path, (initialValue||[]).map(v => ({id: uniqueId(${JSON.stringify(
           metaData.name
         )}), value: v})))`,
         `const addItem=() => setValue(old => [...old, {id: uniqueId(${JSON.stringify(
@@ -212,7 +230,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     <div className="${[this.nestedFormClassName, this.FormListClassName].join(
       ' '
     )}">
-    {label && <h3>{label}</h3>}
+    {label && <h3>{label} {path}</h3>}
     <ol>
         {value.length > 0 ? (
           value.map((item, index) => (
@@ -224,6 +242,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
                   label: JSON.stringify(''),
                   value: 'item.value',
                   ...this.asPropString(metaData, ['optional']),
+                  parentPath: `[path, String(index)].join('.')`,
                 }
               )}
               <button
@@ -252,14 +271,15 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
       ];
     } else if (metaData.endedFromCycle && !metaData.asList) {
       componentPreBody.push(
-        `const [value, setValue] = React.useState(initialValue)`
+        `const [value, setValue] = useFormValue(path, initialValue)`
       );
       componentBody.push(
         `return <div><strong>{label}</strong>: <button>Add {label}</button></div>`
       );
     } else if (metaData.children) {
       componentPreBody.push(
-        `const [value, setValue] = React.useState(initialValue)`
+        `let [shouldRender, setShouldRender] = React.useState(false)`,
+        `const [value, setValue] = useFormValue(path, initialValue)`
       );
       componentBody.push(
         `return <div className="${this.nestedFormClassName}">
@@ -270,18 +290,19 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
               value: `value.${md.name}`,
               ...this.asPropString(md),
               label: JSON.stringify(sentenceCase(md.name)),
+              parentPath: `path`,
             })
           )
           .join('\n  ')}</div>`
       );
     } else {
       componentPreBody.push(
-        `const [value, setValue] = React.useState(initialValue)`
+        `const [value, setValue] = useFormValue(path, initialValue)`
       );
       // TODO: type this properly
       componentBody = [
-        `return <div><label><strong>{label}</strong><br /><input value={value} onChange={(e) =>
-          setValue(e.target.value as any)} /></label></div>`,
+        `return <div><label><strong>{label} {name} {path}</strong><br /><input value={value} onChange={(e) =>
+          setValue(() => e.target.value as any)} /></label></div>`,
       ];
     }
     const component = `
@@ -298,11 +319,14 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
   public get sdkContent(): string {
     const forms =
       `
-
-
 /****************************
  * forms Forms
  * *************************/
+function shallowClone <T>(input: T): T {
+  if(Array.isArray(input)) return [...(input as any)] as any
+  if(typeof input === 'object') return {...input as any} as any
+  return input
+}
 export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
 ` +
       this._mutations
@@ -340,20 +364,33 @@ export const ${baseName} = (
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
+  const values = React.useRef(initialValues)
   return (
+
     <FormValueContext.Provider value={{
-      setValue: (path: string, value: unknown) => console.log('set value', path, value)
+      setValue: (path: string, value: unknown) => {
+        // 0 index is just "root"
+        const updatePath = path.split('.').slice(1)
+        let lastObj: any = values.current
+        for(let p of updatePath.slice(0, -1)){
+          console.log('->', p)
+          lastObj = lastObj[p]
+        }
+        lastObj[updatePath[updatePath.length -1]] = value
+        console.log('currentValue', values.current)
+        console.log('set value', path, value)
+      }
     }}>
       <form onSubmit={(e) => {
         e.preventDefault()
-        // TODO: This needs to be real values from the form
-        onSubmit(initialValues as any)
+        onSubmit(shallowClone(values.current) as any)
       }} {...formProps}>
         ${m.variables
           .map((v) =>
             this.renderComponentFor(v, {
               value: `initialValues.${v.name}`,
               label: JSON.stringify(sentenceCase(v.name)),
+              parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
               ...this.asPropString(v),
             })
           )

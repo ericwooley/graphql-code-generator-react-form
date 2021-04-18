@@ -9,7 +9,8 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
       width: '100%',
-      maxWidth: 360,
+      maxWidth: 560,
+      textAlign: 'center',
       margin: '0 auto',
       padding: theme.spacing(2),
     },
@@ -34,24 +35,36 @@ export default function Todo() {
         for updates
       </Typography>
       <List component="nav" aria-label="secondary mailbox folders">
-        <ListItem>
-          <ListItemIcon>
-            <Checkbox edge="start" checked={false} tabIndex={-1} disabled />
-          </ListItemIcon>
-          <ListItemText primary="Make submit work with real values" />
-        </ListItem>
-        <ListItem>
-          <ListItemIcon>
-            <Checkbox edge="start" checked={false} tabIndex={-1} disabled />
-          </ListItemIcon>
-          <ListItemText primary="Customization through context" />
-        </ListItem>
-        <ListItem>
-          <ListItemIcon>
-            <Checkbox edge="start" checked={false} tabIndex={-1} disabled />
-          </ListItemIcon>
-          <ListItemText primary="Optional React Native Support" />
-        </ListItem>
+        {[
+          {
+            title: 'Make submit work with real values',
+            done: false,
+            inProgress: true,
+          },
+          {
+            title: 'Customization through context',
+            done: false,
+            inProgress: false,
+          },
+          {
+            title: 'Optional React Native Support',
+            done: false,
+            inProgress: false,
+          },
+        ].map(({ title, done, inProgress }) => {
+          return (
+            <ListItem key={title}>
+              <ListItemIcon>
+                <Checkbox edge="start" checked={done} tabIndex={-1} disabled />
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  title + ` (${inProgress ? 'in progress' : 'not started'})`
+                }
+              />
+            </ListItem>
+          );
+        })}
       </List>
     </div>
   );

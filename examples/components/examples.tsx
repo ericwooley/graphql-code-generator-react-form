@@ -46,7 +46,9 @@ export default function Examples() {
           aria-controls="panel2a-content"
           id="panel2a-header"
         >
-          <Typography className={classes.heading}>Recursive Users</Typography>
+          <Typography className={classes.heading}>
+            Recursive Add Users List
+          </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <RecursiveUserExample />
@@ -59,7 +61,7 @@ export default function Examples() {
           id="panel2a-header"
         >
           <Typography className={classes.heading}>
-            Add User From Object
+            Recursive Add User From Object
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
