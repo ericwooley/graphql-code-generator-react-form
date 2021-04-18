@@ -10,7 +10,7 @@
 React form plugin for Graphql Code Generator
 
 ### Examples
-See examples on the demo site.
+See examples on [the website](https://graphql-code-generator-react-form.thewooleyway.com/).
 
 ### Installation
 TODO
