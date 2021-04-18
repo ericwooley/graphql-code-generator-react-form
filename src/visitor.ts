@@ -66,24 +66,6 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
 
   public scalarComponents() {
     return `
-const FormValueContext = React.createContext<{
-  setValue: (path: string, value: any) => unknown;
-}>({
-  setValue: () => ({}),
-});
-
-function useFormValue <T>(path: string, initialValue: T|undefined) {
-  const context = React.useContext(FormValueContext)
-  const [value, _setValue] = React.useState<T>(initialValue)
-  const setValue = React.useCallback((updateV: (oldVal: T) => T) => {
-    _setValue((oldVal) => {
-      const newVal = updateV(oldVal)
-      context.setValue(path, newVal);
-      return newVal
-    })
-  }, [context])
-  return [value, setValue] as const
-}
 let idNonce = 0;
 const uniqueId = (inStr: string) => inStr+(idNonce++)
 /******************************
@@ -196,25 +178,22 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
       value: ${metaData.tsType}${metaData.asList ? '[]' : ''},
       scalarName: string,
       name: string,
-      parentPath: string
+      parentPath: string,
+      onChange: (value: ${metaData.tsType}${
+      metaData.asList ? '[]' : ''
+    }) => unknown
     }`;
     const componentDefinitionHead = `export const ${componentKey} = (props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
-      `const {parentPath, label, name, value: initialValue = ${this.getDefaultValueStringForTypeNodeMetaData(
-        metaData
-      )}} = props`,
+      `const {parentPath, label, name, value, onChange } = props`,
       `const path = [parentPath, name].join('.')`,
     ];
     let componentBody = [
       `
-      React.useEffect(() => {
-        if(!props.optional)
-          setValue(() =>  initialValue)
-      }, [])
       if(props.optional && !shouldRender){
         return <div><button onClick={(e) => {
           e.preventDefault();
-          setValue(() => initialValue)
+          onChange(${this.getDefaultValueStringForTypeNodeMetaData(metaData)})
           setShouldRender(true)
         }}>Add {label}</button></div>
       }`,
@@ -225,14 +204,11 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
         ? metaData.children?.[0]
         : { ...metaData, asList: false };
       componentPreBody.push(
-        `const [value, setValue] = useFormValue(path, (initialValue||[]).map(v => ({id: uniqueId(${JSON.stringify(
+        `const [_value, setValue] = React.useState<{id: string, value: ${
+          metaData.tsType
+        }}[]>((value||[]).map(v => ({id: uniqueId(${JSON.stringify(
           metaData.name
         )}), value: v})))`,
-        `React.useEffect(() => {
-          if(!initialValue) {
-            setValue(() => [])
-          }
-        }, [])`,
         `const addItem=() => setValue(old => [...old, {id: uniqueId(${JSON.stringify(
           metaData.name
         )}), value: ${this.getDefaultValueStringForTypeNodeMetaData(
@@ -252,8 +228,8 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     )}">
     {label && <h3>{label} {path}</h3>}
     <ol>
-        {value.length > 0 ? (
-          value.map((item, index) => (
+        {value && value.length > 0 ? (
+          _value.map((item, index) => (
             <li key={item.id}>
               ${this.renderComponentFor(
                 { ...metaData, optional: false, asList: false },
@@ -264,6 +240,13 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
                   ...this.asPropString(metaData, ['optional']),
                   parentPath: `path`,
                   name: `String(index)`,
+                  onChange: `(newValue) => {
+                    setValue(oldValue => {
+                      const replaced = oldValue.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
+                      onChange(replaced.map(i => i.value))
+                      return replaced
+                    })
+                  }`,
                 }
               )}
               <button
@@ -291,23 +274,13 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     )`,
       ];
     } else if (metaData.endedFromCycle) {
-      componentPreBody.push(
-        `const [value, setValue] = useFormValue(path, initialValue)`,
-        `React.useEffect(() => {
-          if(!initialValue) {
-            setValue(() => ${this.getDefaultValueStringForTypeNodeMetaData(
-              metaData
-            )})
-          }
-        }, [])`
-      );
+      componentPreBody.push();
       componentBody.push(
         `return <div><strong>{label}</strong>: <button>Add {label}</button></div>`
       );
     } else if (metaData.children) {
       componentPreBody.push(
-        `let [shouldRender, setShouldRender] = React.useState(false)`,
-        `const [value, setValue] = useFormValue(path, initialValue)`
+        `let [shouldRender, setShouldRender] = React.useState(false)`
       );
       componentBody.push(
         `return <div className="${this.nestedFormClassName}">
@@ -315,22 +288,20 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
         ${metaData.children
           .map((md) =>
             this.renderComponentFor(md, {
-              value: `value.${md.name}`,
+              value: `value?.${md.name}`,
               ...this.asPropString(md),
               label: JSON.stringify(sentenceCase(md.name)),
               parentPath: `path`,
+              onChange: `(newValue) => ({...value, ['${md.name}']: newValue})`,
             })
           )
           .join('\n  ')}</div>`
       );
     } else {
-      componentPreBody.push(
-        `const [value, setValue] = useFormValue(path, initialValue)`
-      );
-      // TODO: type this properly
+      componentPreBody.push();
       componentBody = [
         `return <div><label><strong>{label} {name} {path}</strong><br /><input value={value} onChange={(e) =>
-          setValue(() => e.target.value as any)} /></label></div>`,
+          onChange(e.target.value as any)} /></label></div>`,
       ];
     }
     const component = `
@@ -350,9 +321,6 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
 /****************************
  * forms Forms
  * *************************/
-function clone <T>(input: T): T {
-  return JSON.parse(JSON.stringify(input))
-}
 export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
 ` +
       this._mutations
@@ -390,42 +358,28 @@ export const ${baseName} = (
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
-  const [_initialValue] = React.useState(() => JSON.parse(JSON.stringify(initialValues)))
-  const values = React.useRef(_initialValue)
+  const [value, setValue]= React.useState(initialValues)
   return (
-
-    <FormValueContext.Provider value={{
-      setValue: (path: string, value: unknown) => {
-        // 0 index is just "root"
-        const updatePath = path.split('.').slice(1)
-        let lastObj: any = values.current
-        console.log('updating path', updatePath)
-        for(let p of updatePath.slice(0, -1)){
-          lastObj = lastObj[p]
-          console.log('->', p, lastObj)
-        }
-        lastObj[updatePath[updatePath.length -1]] = value
-        console.log('currentValue', values.current)
-        console.log('set value', path, value)
-      }
-    }}>
-      <form onSubmit={(e) => {
-        e.preventDefault()
-        onSubmit(clone(values.current) as any)
-      }} {...formProps}>
-        ${m.variables
-          .map((v) =>
-            this.renderComponentFor(v, {
-              value: `initialValues.${v.name}`,
-              label: JSON.stringify(sentenceCase(v.name)),
-              parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
-              ...this.asPropString(v),
-            })
-          )
-          .join('\n    ')}
-        <input type="submit" value="submit" />
-      </form>
-    </FormValueContext.Provider>
+    <form onSubmit={(e) => {
+      e.preventDefault()
+      onSubmit(value as any)
+    }} {...formProps}>
+      ${m.variables
+        .map((v) =>
+          this.renderComponentFor(v, {
+            value: `value?.${v.name}`,
+            label: JSON.stringify(sentenceCase(v.name)),
+            parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
+            onChange: `(value) => {
+              console.log('onChange ${v.name}', value)
+              setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
+            }`,
+            ...this.asPropString(v),
+          })
+        )
+        .join('\n    ')}
+      <input type="submit" value="submit" />
+    </form>
   )
 };
     `;

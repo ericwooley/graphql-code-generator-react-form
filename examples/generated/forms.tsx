@@ -135,27 +135,6 @@ export const defaultUserInputScalar = {
   },
 };
 
-const FormValueContext = React.createContext<{
-  setValue: (path: string, value: any) => unknown;
-}>({
-  setValue: () => ({}),
-});
-
-function useFormValue<T>(path: string, initialValue: T | undefined) {
-  const context = React.useContext(FormValueContext);
-  const [value, _setValue] = React.useState<T>(initialValue);
-  const setValue = React.useCallback(
-    (updateV: (oldVal: T) => T) => {
-      _setValue((oldVal) => {
-        const newVal = updateV(oldVal);
-        context.setValue(path, newVal);
-        return newVal;
-      });
-    },
-    [context]
-  );
-  return [value, setValue] as const;
-}
 let idNonce = 0;
 const uniqueId = (inStr: string) => inStr + idNonce++;
 /******************************
@@ -169,11 +148,11 @@ export interface StringFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  onChange: (value: Scalars['String']) => unknown;
 }
 export const StringFormInput = (props: StringFormInputPropTypes) => {
-  const { parentPath, label, name, value: initialValue = '' } = props;
+  const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
-  const [value, setValue] = useFormValue(path, initialValue);
   return (
     <div>
       <label>
@@ -183,7 +162,7 @@ export const StringFormInput = (props: StringFormInputPropTypes) => {
         <br />
         <input
           value={value}
-          onChange={(e) => setValue(() => e.target.value as any)}
+          onChange={(e) => onChange(e.target.value as any)}
         />
       </label>
     </div>
@@ -197,11 +176,11 @@ export interface IntFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  onChange: (value: Scalars['Int']) => unknown;
 }
 export const IntFormInput = (props: IntFormInputPropTypes) => {
-  const { parentPath, label, name, value: initialValue = 0 } = props;
+  const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
-  const [value, setValue] = useFormValue(path, initialValue);
   return (
     <div>
       <label>
@@ -211,7 +190,7 @@ export const IntFormInput = (props: IntFormInputPropTypes) => {
         <br />
         <input
           value={value}
-          onChange={(e) => setValue(() => e.target.value as any)}
+          onChange={(e) => onChange(e.target.value as any)}
         />
       </label>
     </div>
@@ -225,28 +204,20 @@ export interface UserInputFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  onChange: (value: UserInput) => unknown;
 }
 export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
-  const {
-    parentPath,
-    label,
-    name,
-    value: initialValue = JSON.parse(JSON.stringify(defaultUserInputScalar)),
-  } = props;
+  const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
   let [shouldRender, setShouldRender] = React.useState(false);
-  const [value, setValue] = useFormValue(path, initialValue);
 
-  React.useEffect(() => {
-    if (!props.optional) setValue(() => initialValue);
-  }, []);
   if (props.optional && !shouldRender) {
     return (
       <div>
         <button
           onClick={(e) => {
             e.preventDefault();
-            setValue(() => initialValue);
+            onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)));
             setShouldRender(true);
           }}
         >
@@ -259,52 +230,58 @@ export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
     <div className="mutationFormNested">
       <h4>{label}</h4>
       <IntFormInput
-        value={value.id}
+        value={value?.id}
         scalarName={'Int'}
         name={'id'}
         optional={true}
         label={'Id'}
         parentPath={path}
+        onChange={(newValue) => ({ ...value, ['id']: newValue })}
       />
       <StringFormInput
-        value={value.name}
+        value={value?.name}
         scalarName={'String'}
         name={'name'}
         optional={true}
         label={'Name'}
         parentPath={path}
+        onChange={(newValue) => ({ ...value, ['name']: newValue })}
       />
       <StringFormInput
-        value={value.email}
+        value={value?.email}
         scalarName={'String'}
         name={'email'}
         optional={true}
         label={'Email'}
         parentPath={path}
+        onChange={(newValue) => ({ ...value, ['email']: newValue })}
       />
       <UserInputFormInput
-        value={value.mother}
+        value={value?.mother}
         scalarName={'UserInput'}
         name={'mother'}
         optional={true}
         label={'Mother'}
         parentPath={path}
+        onChange={(newValue) => ({ ...value, ['mother']: newValue })}
       />
       <UserInputFormInput
-        value={value.father}
+        value={value?.father}
         scalarName={'UserInput'}
         name={'father'}
         optional={true}
         label={'Father'}
         parentPath={path}
+        onChange={(newValue) => ({ ...value, ['father']: newValue })}
       />
       <UserInputFormInputAsList
-        value={value.friends}
+        value={value?.friends}
         scalarName={'UserInput'}
         name={'friends'}
         optional={true}
         label={'Friends'}
         parentPath={path}
+        onChange={(newValue) => ({ ...value, ['friends']: newValue })}
       />
     </div>
   );
@@ -317,21 +294,16 @@ export interface UserInputFormInputAsListPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  onChange: (value: UserInput[]) => unknown;
 }
 export const UserInputFormInputAsList = (
   props: UserInputFormInputAsListPropTypes
 ) => {
-  const { parentPath, label, name, value: initialValue = [] } = props;
+  const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
-  const [value, setValue] = useFormValue(
-    path,
-    (initialValue || []).map((v) => ({ id: uniqueId('friends'), value: v }))
+  const [_value, setValue] = React.useState<{ id: string; value: UserInput }[]>(
+    (value || []).map((v) => ({ id: uniqueId('friends'), value: v }))
   );
-  React.useEffect(() => {
-    if (!initialValue) {
-      setValue(() => []);
-    }
-  }, []);
   const addItem = () =>
     setValue((old) => [
       ...old,
@@ -359,8 +331,8 @@ export const UserInputFormInputAsList = (
         </h3>
       )}
       <ol>
-        {value.length > 0 ? (
-          value.map((item, index) => (
+        {value && value.length > 0 ? (
+          _value.map((item, index) => (
             <li key={item.id}>
               <UserInputFormInput
                 optional={false}
@@ -369,6 +341,15 @@ export const UserInputFormInputAsList = (
                 scalarName={'UserInput'}
                 name={String(index)}
                 parentPath={path}
+                onChange={(newValue) => {
+                  setValue((oldValue) => {
+                    const replaced = oldValue.map((i) =>
+                      i.id === item.id ? { id: item.id, value: newValue } : i
+                    );
+                    onChange(replaced.map((i) => i.value));
+                    return replaced;
+                  });
+                }}
               />
               <button
                 type="button"
@@ -398,9 +379,6 @@ export const UserInputFormInputAsList = (
 /****************************
  * forms Forms
  * *************************/
-function clone<T>(input: T): T {
-  return JSON.parse(JSON.stringify(input));
-}
 export const mutationsMetaData = [
   {
     name: 'addUser',
@@ -630,54 +608,41 @@ export const AddUserForm = ({
   initialValues?: Partial<AddUserFormVariables>;
   onSubmit: (values: AddUserFormVariables) => unknown;
 }) => {
-  const [_initialValue] = React.useState(() =>
-    JSON.parse(JSON.stringify(initialValues))
-  );
-  const values = React.useRef(_initialValue);
+  const [value, setValue] = React.useState(initialValues);
   return (
-    <FormValueContext.Provider
-      value={{
-        setValue: (path: string, value: unknown) => {
-          // 0 index is just "root"
-          const updatePath = path.split('.').slice(1);
-          let lastObj: any = values.current;
-          console.log('updating path', updatePath);
-          for (let p of updatePath.slice(0, -1)) {
-            lastObj = lastObj[p];
-            console.log('->', p, lastObj);
-          }
-          lastObj[updatePath[updatePath.length - 1]] = value;
-          console.log('currentValue', values.current);
-          console.log('set value', path, value);
-        },
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(value as any);
       }}
+      {...formProps}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit(clone(values.current) as any);
+      <StringFormInput
+        value={value?.email}
+        label={'Email'}
+        parentPath={'root'}
+        onChange={(value) => {
+          console.log('onChange email', value);
+          setValue((oldVal) => ({ ...oldVal, ['email']: value }));
         }}
-        {...formProps}
-      >
-        <StringFormInput
-          value={initialValues.email}
-          label={'Email'}
-          parentPath={'root'}
-          scalarName={'String'}
-          name={'email'}
-          optional={false}
-        />
-        <StringFormInput
-          value={initialValues.name}
-          label={'Name'}
-          parentPath={'root'}
-          scalarName={'String'}
-          name={'name'}
-          optional={false}
-        />
-        <input type="submit" value="submit" />
-      </form>
-    </FormValueContext.Provider>
+        scalarName={'String'}
+        name={'email'}
+        optional={false}
+      />
+      <StringFormInput
+        value={value?.name}
+        label={'Name'}
+        parentPath={'root'}
+        onChange={(value) => {
+          console.log('onChange name', value);
+          setValue((oldVal) => ({ ...oldVal, ['name']: value }));
+        }}
+        scalarName={'String'}
+        name={'name'}
+        optional={false}
+      />
+      <input type="submit" value="submit" />
+    </form>
   );
 };
 
@@ -700,46 +665,29 @@ export const AddUserFromObjectForm = ({
   initialValues?: Partial<AddUserFromObjectFormVariables>;
   onSubmit: (values: AddUserFromObjectFormVariables) => unknown;
 }) => {
-  const [_initialValue] = React.useState(() =>
-    JSON.parse(JSON.stringify(initialValues))
-  );
-  const values = React.useRef(_initialValue);
+  const [value, setValue] = React.useState(initialValues);
   return (
-    <FormValueContext.Provider
-      value={{
-        setValue: (path: string, value: unknown) => {
-          // 0 index is just "root"
-          const updatePath = path.split('.').slice(1);
-          let lastObj: any = values.current;
-          console.log('updating path', updatePath);
-          for (let p of updatePath.slice(0, -1)) {
-            lastObj = lastObj[p];
-            console.log('->', p, lastObj);
-          }
-          lastObj[updatePath[updatePath.length - 1]] = value;
-          console.log('currentValue', values.current);
-          console.log('set value', path, value);
-        },
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(value as any);
       }}
+      {...formProps}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit(clone(values.current) as any);
+      <UserInputFormInput
+        value={value?.user}
+        label={'User'}
+        parentPath={'root'}
+        onChange={(value) => {
+          console.log('onChange user', value);
+          setValue((oldVal) => ({ ...oldVal, ['user']: value }));
         }}
-        {...formProps}
-      >
-        <UserInputFormInput
-          value={initialValues.user}
-          label={'User'}
-          parentPath={'root'}
-          scalarName={'UserInput'}
-          name={'user'}
-          optional={false}
-        />
-        <input type="submit" value="submit" />
-      </form>
-    </FormValueContext.Provider>
+        scalarName={'UserInput'}
+        name={'user'}
+        optional={false}
+      />
+      <input type="submit" value="submit" />
+    </form>
   );
 };
 
@@ -762,45 +710,28 @@ export const AddUsersForm = ({
   initialValues?: Partial<AddUsersFormVariables>;
   onSubmit: (values: AddUsersFormVariables) => unknown;
 }) => {
-  const [_initialValue] = React.useState(() =>
-    JSON.parse(JSON.stringify(initialValues))
-  );
-  const values = React.useRef(_initialValue);
+  const [value, setValue] = React.useState(initialValues);
   return (
-    <FormValueContext.Provider
-      value={{
-        setValue: (path: string, value: unknown) => {
-          // 0 index is just "root"
-          const updatePath = path.split('.').slice(1);
-          let lastObj: any = values.current;
-          console.log('updating path', updatePath);
-          for (let p of updatePath.slice(0, -1)) {
-            lastObj = lastObj[p];
-            console.log('->', p, lastObj);
-          }
-          lastObj[updatePath[updatePath.length - 1]] = value;
-          console.log('currentValue', values.current);
-          console.log('set value', path, value);
-        },
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(value as any);
       }}
+      {...formProps}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit(clone(values.current) as any);
+      <UserInputFormInputAsList
+        value={value?.users}
+        label={'Users'}
+        parentPath={'root'}
+        onChange={(value) => {
+          console.log('onChange users', value);
+          setValue((oldVal) => ({ ...oldVal, ['users']: value }));
         }}
-        {...formProps}
-      >
-        <UserInputFormInputAsList
-          value={initialValues.users}
-          label={'Users'}
-          parentPath={'root'}
-          name={'users'}
-          optional={false}
-          scalarName={'UserInput'}
-        />
-        <input type="submit" value="submit" />
-      </form>
-    </FormValueContext.Provider>
+        name={'users'}
+        optional={false}
+        scalarName={'UserInput'}
+      />
+      <input type="submit" value="submit" />
+    </form>
   );
 };
