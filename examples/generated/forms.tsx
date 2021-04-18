@@ -150,7 +150,7 @@ export interface StringFormInputPropTypes {
   parentPath: string;
   onChange: (value: Scalars['String']) => unknown;
 }
-export const StringFormInput = (props: StringFormInputPropTypes) => {
+export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
   return (
@@ -161,13 +161,13 @@ export const StringFormInput = (props: StringFormInputPropTypes) => {
         </strong>
         <br />
         <input
-          value={value}
+          value={value === undefined ? '' : value}
           onChange={(e) => onChange(e.target.value as any)}
         />
       </label>
     </div>
   );
-};
+});
 
 export interface IntFormInputPropTypes {
   optional: boolean;
@@ -178,7 +178,7 @@ export interface IntFormInputPropTypes {
   parentPath: string;
   onChange: (value: Scalars['Int']) => unknown;
 }
-export const IntFormInput = (props: IntFormInputPropTypes) => {
+export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
   return (
@@ -189,13 +189,13 @@ export const IntFormInput = (props: IntFormInputPropTypes) => {
         </strong>
         <br />
         <input
-          value={value}
+          value={value === undefined ? '' : value}
           onChange={(e) => onChange(e.target.value as any)}
         />
       </label>
     </div>
   );
-};
+});
 
 export interface UserInputFormInputPropTypes {
   optional: boolean;
@@ -206,86 +206,88 @@ export interface UserInputFormInputPropTypes {
   parentPath: string;
   onChange: (value: UserInput) => unknown;
 }
-export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
-  const { parentPath, label, name, value, onChange } = props;
-  const path = [parentPath, name].join('.');
-  let [shouldRender, setShouldRender] = React.useState(false);
+export const UserInputFormInput = React.memo(
+  (props: UserInputFormInputPropTypes) => {
+    const { parentPath, label, name, value, onChange } = props;
+    const path = [parentPath, name].join('.');
+    let [shouldRender, setShouldRender] = React.useState(false);
 
-  if (props.optional && !shouldRender) {
+    if (props.optional && !shouldRender) {
+      return (
+        <div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)));
+              setShouldRender(true);
+            }}
+          >
+            Add {label}
+          </button>
+        </div>
+      );
+    }
     return (
-      <div>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)));
-            setShouldRender(true);
-          }}
-        >
-          Add {label}
-        </button>
+      <div className="mutationFormNested">
+        <h4>{label}</h4>
+        <IntFormInput
+          value={value?.id}
+          scalarName={'Int'}
+          name={'id'}
+          optional={true}
+          label={'Id'}
+          parentPath={path}
+          onChange={(newValue) => onChange({ ...value, ['id']: newValue })}
+        />
+        <StringFormInput
+          value={value?.name}
+          scalarName={'String'}
+          name={'name'}
+          optional={true}
+          label={'Name'}
+          parentPath={path}
+          onChange={(newValue) => onChange({ ...value, ['name']: newValue })}
+        />
+        <StringFormInput
+          value={value?.email}
+          scalarName={'String'}
+          name={'email'}
+          optional={true}
+          label={'Email'}
+          parentPath={path}
+          onChange={(newValue) => onChange({ ...value, ['email']: newValue })}
+        />
+        <UserInputFormInput
+          value={value?.mother}
+          scalarName={'UserInput'}
+          name={'mother'}
+          optional={true}
+          label={'Mother'}
+          parentPath={path}
+          onChange={(newValue) => onChange({ ...value, ['mother']: newValue })}
+        />
+        <UserInputFormInput
+          value={value?.father}
+          scalarName={'UserInput'}
+          name={'father'}
+          optional={true}
+          label={'Father'}
+          parentPath={path}
+          onChange={(newValue) => onChange({ ...value, ['father']: newValue })}
+        />
+        <UserInputFormInputAsList
+          value={value?.friends}
+          scalarName={'UserInput'}
+          name={'friends'}
+          optional={true}
+          label={'Friends'}
+          parentPath={path}
+          onChange={(newValue) => onChange({ ...value, ['friends']: newValue })}
+        />
       </div>
     );
   }
-  return (
-    <div className="mutationFormNested">
-      <h4>{label}</h4>
-      <IntFormInput
-        value={value?.id}
-        scalarName={'Int'}
-        name={'id'}
-        optional={true}
-        label={'Id'}
-        parentPath={path}
-        onChange={(newValue) => ({ ...value, ['id']: newValue })}
-      />
-      <StringFormInput
-        value={value?.name}
-        scalarName={'String'}
-        name={'name'}
-        optional={true}
-        label={'Name'}
-        parentPath={path}
-        onChange={(newValue) => ({ ...value, ['name']: newValue })}
-      />
-      <StringFormInput
-        value={value?.email}
-        scalarName={'String'}
-        name={'email'}
-        optional={true}
-        label={'Email'}
-        parentPath={path}
-        onChange={(newValue) => ({ ...value, ['email']: newValue })}
-      />
-      <UserInputFormInput
-        value={value?.mother}
-        scalarName={'UserInput'}
-        name={'mother'}
-        optional={true}
-        label={'Mother'}
-        parentPath={path}
-        onChange={(newValue) => ({ ...value, ['mother']: newValue })}
-      />
-      <UserInputFormInput
-        value={value?.father}
-        scalarName={'UserInput'}
-        name={'father'}
-        optional={true}
-        label={'Father'}
-        parentPath={path}
-        onChange={(newValue) => ({ ...value, ['father']: newValue })}
-      />
-      <UserInputFormInputAsList
-        value={value?.friends}
-        scalarName={'UserInput'}
-        name={'friends'}
-        optional={true}
-        label={'Friends'}
-        parentPath={path}
-        onChange={(newValue) => ({ ...value, ['friends']: newValue })}
-      />
-    </div>
-  );
-};
+);
 
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
@@ -296,85 +298,91 @@ export interface UserInputFormInputAsListPropTypes {
   parentPath: string;
   onChange: (value: UserInput[]) => unknown;
 }
-export const UserInputFormInputAsList = (
-  props: UserInputFormInputAsListPropTypes
-) => {
-  const { parentPath, label, name, value, onChange } = props;
-  const path = [parentPath, name].join('.');
-  const [_value, setValue] = React.useState<{ id: string; value: UserInput }[]>(
-    (value || []).map((v) => ({ id: uniqueId('friends'), value: v }))
-  );
-  const addItem = () =>
-    setValue((old) => [
-      ...old,
-      {
-        id: uniqueId('friends'),
-        value: JSON.parse(JSON.stringify(defaultUserInputScalar)),
-      },
-    ]);
-  const insertItem = (index: number) =>
-    setValue((old) => [
-      ...old.slice(0, index),
-      {
-        id: uniqueId('friends'),
-        value: JSON.parse(JSON.stringify(defaultUserInputScalar)),
-      },
-      ...old.slice(index),
-    ]);
-  const removeItem = (index: number) =>
-    setValue((old) => [...old.slice(0, index), ...old.slice(index + 1)]);
-  return (
-    <div className="mutationFormNested mutationFormList">
-      {label && (
-        <h3>
-          {label} {path}
-        </h3>
-      )}
-      <ol>
-        {value && value.length > 0 ? (
-          _value.map((item, index) => (
-            <li key={item.id}>
-              <UserInputFormInput
-                optional={false}
-                label={''}
-                value={item.value}
-                scalarName={'UserInput'}
-                name={String(index)}
-                parentPath={path}
-                onChange={(newValue) => {
-                  setValue((oldValue) => {
-                    const replaced = oldValue.map((i) =>
+export const UserInputFormInputAsList = React.memo(
+  (props: UserInputFormInputAsListPropTypes) => {
+    const { parentPath, label, name, value, onChange } = props;
+    const path = [parentPath, name].join('.');
+    const valueMapRef = React.useRef<{ id: string; value: UserInput }[]>(
+      (value || []).map((v) => ({ id: uniqueId('friends'), value: v }))
+    );
+    const addItem = () => {
+      valueMapRef.current = [
+        ...valueMapRef.current,
+        {
+          id: uniqueId('friends'),
+          value: JSON.parse(JSON.stringify(defaultUserInputScalar)),
+        },
+      ];
+      onChange(valueMapRef.current.map((i) => i.value));
+    };
+    const insertItem = (index: number) => {
+      valueMapRef.current = [
+        ...valueMapRef.current.slice(0, index),
+        {
+          id: uniqueId('friends'),
+          value: JSON.parse(JSON.stringify(defaultUserInputScalar)),
+        },
+        ...valueMapRef.current.slice(index),
+      ];
+      onChange(valueMapRef.current.map((i) => i.value));
+    };
+    const removeItem = (index: number) => {
+      valueMapRef.current = [
+        ...valueMapRef.current.slice(0, index),
+        ...valueMapRef.current.slice(index + 1),
+      ];
+      onChange(valueMapRef.current.map((i) => i.value));
+    };
+    return (
+      <div className="mutationFormNested mutationFormList">
+        {label && (
+          <h3>
+            {label} {path}
+          </h3>
+        )}
+        <ol>
+          {valueMapRef.current.length > 0 ? (
+            valueMapRef.current.map((item, index) => (
+              <li key={item.id}>
+                <UserInputFormInput
+                  optional={false}
+                  label={''}
+                  value={item.value}
+                  scalarName={'UserInput'}
+                  name={String(index)}
+                  parentPath={path}
+                  onChange={(newValue) => {
+                    valueMapRef.current = valueMapRef.current.map((i) =>
                       i.id === item.id ? { id: item.id, value: newValue } : i
                     );
-                    onChange(replaced.map((i) => i.value));
-                    return replaced;
-                  });
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => removeItem(index)} // remove a friend from the list
-              >
-                -
-              </button>
+                    onChange(valueMapRef.current.map((i) => i.value));
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeItem(index)} // remove a friend from the list
+                >
+                  -
+                </button>
 
-              <button
-                type="button"
-                onClick={() => insertItem(index)} // insert an empty string at a position
-              >
-                +
-              </button>
-            </li>
-          ))
-        ) : (
-          <button type="button" onClick={addItem}>
-            +
-          </button>
-        )}
-      </ol>
-    </div>
-  );
-};
+                <button
+                  type="button"
+                  onClick={() => insertItem(index)} // insert an empty string at a position
+                >
+                  +
+                </button>
+              </li>
+            ))
+          ) : (
+            <button type="button" onClick={addItem}>
+              +
+            </button>
+          )}
+        </ol>
+      </div>
+    );
+  }
+);
 
 /****************************
  * forms Forms
@@ -608,7 +616,7 @@ export const AddUserForm = ({
   initialValues?: Partial<AddUserFormVariables>;
   onSubmit: (values: AddUserFormVariables) => unknown;
 }) => {
-  const [value, setValue] = React.useState(initialValues);
+  const [value, setValue] = React.useState(initialValues || {});
   return (
     <form
       onSubmit={(e) => {
@@ -665,7 +673,7 @@ export const AddUserFromObjectForm = ({
   initialValues?: Partial<AddUserFromObjectFormVariables>;
   onSubmit: (values: AddUserFromObjectFormVariables) => unknown;
 }) => {
-  const [value, setValue] = React.useState(initialValues);
+  const [value, setValue] = React.useState(initialValues || {});
   return (
     <form
       onSubmit={(e) => {
@@ -710,7 +718,7 @@ export const AddUsersForm = ({
   initialValues?: Partial<AddUsersFormVariables>;
   onSubmit: (values: AddUsersFormVariables) => unknown;
 }) => {
-  const [value, setValue] = React.useState(initialValues);
+  const [value, setValue] = React.useState(initialValues || {});
   return (
     <form
       onSubmit={(e) => {

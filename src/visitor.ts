@@ -183,7 +183,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
       metaData.asList ? '[]' : ''
     }) => unknown
     }`;
-    const componentDefinitionHead = `export const ${componentKey} = (props: ${componentKey}PropTypes) => {`;
+    const componentDefinitionHead = `export const ${componentKey} = React.memo((props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
       `const {parentPath, label, name, value, onChange } = props`,
       `const path = [parentPath, name].join('.')`,
@@ -198,28 +198,37 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
         }}>Add {label}</button></div>
       }`,
     ];
-    const componentDefinitionTail = `}`;
+    const componentDefinitionTail = `})`;
     if (metaData.asList) {
       const actualScalarMetaData = metaData.children?.[0]
         ? metaData.children?.[0]
         : { ...metaData, asList: false };
+      const defaultValueString = this.getDefaultValueStringForTypeNodeMetaData(
+        actualScalarMetaData
+      );
+      const name = metaData.name;
       componentPreBody.push(
-        `const [_value, setValue] = React.useState<{id: string, value: ${
-          metaData.tsType
-        }}[]>((value||[]).map(v => ({id: uniqueId(${JSON.stringify(
+        `const valueMapRef = React.useRef<
+          {id: string, value: ${metaData.tsType}}[]
+        >((value||[]).map(v => ({id: uniqueId(${JSON.stringify(
           metaData.name
         )}), value: v})))`,
-        `const addItem=() => setValue(old => [...old, {id: uniqueId(${JSON.stringify(
-          metaData.name
-        )}), value: ${this.getDefaultValueStringForTypeNodeMetaData(
-          actualScalarMetaData
-        )}} ])`,
-        `const insertItem=(index: number) => setValue(old => [...old.slice(0, index), {id: uniqueId(${JSON.stringify(
-          metaData.name
-        )}), value: ${this.getDefaultValueStringForTypeNodeMetaData(
-          actualScalarMetaData
-        )}}, ...old.slice(index) ])`,
-        `const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ...old.slice(index+1) ])`
+
+        `const addItem=() => {
+          valueMapRef.current = [...valueMapRef.current, {id: uniqueId('${name}'), value: ${defaultValueString}} ];
+          onChange(valueMapRef.current.map(i => i.value))
+        }`,
+        `const insertItem=(index: number) =>  {
+            valueMapRef.current = [
+              ...valueMapRef.current.slice(0, index),
+              {id: uniqueId('${name}'), value: ${defaultValueString}},
+              ...valueMapRef.current.slice(index) ];
+            onChange(valueMapRef.current.map(i => i.value))
+        }`,
+        `const removeItem=(index: number) => {
+          valueMapRef.current = [...valueMapRef.current.slice(0, index), ...valueMapRef.current.slice(index+1) ]
+          onChange(valueMapRef.current.map(i => i.value))
+        }`
       );
       componentBody = [
         `return (
@@ -228,8 +237,8 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     )}">
     {label && <h3>{label} {path}</h3>}
     <ol>
-        {value && value.length > 0 ? (
-          _value.map((item, index) => (
+        {valueMapRef.current.length > 0 ? (
+          valueMapRef.current.map((item, index) => (
             <li key={item.id}>
               ${this.renderComponentFor(
                 { ...metaData, optional: false, asList: false },
@@ -241,11 +250,8 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
                   parentPath: `path`,
                   name: `String(index)`,
                   onChange: `(newValue) => {
-                    setValue(oldValue => {
-                      const replaced = oldValue.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
-                      onChange(replaced.map(i => i.value))
-                      return replaced
-                    })
+                      valueMapRef.current = valueMapRef.current.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
+                      onChange(valueMapRef.current.map(i => i.value))
                   }`,
                 }
               )}
@@ -292,7 +298,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
               ...this.asPropString(md),
               label: JSON.stringify(sentenceCase(md.name)),
               parentPath: `path`,
-              onChange: `(newValue) => ({...value, ['${md.name}']: newValue})`,
+              onChange: `(newValue) => onChange({...value, ['${md.name}']: newValue})`,
             })
           )
           .join('\n  ')}</div>`
@@ -300,7 +306,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     } else {
       componentPreBody.push();
       componentBody = [
-        `return <div><label><strong>{label} {name} {path}</strong><br /><input value={value} onChange={(e) =>
+        `return <div><label><strong>{label} {name} {path}</strong><br /><input value={value === undefined? "" : value} onChange={(e) =>
           onChange(e.target.value as any)} /></label></div>`,
       ];
     }
@@ -358,7 +364,7 @@ export const ${baseName} = (
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
-  const [value, setValue]= React.useState(initialValues)
+  const [value, setValue]= React.useState(initialValues || {})
   return (
     <form onSubmit={(e) => {
       e.preventDefault()
