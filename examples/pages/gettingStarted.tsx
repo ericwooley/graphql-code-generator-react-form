@@ -1,23 +1,12 @@
 import {
-  AppBar,
-  Box,
-  Button,
   Card,
   CardContent,
   CardHeader,
   Container,
   Grid,
-  IconButton,
   makeStyles,
-  Toolbar,
   Typography,
 } from '@material-ui/core';
-import DataTabs from '../components/DataTabs';
-import Examples from '../components/examples';
-import Image from 'next/image';
-import Todo from '../components/todo';
-import MenuIcon from '@material-ui/icons/Menu';
-import GithubIcon from '@material-ui/icons/GitHub';
 import { Layout } from '../components/layout';
 
 const useStyles = makeStyles((theme) => ({
