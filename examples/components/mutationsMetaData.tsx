@@ -8,12 +8,13 @@ const useStyles = makeStyles((theme) => ({
   content: {
     background: '#002b35',
     padding: theme.spacing(2),
+    borderRadius: 2,
   },
 }));
 export const MutationsMetaData = () => {
   const classes = useStyles();
   return (
-    <Card style={{ borderRadius: '0 0 4px 4px' }}>
+    <Card elevation={0} style={{ borderRadius: '0 0 4px 4px' }}>
       <CardHeader title="Mutation Data Explorer" />
       <CardContent className={classes.content}>
         {typeof window !== 'undefined' && (

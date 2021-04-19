@@ -10,8 +10,7 @@ const useStyles = makeStyles((theme: Theme) =>
     root: {
       width: '100%',
       maxWidth: 560,
-      textAlign: 'center',
-      margin: '0 auto',
+      textAlign: 'right',
       padding: theme.spacing(2),
     },
   })
@@ -53,16 +52,9 @@ export default function Todo() {
           },
         ].map(({ title, done, inProgress }) => {
           return (
-            <ListItem key={title}>
-              <ListItemIcon>
-                <Checkbox edge="start" checked={done} tabIndex={-1} disabled />
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  title + ` (${inProgress ? 'in progress' : 'not started'})`
-                }
-              />
-            </ListItem>
+            <Typography key={title}>
+              {title + ` (${inProgress ? 'in progress' : 'not started'})`}
+            </Typography>
           );
         })}
       </List>

@@ -1,4 +1,10 @@
-import { Grid, makeStyles, Paper, Typography } from '@material-ui/core';
+import {
+  Container,
+  Grid,
+  makeStyles,
+  Paper,
+  Typography,
+} from '@material-ui/core';
 import DataTabs from '../components/DataTabs';
 import Examples from '../components/examples';
 import Image from 'next/image';
@@ -10,6 +16,7 @@ const useStyles = makeStyles((theme) => ({
     textAlign: 'center',
     paddingBottom: theme.spacing(4),
     paddingTop: theme.spacing(8),
+    background: 'rgba(240, 240, 240)',
   },
   content: {},
   title: {
@@ -37,24 +44,31 @@ export default function Home() {
   return (
     <Layout title="Examples">
       <div className={classes.header}>
-        <div style={{ maxWidth: 440, margin: '0 auto' }}>
-          <a href="https://www.graphql-code-generator.com/">
-            <Image
-              src="/gql-codegen-cover.png"
-              layout="responsive"
-              alt="Graphql Code Generator logo"
-              width={934}
-              height={864}
-            />
-          </a>
-        </div>
-        <Typography variant="h3" component="h1" className={classes.title}>
-          React Form Plugin
-        </Typography>
-
-        <Todo />
+        <Container maxWidth="md">
+          <Grid container>
+            <Grid item xs={12} md={6}>
+              <div style={{ maxWidth: 440, margin: '0 auto' }}>
+                <a href="https://www.graphql-code-generator.com/">
+                  <Image
+                    src="/gql-codegen-cover.png"
+                    layout="responsive"
+                    alt="Graphql Code Generator logo"
+                    width={934}
+                    height={864}
+                  />
+                </a>
+              </div>
+              <Typography variant="h3" component="h1" className={classes.title}>
+                React Form Plugin
+              </Typography>
+            </Grid>
+            <Grid xs={12} md={6}>
+              <Todo />
+            </Grid>
+          </Grid>
+        </Container>
       </div>
-      <Paper elevation={3} className={classes.content}>
+      <Paper elevation={0} className={classes.content}>
         <Grid container>
           <Grid item xs={12} md={8}>
             <Examples />

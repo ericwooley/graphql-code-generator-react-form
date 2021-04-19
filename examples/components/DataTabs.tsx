@@ -54,7 +54,7 @@ export default function DataTabs() {
 
   return (
     <div className={classes.root}>
-      <AppBar position="static" color="transparent">
+      <AppBar elevation={0} position="static" color="transparent">
         <Tabs
           value={value}
           onChange={handleChange}
