@@ -598,9 +598,13 @@ export function scalarTypeConfigToNodeMetaData(
     scalarName = scalar.type;
   } else if (scalar.type['ofType']) {
     const ofType: unknown = scalar.type.ofType;
+    const optional = !isNonNullType(scalar.type);
+    const asList = isListType(scalar.type);
     if (isListType(ofType)) {
+      isNonNullType(ofType);
       return {
         ...listTypeConfigToNodeMetaData(ofType, name, types, depth, parentTree),
+        optional,
         asList: true,
       };
     } else if (isNonNullType(ofType)) {
@@ -613,6 +617,7 @@ export function scalarTypeConfigToNodeMetaData(
           parentTree
         ),
         optional: false,
+        asList,
       };
     } else if (isNamedType(ofType)) {
       return namedTypeToTypeNodeMetaData(

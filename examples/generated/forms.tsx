@@ -118,8 +118,8 @@ export const defaultUserInputScalar = {
     return undefined;
   },
 
-  get friends(): UserInput[] | undefined {
-    return undefined;
+  get friends(): UserInput[] {
+    return JSON.parse(JSON.stringify([]));
   },
 };
 /**********************
@@ -266,7 +266,7 @@ export const UserInputFormInput = React.memo(
           value={value?.friends}
           scalarName={'UserInput'}
           name={'friends'}
-          optional={true}
+          optional={false}
           label={'Friends'}
           parentPath={path}
           onChange={(newValue) => onChange({ ...value, ['friends']: newValue })}
@@ -622,7 +622,7 @@ export const mutationsMetaData = [
             scalarName: 'UserInput',
             name: 'friends',
             tsType: 'UserInput',
-            optional: true,
+            optional: false,
             asList: true,
             children: null,
           },
@@ -707,7 +707,7 @@ export const mutationsMetaData = [
                 scalarName: 'UserInput',
                 name: 'friends',
                 tsType: 'UserInput',
-                optional: true,
+                optional: false,
                 asList: true,
                 children: null,
               },
