@@ -1,9 +1,7 @@
 import React from 'react';
 import { createStyles, Theme, makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import { Checkbox, Link, ListItemIcon, Typography } from '@material-ui/core';
+import { Link, Typography } from '@material-ui/core';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -37,20 +35,17 @@ export default function Todo() {
         {[
           {
             title: 'Customization through context',
-            done: false,
             inProgress: true,
           },
           {
             title: 'Validation',
-            done: false,
             inProgress: false,
           },
           {
             title: 'Optional React Native Support',
-            done: false,
             inProgress: false,
           },
-        ].map(({ title, done, inProgress }) => {
+        ].map(({ title, inProgress }) => {
           return (
             <Typography key={title}>
               {title + ` (${inProgress ? 'in progress' : 'not started'})`}
