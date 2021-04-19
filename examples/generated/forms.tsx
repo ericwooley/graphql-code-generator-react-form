@@ -99,41 +99,32 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
  * *******************/
 export const defaultUserInputScalar = {
   get id(): Scalars['Int'] | undefined {
-    const val = 0;
-    if (val === undefined) return val;
-    return JSON.parse(JSON.stringify(val));
+    return JSON.parse(JSON.stringify(0));
   },
 
   get name(): Scalars['String'] | undefined {
-    const val = '';
-    if (val === undefined) return val;
-    return JSON.parse(JSON.stringify(val));
+    return JSON.parse(JSON.stringify(''));
   },
 
   get email(): Scalars['String'] | undefined {
-    const val = '';
-    if (val === undefined) return val;
-    return JSON.parse(JSON.stringify(val));
+    return JSON.parse(JSON.stringify(''));
   },
 
   get mother(): UserInput | undefined {
-    const val = undefined;
-    if (val === undefined) return val;
-    return JSON.parse(JSON.stringify(val));
+    return undefined;
   },
 
   get father(): UserInput | undefined {
-    const val = undefined;
-    if (val === undefined) return val;
-    return JSON.parse(JSON.stringify(val));
+    return undefined;
   },
 
   get friends(): UserInput[] | undefined {
-    const val = undefined;
-    if (val === undefined) return val;
-    return JSON.parse(JSON.stringify(val));
+    return undefined;
   },
 };
+/**********************
+ * Scalar Form Fragments
+ * *******************/
 
 let idNonce = 0;
 const uniqueId = (inStr: string) => inStr + idNonce++;
@@ -156,9 +147,7 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   return (
     <div>
       <label>
-        <strong>
-          {label} {name} {path}
-        </strong>
+        <strong>{label}</strong>
         <br />
         <input
           value={value === undefined ? '' : value}
@@ -184,9 +173,7 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   return (
     <div>
       <label>
-        <strong>
-          {label} {name} {path}
-        </strong>
+        <strong>{label}</strong>
         <br />
         <input
           value={value === undefined ? '' : value}
@@ -384,216 +371,9 @@ export const UserInputFormInputAsList = React.memo(
   }
 );
 
-/****************************
+/***************************
  * forms Forms
  * *************************/
-export const mutationsMetaData = [
-  {
-    name: 'addUser',
-    variables: [
-      {
-        accessChain: ['String'],
-        endedFromCycle: false,
-        scalarName: 'String',
-        name: 'email',
-        tsType: 'Scalars["String"]',
-        defaultVal: '""',
-        optional: false,
-        asList: false,
-        children: null,
-      },
-      {
-        accessChain: ['String'],
-        endedFromCycle: false,
-        scalarName: 'String',
-        name: 'name',
-        tsType: 'Scalars["String"]',
-        defaultVal: '""',
-        optional: false,
-        asList: false,
-        children: null,
-      },
-    ],
-  },
-  {
-    name: 'addUserFromObject',
-    variables: [
-      {
-        accessChain: ['UserInput'],
-        endedFromCycle: false,
-        scalarName: 'UserInput',
-        name: 'user',
-        tsType: 'UserInput',
-        defaultVal: '"undefined"',
-        optional: false,
-        asList: false,
-        children: [
-          {
-            accessChain: ['UserInput', 'Int'],
-            endedFromCycle: false,
-            scalarName: 'Int',
-            name: 'id',
-            tsType: 'Scalars["Int"]',
-            defaultVal: '0',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'String'],
-            endedFromCycle: false,
-            scalarName: 'String',
-            name: 'name',
-            tsType: 'Scalars["String"]',
-            defaultVal: '""',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'String'],
-            endedFromCycle: false,
-            scalarName: 'String',
-            name: 'email',
-            tsType: 'Scalars["String"]',
-            defaultVal: '""',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'UserInput'],
-            endedFromCycle: true,
-            scalarName: 'UserInput',
-            name: 'mother',
-            tsType: 'UserInput',
-            defaultVal: '"undefined"',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'UserInput'],
-            endedFromCycle: true,
-            scalarName: 'UserInput',
-            name: 'father',
-            tsType: 'UserInput',
-            defaultVal: '"undefined"',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'UserInput'],
-            endedFromCycle: true,
-            scalarName: 'UserInput',
-            name: 'friends',
-            tsType: 'UserInput',
-            defaultVal: '"undefined"',
-            optional: true,
-            asList: true,
-            children: null,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'addUsers',
-    variables: [
-      {
-        accessChain: [],
-        endedFromCycle: false,
-        name: 'users',
-        optional: false,
-        children: [
-          {
-            accessChain: ['UserInput'],
-            endedFromCycle: false,
-            scalarName: 'UserInput',
-            name: 'users',
-            tsType: 'UserInput',
-            defaultVal: '"undefined"',
-            optional: true,
-            asList: false,
-            children: [
-              {
-                accessChain: ['UserInput', 'Int'],
-                endedFromCycle: false,
-                scalarName: 'Int',
-                name: 'id',
-                tsType: 'Scalars["Int"]',
-                defaultVal: '0',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'String'],
-                endedFromCycle: false,
-                scalarName: 'String',
-                name: 'name',
-                tsType: 'Scalars["String"]',
-                defaultVal: '""',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'String'],
-                endedFromCycle: false,
-                scalarName: 'String',
-                name: 'email',
-                tsType: 'Scalars["String"]',
-                defaultVal: '""',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'UserInput'],
-                endedFromCycle: true,
-                scalarName: 'UserInput',
-                name: 'mother',
-                tsType: 'UserInput',
-                defaultVal: '"undefined"',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'UserInput'],
-                endedFromCycle: true,
-                scalarName: 'UserInput',
-                name: 'father',
-                tsType: 'UserInput',
-                defaultVal: '"undefined"',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'UserInput'],
-                endedFromCycle: true,
-                scalarName: 'UserInput',
-                name: 'friends',
-                tsType: 'UserInput',
-                defaultVal: '"undefined"',
-                optional: true,
-                asList: true,
-                children: null,
-              },
-            ],
-          },
-        ],
-        tsType: 'UserInput',
-        defaultVal: '[]',
-        scalarName: 'UserInput',
-        asList: true,
-      },
-    ],
-  },
-];
 
 export const addUserDefaultValues = {
   email: '',
@@ -735,11 +515,206 @@ export const AddUsersForm = ({
           console.log('onChange users', value);
           setValue((oldVal) => ({ ...oldVal, ['users']: value }));
         }}
+        scalarName={'UserInput'}
         name={'users'}
         optional={false}
-        scalarName={'UserInput'}
       />
       <input type="submit" value="submit" />
     </form>
   );
 };
+
+/***************************
+ * MetaData Export
+ * *************************/
+
+export const mutationsMetaData = [
+  {
+    name: 'addUser',
+    variables: [
+      {
+        accessChain: ['String'],
+        endedFromCycle: false,
+        scalarName: 'String',
+        name: 'email',
+        tsType: 'Scalars["String"]',
+        optional: false,
+        asList: false,
+        children: null,
+      },
+      {
+        accessChain: ['String'],
+        endedFromCycle: false,
+        scalarName: 'String',
+        name: 'name',
+        tsType: 'Scalars["String"]',
+        optional: false,
+        asList: false,
+        children: null,
+      },
+    ],
+  },
+  {
+    name: 'addUserFromObject',
+    variables: [
+      {
+        accessChain: ['UserInput'],
+        endedFromCycle: false,
+        scalarName: 'UserInput',
+        name: 'user',
+        tsType: 'UserInput',
+        optional: false,
+        asList: false,
+        children: [
+          {
+            accessChain: ['UserInput', 'Int'],
+            endedFromCycle: false,
+            scalarName: 'Int',
+            name: 'id',
+            tsType: 'Scalars["Int"]',
+            optional: true,
+            asList: false,
+            children: null,
+          },
+          {
+            accessChain: ['UserInput', 'String'],
+            endedFromCycle: false,
+            scalarName: 'String',
+            name: 'name',
+            tsType: 'Scalars["String"]',
+            optional: true,
+            asList: false,
+            children: null,
+          },
+          {
+            accessChain: ['UserInput', 'String'],
+            endedFromCycle: false,
+            scalarName: 'String',
+            name: 'email',
+            tsType: 'Scalars["String"]',
+            optional: true,
+            asList: false,
+            children: null,
+          },
+          {
+            accessChain: ['UserInput', 'UserInput'],
+            endedFromCycle: true,
+            scalarName: 'UserInput',
+            name: 'mother',
+            tsType: 'UserInput',
+            optional: true,
+            asList: false,
+            children: null,
+          },
+          {
+            accessChain: ['UserInput', 'UserInput'],
+            endedFromCycle: true,
+            scalarName: 'UserInput',
+            name: 'father',
+            tsType: 'UserInput',
+            optional: true,
+            asList: false,
+            children: null,
+          },
+          {
+            accessChain: ['UserInput', 'UserInput'],
+            endedFromCycle: true,
+            scalarName: 'UserInput',
+            name: 'friends',
+            tsType: 'UserInput',
+            optional: true,
+            asList: true,
+            children: null,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'addUsers',
+    variables: [
+      {
+        accessChain: [],
+        endedFromCycle: false,
+        scalarName: 'UserInput',
+        name: 'users',
+        tsType: 'UserInput',
+        optional: false,
+        asList: true,
+        children: [
+          {
+            accessChain: ['UserInput'],
+            endedFromCycle: false,
+            scalarName: 'UserInput',
+            name: 'users',
+            tsType: 'UserInput',
+            optional: true,
+            asList: false,
+            children: [
+              {
+                accessChain: ['UserInput', 'Int'],
+                endedFromCycle: false,
+                scalarName: 'Int',
+                name: 'id',
+                tsType: 'Scalars["Int"]',
+                optional: true,
+                asList: false,
+                children: null,
+              },
+              {
+                accessChain: ['UserInput', 'String'],
+                endedFromCycle: false,
+                scalarName: 'String',
+                name: 'name',
+                tsType: 'Scalars["String"]',
+                optional: true,
+                asList: false,
+                children: null,
+              },
+              {
+                accessChain: ['UserInput', 'String'],
+                endedFromCycle: false,
+                scalarName: 'String',
+                name: 'email',
+                tsType: 'Scalars["String"]',
+                optional: true,
+                asList: false,
+                children: null,
+              },
+              {
+                accessChain: ['UserInput', 'UserInput'],
+                endedFromCycle: true,
+                scalarName: 'UserInput',
+                name: 'mother',
+                tsType: 'UserInput',
+                optional: true,
+                asList: false,
+                children: null,
+              },
+              {
+                accessChain: ['UserInput', 'UserInput'],
+                endedFromCycle: true,
+                scalarName: 'UserInput',
+                name: 'father',
+                tsType: 'UserInput',
+                optional: true,
+                asList: false,
+                children: null,
+              },
+              {
+                accessChain: ['UserInput', 'UserInput'],
+                endedFromCycle: true,
+                scalarName: 'UserInput',
+                name: 'friends',
+                tsType: 'UserInput',
+                optional: true,
+                asList: true,
+                children: null,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+];

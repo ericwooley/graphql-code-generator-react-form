@@ -5,5 +5,5 @@ import { RawClientSideBasePluginConfig } from '@graphql-codegen/visitor-plugin-c
  *
  * It extends the basic TypeScript plugins: `@graphql-codegen/typescript`, `@graphql-codegen/typescript-operations` - and thus shares a similar configuration.
  */
-export interface ReactformsRawPluginConfig
+export interface ReactFormsRawPluginConfig
   extends RawClientSideBasePluginConfig {}

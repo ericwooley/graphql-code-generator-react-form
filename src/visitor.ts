@@ -3,7 +3,7 @@ import {
   ClientSideBasePluginConfig,
   LoadedFragment,
 } from '@graphql-codegen/visitor-plugin-common';
-import { ReactformsRawPluginConfig } from './config';
+import { ReactFormsRawPluginConfig } from './config';
 import autoBind from 'auto-bind';
 import {
   GraphQLNamedType,
@@ -23,11 +23,11 @@ import { Types } from '@graphql-codegen/plugin-helpers';
 import { camelCase, pascalCase, sentenceCase } from 'change-case-all';
 import { TypeMap } from 'graphql/type/schema';
 
-export interface ReactformsConfig extends ClientSideBasePluginConfig {}
+export interface ReactFormsConfig extends ClientSideBasePluginConfig {}
 
-export class ReactformsVisitor extends ClientSideBaseVisitor<
-  ReactformsRawPluginConfig,
-  ReactformsConfig
+export class ReactFormsVisitor extends ClientSideBaseVisitor<
+  ReactFormsRawPluginConfig,
+  ReactFormsConfig
 > {
   private _operationsToInclude: {
     node: OperationDefinitionNode;
@@ -44,7 +44,7 @@ export class ReactformsVisitor extends ClientSideBaseVisitor<
   constructor(
     schema: GraphQLSchema,
     fragments: LoadedFragment[],
-    protected rawConfig: ReactformsRawPluginConfig,
+    protected rawConfig: ReactFormsRawPluginConfig,
     documents: Types.DocumentFile[]
   ) {
     super(schema, fragments, rawConfig, {});
@@ -124,15 +124,23 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
         const type = `${c.tsType}${c.asList ? '[]' : ''}${
           c.optional ? '|undefined' : ''
         }`;
-        return `
-      get ${c.name} (): ${type} {
-        const val = ${this.getDefaultValueStringForTypeNodeMetaData(
+
+        let defaultVal = this.getDefaultValueStringForTypeNodeMetaData(
           c,
           undefinedIfOptionalScalarName || metaData.scalarName
-        )};
-        if(val === undefined) return val
-        return JSON.parse(JSON.stringify(val))
-      },
+        );
+        let content =
+          defaultVal === 'undefined'
+            ? `return undefined`
+            : `
+          return JSON.parse(JSON.stringify(${defaultVal}))
+        `;
+
+        // TODO: everything seems to be optional
+        return `
+          get ${c.name} (): ${type} {
+            ${content}
+          },
     `;
       }),
       '}',
@@ -306,7 +314,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     } else {
       componentPreBody.push();
       componentBody = [
-        `return <div><label><strong>{label} {name} {path}</strong><br /><input value={value === undefined? "" : value} onChange={(e) =>
+        `return <div><label><strong>{label}</strong><br /><input value={value === undefined? "" : value} onChange={(e) =>
           onChange(e.target.value as any)} /></label></div>`,
       ];
     }
@@ -320,20 +328,30 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
     this._typeComponentMap[componentKey] = component;
     return componentRenderString;
   }
+  public generateContext() {
+    return `
+      export const defaultReactFormContexts = {
+        ${Object.entries(this._typeComponentMap).map(
+          ([scalarName]) => `${scalarName}: 'here',`
+        )}
+      }
+      export const GQLReactFormContext = React.createContext({})
 
-  public get sdkContent(): string {
-    const forms =
-      `
-/****************************
- * forms Forms
- * *************************/
-export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
-` +
-      this._mutations
-        .map((m) => {
-          const baseName = `${pascalCase(m.name)}Form`;
-          return `
-export const ${camelCase(m.name + 'DefaultValues')} = {
+    `;
+  }
+  public generateMutationsMetaDataExport() {
+    return `
+  export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
+  `;
+  }
+  public forms = '';
+  public generateFormsOutput() {
+    this.forms = this._mutations
+      .map((m) => {
+        const baseName = `${pascalCase(m.name)}Form`;
+        return `
+
+  export const ${camelCase(m.name + 'DefaultValues')} = {
   ${m.variables
     .map(
       (v) =>
@@ -342,28 +360,28 @@ export const ${camelCase(m.name + 'DefaultValues')} = {
         }: ${this.getDefaultValueStringForTypeNodeMetaData(v)}`
     )
     .join(',\n')}
-};
+  };
 
 
-export interface ${baseName}Variables {
+  export interface ${baseName}Variables {
   ${m.variables
     .map(
       (v) =>
         `${v.name}${v.optional ? '?' : ''}: ${v.tsType}${v.asList ? '[]' : ''}`
     )
     .join(',\n')}
-}
+  }
 
 
 
-export const ${baseName} = (
+  export const ${baseName} = (
   {
     initialValues = ${camelCase(m.name + 'DefaultValues')},
     onSubmit,
     ...formProps} : React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-> & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
+  > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
   const [value, setValue]= React.useState(initialValues || {})
   return (
     <form onSubmit={(e) => {
@@ -387,11 +405,12 @@ export const ${baseName} = (
       <input type="submit" value="submit" />
     </form>
   )
-};
+  };
     `;
-        })
-        .join('\n');
-
+      })
+      .join('\n');
+  }
+  public get sdkContent(): string {
     return `
 /**********************
  * Default Values
@@ -399,8 +418,18 @@ export const ${baseName} = (
   ${Object.entries(this.defaultScalarValues)
     .map(([name, entry]) => `export const ${name} = ${entry}`)
     .join('\n')}
+/**********************
+ * Scalar Form Fragments
+ * *******************/
   ${this.scalarComponents()}
-  ${forms}
+/***************************
+* forms Forms
+* *************************/
+  ${this.forms}
+/***************************
+ * MetaData Export
+ * *************************/
+  ${this.generateMutationsMetaDataExport()}
   `;
   }
 }
@@ -426,7 +455,6 @@ interface TypeNodeMetaData {
   name: string;
   tsType: string;
   scalarName: string;
-  defaultVal: string;
   optional: boolean;
   children?: Array<TypeNodeMetaData> | null;
   asList: boolean;
@@ -449,7 +477,6 @@ export function namedTypeToTypeNodeMetaData(
   parentTree: string[]
 ): TypeNodeMetaData {
   let tsType = typeDef.name;
-  let defaultVal = JSON.stringify('undefined');
   const optional = true;
   let children: TypeNodeMetaData[] | null = null;
   let endedFromCycle = false;
@@ -457,7 +484,6 @@ export function namedTypeToTypeNodeMetaData(
     endedFromCycle = true;
   }
   if (PrimitiveMaps[typeDef.name]) {
-    defaultVal = PrimitiveMaps[typeDef.name].defaultVal;
     tsType = PrimitiveMaps[typeDef.name].type;
   } else if (typeDef._fields && !endedFromCycle) {
     const typeDefFields = Object.fromEntries(
@@ -474,9 +500,6 @@ export function namedTypeToTypeNodeMetaData(
         })
     );
     children = Object.values(typeDefFields);
-  } else if (typeDef._values) {
-    defaultVal = typeDef._values[0].value;
-    tsType = typeof defaultVal;
   }
   return {
     accessChain: [...parentTree, typeDef.name],
@@ -484,7 +507,6 @@ export function namedTypeToTypeNodeMetaData(
     scalarName: typeDef.name,
     name,
     tsType,
-    defaultVal,
     optional,
     asList: false,
     children,
@@ -621,7 +643,6 @@ export function getTypeNodeMeta(
   parentTree: string[]
 ): TypeNodeMetaData {
   let tsType = '';
-  let defaultVal = JSON.stringify('undefined');
   const optional = true;
   let children: TypeNodeMetaData[] | null = null;
   let scalarName = '';
@@ -654,7 +675,6 @@ export function getTypeNodeMeta(
       name,
       tsType,
       optional,
-      defaultVal,
       children,
     };
   }
@@ -668,14 +688,11 @@ export function getTypeNodeMeta(
     );
 
     return {
+      ...child,
       accessChain: parentTree,
       endedFromCycle: false,
       name,
-      optional: true,
       children: [child],
-      tsType: child.tsType,
-      defaultVal: JSON.stringify([]),
-      scalarName: child.scalarName,
       asList: true,
     };
   } else if (type.kind === 'NonNullType') {

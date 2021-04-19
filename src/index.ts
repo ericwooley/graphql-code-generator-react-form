@@ -12,17 +12,17 @@ import {
   FragmentDefinitionNode,
 } from 'graphql';
 import { LoadedFragment } from '@graphql-codegen/visitor-plugin-common';
-import { ReactformsVisitor } from './visitor';
-import { ReactformsRawPluginConfig } from './config';
+import { ReactFormsVisitor } from './visitor';
+import { ReactFormsRawPluginConfig } from './config';
 import { extname } from 'path';
 
 export const plugin: PluginFunction<
-  ReactformsRawPluginConfig,
+  ReactFormsRawPluginConfig,
   Types.ComplexPluginOutput
 > = (
   schema: GraphQLSchema,
   documents: Types.DocumentFile[],
-  config: ReactformsRawPluginConfig
+  config: ReactFormsRawPluginConfig
 ) => {
   const allAst = concatAST(documents.map((v) => v.document as any));
 
@@ -38,7 +38,7 @@ export const plugin: PluginFunction<
     ...(config.externalFragments || []),
   ];
 
-  const visitor = new ReactformsVisitor(
+  const visitor = new ReactFormsVisitor(
     schema,
     allFragments,
     config,
@@ -46,7 +46,7 @@ export const plugin: PluginFunction<
   );
 
   visit(allAst, { leave: visitor });
-
+  visitor.generateFormsOutput();
   return {
     prepend: visitor.formsImports(),
     content: [visitor.sdkContent].join('\n'),
@@ -56,7 +56,7 @@ export const plugin: PluginFunction<
 export const validate: PluginValidateFn<any> = async (
   _schema: GraphQLSchema,
   _documents: Types.DocumentFile[],
-  _config: ReactformsRawPluginConfig,
+  _config: ReactFormsRawPluginConfig,
   outputFile: string
 ) => {
   if (extname(outputFile) !== '.tsx') {
@@ -66,4 +66,4 @@ export const validate: PluginValidateFn<any> = async (
   }
 };
 
-export { ReactformsVisitor as ReactApolloVisitor };
+export { ReactFormsVisitor as ReactApolloVisitor };
