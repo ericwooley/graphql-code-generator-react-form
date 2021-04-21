@@ -64,16 +64,17 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     return `mutationFormList`;
   }
 
-  public scalarComponents() {
+  public utilities() {
     return `
-let idNonce = 0;
-const uniqueId = (inStr: string) => inStr+(idNonce++)
-/******************************
- * Scalar Components
- * ****************************/
-
-
-    ${Object.values(this._typeComponentMap).join('\n\n')}`;
+    /**************************
+     * utilities
+     *************************/
+    let idNonce = 0;
+    const uniqueId = (inStr: string) => inStr+(idNonce++)
+    `;
+  }
+  public scalarComponents() {
+    return Object.values(this._typeComponentMap).join('\n\n');
   }
 
   protected buildOperation(
@@ -330,12 +331,42 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
   }
   public generateContext() {
     return `
-      export const defaultReactFormContexts = {
-        ${Object.entries(this._typeComponentMap).map(
-          ([scalarName]) => `${scalarName}: 'here',`
-        )}
+      interface ReactOnChangeHandler<T> extends React.FC<{onChange: (value: T) => T, value?: T, label: string }> {
+
       }
-      export const GQLReactFormContext = React.createContext({})
+      export const defaultReactFormContext = {
+        form: 'form' as any as React.FunctionComponent<{onSubmit: (e?: {preventDefault?: () => any}) => any}>,
+        submitButton: ((props) => <input type="submit" {...props} value={props.text} /> )as React.FunctionComponent<{text: string}>,
+        input: ((props) => {
+          const typeofValue = typeof props.value
+            return (
+            <div>
+              <label>
+                <strong>{props.label}</strong><br />
+                <input value={props.value === undefined
+                  ? "string"
+                  : typeofValue === 'string'
+                  ? 'text'
+                  : typeofValue === 'number'
+                  ? 'number'
+                  : props.value instanceof Date
+                  ? 'date'
+                  : ''
+                } onChange={(e) =>
+                  props.onChange(e.target.value)} />
+              </label>
+            </div>)
+          }) as ReactOnChangeHandler<string|number|Date>,
+        ${Object.keys(this._typeComponentMap)
+          .filter((name) => !name.match(/AsList$/))
+          .map(
+            (scalarName) => `get ${scalarName.replace(/FormInput$/, '')}() {
+            return ${scalarName}
+          }`
+          )
+          .join(',\n')}
+      }
+      export const GQLReactFormContext = React.createContext(defaultReactFormContext)
 
     `;
   }
@@ -383,27 +414,30 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
   HTMLFormElement
   > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
   const [value, setValue]= React.useState(initialValues || {})
+  const ctx = React.useContext(GQLReactFormContext)
+  const FormComponent = ctx.form
+  const SubmitButton = ctx.submitButton
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault()
-      onSubmit(value as any)
-    }} {...formProps}>
-      ${m.variables
-        .map((v) =>
-          this.renderComponentFor(v, {
-            value: `value?.${v.name}`,
-            label: JSON.stringify(sentenceCase(v.name)),
-            parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
-            onChange: `(value) => {
-              console.log('onChange ${v.name}', value)
-              setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
-            }`,
-            ...this.asPropString(v),
-          })
-        )
-        .join('\n    ')}
-      <input type="submit" value="submit" />
-    </form>
+      <FormComponent onSubmit={(e) => {
+        e?.preventDefault?.()
+        onSubmit(value as any)
+      }} {...formProps}>
+        ${m.variables
+          .map((v) =>
+            this.renderComponentFor(v, {
+              value: `value?.${v.name}`,
+              label: JSON.stringify(sentenceCase(v.name)),
+              parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
+              onChange: `(value) => {
+                console.log('onChange ${v.name}', value)
+                setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
+              }`,
+              ...this.asPropString(v),
+            })
+          )
+          .join('\n    ')}
+        <SubmitButton text="submit" />
+      </FormComponent>
   )
   };
     `;
@@ -412,6 +446,7 @@ const uniqueId = (inStr: string) => inStr+(idNonce++)
   }
   public get sdkContent(): string {
     return `
+    ${this.generateContext()}
 /**********************
  * Default Values
  * *******************/

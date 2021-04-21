@@ -94,6 +94,58 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
   allUsers: Array<Maybe<{ __typename?: 'User' } & Pick<User, 'id'>>>;
 };
 
+/**************************
+ * utilities
+ *************************/
+let idNonce = 0;
+const uniqueId = (inStr: string) => inStr + idNonce++;
+
+interface ReactOnChangeHandler<T>
+  extends React.FC<{ onChange: (value: T) => T; value?: T; label: string }> {}
+export const defaultReactFormContext = {
+  form: ('form' as any) as React.FunctionComponent<{
+    onSubmit: (e?: { preventDefault?: () => any }) => any;
+  }>,
+  submitButton: ((props) => (
+    <input type="submit" {...props} value={props.text} />
+  )) as React.FunctionComponent<{ text: string }>,
+  input: ((props) => {
+    const typeofValue = typeof props.value;
+    return (
+      <div>
+        <label>
+          <strong>{props.label}</strong>
+          <br />
+          <input
+            value={
+              props.value === undefined
+                ? 'string'
+                : typeofValue === 'string'
+                ? 'text'
+                : typeofValue === 'number'
+                ? 'number'
+                : props.value instanceof Date
+                ? 'date'
+                : ''
+            }
+            onChange={(e) => props.onChange(e.target.value)}
+          />
+        </label>
+      </div>
+    );
+  }) as ReactOnChangeHandler<string | number | Date>,
+  get String() {
+    return StringFormInput;
+  },
+  get Int() {
+    return IntFormInput;
+  },
+  get UserInput() {
+    return UserInputFormInput;
+  },
+};
+export const GQLReactFormContext = React.createContext(defaultReactFormContext);
+
 /**********************
  * Default Values
  * *******************/
@@ -125,12 +177,6 @@ export const defaultUserInputScalar = {
 /**********************
  * Scalar Form Fragments
  * *******************/
-
-let idNonce = 0;
-const uniqueId = (inStr: string) => inStr + idNonce++;
-/******************************
- * Scalar Components
- * ****************************/
 
 export interface StringFormInputPropTypes {
   optional: boolean;
@@ -397,10 +443,13 @@ export const AddUserForm = ({
   onSubmit: (values: AddUserFormVariables) => unknown;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
+  const ctx = React.useContext(GQLReactFormContext);
+  const FormComponent = ctx.form;
+  const SubmitButton = ctx.submitButton;
   return (
-    <form
+    <FormComponent
       onSubmit={(e) => {
-        e.preventDefault();
+        e?.preventDefault?.();
         onSubmit(value as any);
       }}
       {...formProps}
@@ -429,8 +478,8 @@ export const AddUserForm = ({
         name={'name'}
         optional={false}
       />
-      <input type="submit" value="submit" />
-    </form>
+      <SubmitButton text="submit" />
+    </FormComponent>
   );
 };
 
@@ -454,10 +503,13 @@ export const AddUserFromObjectForm = ({
   onSubmit: (values: AddUserFromObjectFormVariables) => unknown;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
+  const ctx = React.useContext(GQLReactFormContext);
+  const FormComponent = ctx.form;
+  const SubmitButton = ctx.submitButton;
   return (
-    <form
+    <FormComponent
       onSubmit={(e) => {
-        e.preventDefault();
+        e?.preventDefault?.();
         onSubmit(value as any);
       }}
       {...formProps}
@@ -474,8 +526,8 @@ export const AddUserFromObjectForm = ({
         name={'user'}
         optional={false}
       />
-      <input type="submit" value="submit" />
-    </form>
+      <SubmitButton text="submit" />
+    </FormComponent>
   );
 };
 
@@ -499,10 +551,13 @@ export const AddUsersForm = ({
   onSubmit: (values: AddUsersFormVariables) => unknown;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
+  const ctx = React.useContext(GQLReactFormContext);
+  const FormComponent = ctx.form;
+  const SubmitButton = ctx.submitButton;
   return (
-    <form
+    <FormComponent
       onSubmit={(e) => {
-        e.preventDefault();
+        e?.preventDefault?.();
         onSubmit(value as any);
       }}
       {...formProps}
@@ -519,8 +574,8 @@ export const AddUsersForm = ({
         name={'users'}
         optional={false}
       />
-      <input type="submit" value="submit" />
-    </form>
+      <SubmitButton text="submit" />
+    </FormComponent>
   );
 };
 

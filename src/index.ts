@@ -49,7 +49,7 @@ export const plugin: PluginFunction<
   visitor.generateFormsOutput();
   return {
     prepend: visitor.formsImports(),
-    content: [visitor.sdkContent].join('\n'),
+    content: [visitor.utilities(), visitor.sdkContent].join('\n'),
   };
 };
 
