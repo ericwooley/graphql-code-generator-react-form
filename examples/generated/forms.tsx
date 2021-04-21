@@ -101,7 +101,6 @@ let idNonce = 0;
 const uniqueId = (inStr: string) => inStr + idNonce++;
 
 interface StandardProps {
-  onClick?: () => any;
   children?: React.ReactNode;
   path: string;
   id?: string;
@@ -111,14 +110,36 @@ interface ReactOnChangeHandler<T>
   extends React.FC<
     { onChange: (value: T) => T; value?: T; label: string } & StandardProps
   > {}
-export const defaultReactFormContext = {
-  form: ('form' as any) as React.FunctionComponent<{
+interface GQLFormStandardComponent<T = {}>
+  extends React.FC<StandardProps & T> {}
+export interface GQLReactFormContext {
+  form: GQLFormStandardComponent<{
     onSubmit: (e?: { preventDefault?: () => any }) => any;
-  }>,
+  }>;
+  div: GQLFormStandardComponent;
+  label: GQLFormStandardComponent;
+  labelTextWrapper: GQLFormStandardComponent;
+  button: GQLFormStandardComponent<{
+    onClick?: (e?: { preventDefault?: () => any }) => any;
+  }>;
+  listWrapper: GQLFormStandardComponent;
+  listItem: GQLFormStandardComponent;
+  submitButton: React.FC<{ text: string }>;
+  input: ReactOnChangeHandler<string | number | Date>;
+  String: React.FC<StringFormInputPropTypes>;
+  Int: React.FC<IntFormInputPropTypes>;
+  UserInput: React.FC<UserInputFormInputPropTypes>;
+}
+export const defaultReactFormContext: GQLReactFormContext = {
+  form: 'form' as any,
   div: ({ ...props }: StandardProps) => <div {...props} />,
   label: ({ ...props }: StandardProps) => <label {...props} />,
   labelTextWrapper: ({ ...props }: StandardProps) => <h4 {...props} />,
-  button: ({ ...props }: StandardProps) => (
+  button: ({
+    ...props
+  }: StandardProps & {
+    onClick?: (e?: { preventDefault: () => any }) => any;
+  }) => (
     <button
       {...props}
       onClick={(e) => {
@@ -129,9 +150,9 @@ export const defaultReactFormContext = {
   ),
   listWrapper: ({ ...props }: StandardProps) => <ol {...props} />,
   listItem: ({ ...props }: StandardProps) => <li {...props} />,
-  submitButton: ((props) => (
+  submitButton: (props: { text: string }) => (
     <input type="submit" {...props} value={props.text} />
-  )) as React.FunctionComponent<{ text: string }>,
+  ),
   input: ((props) => {
     const { path } = props;
     const ctx = React.useContext(GQLReactFormContext);
@@ -160,18 +181,18 @@ export const defaultReactFormContext = {
       </DivComponent>
     );
   }) as ReactOnChangeHandler<string | number | Date>,
-  get String() {
+  get String(): React.FC<StringFormInputPropTypes> {
     return StringFormInput;
   },
-  get Int() {
+  get Int(): React.FC<IntFormInputPropTypes> {
     return IntFormInput;
   },
-  get UserInput() {
+  get UserInput(): React.FC<UserInputFormInputPropTypes> {
     return UserInputFormInput;
   },
 };
 export const GQLReactFormContext = React.createContext<
-  Partial<typeof defaultReactFormContext>
+  Partial<GQLReactFormContext>
 >(defaultReactFormContext);
 
 /**********************
@@ -544,6 +565,7 @@ export const AddUserForm = ({
         onSubmit(value as any);
       }}
       {...formProps}
+      path=""
     >
       <StringFormInput
         value={value?.email}
@@ -605,6 +627,7 @@ export const AddUserFromObjectForm = ({
         onSubmit(value as any);
       }}
       {...formProps}
+      path=""
     >
       <UserInputFormInput
         value={value?.user}
@@ -654,6 +677,7 @@ export const AddUsersForm = ({
         onSubmit(value as any);
       }}
       {...formProps}
+      path=""
     >
       <UserInputFormInputAsList
         value={value?.users}

@@ -422,7 +422,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       <${this.cc.form.tagName} onSubmit={(e) => {
         e?.preventDefault?.()
         onSubmit(value as any)
-      }} {...formProps}>
+      }} {...formProps} path="">
         ${m.variables
           .map((v) =>
             this.renderComponentFor(v, {

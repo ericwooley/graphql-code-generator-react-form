@@ -48,33 +48,58 @@ export class ComponentComposer {
   private generatePassthroughComponent(
     name: string,
     componentType = name,
-    extra = ''
+    extra = '',
+    extraPropTypes: string = ''
   ) {
-    return `${name}: ({...props}: StandardProps) => <${componentType} {...props} ${extra}/>`;
+    return `${name}: ({...props}: ${['StandardProps', extraPropTypes]
+      .filter((i) => i)
+      .join(' & ')}) => <${componentType} {...props} ${extra}/>`;
   }
   public generateContext(typeComponentMap: { [key: string]: any }) {
     return `
       interface StandardProps {
-        onClick?: () => any
         children?: React.ReactNode
         path: string
         id?: string
         className?: string
       }
       interface ReactOnChangeHandler<T> extends React.FC<{onChange: (value: T) => T, value?: T, label: string } & StandardProps> {}
-      export const defaultReactFormContext = {
-        form: 'form' as any as React.FunctionComponent<{onSubmit: (e?: {preventDefault?: () => any}) => any}>,
+      interface GQLFormStandardComponent<T = {}> extends React.FC<StandardProps & T> { }
+      export interface GQLReactFormContext {
+        form: GQLFormStandardComponent< {onSubmit: (e?: {preventDefault?: () => any}) => any} >,
+        div: GQLFormStandardComponent,
+        label: GQLFormStandardComponent,
+        labelTextWrapper: GQLFormStandardComponent,
+        button: GQLFormStandardComponent<{onClick?: (e?: {preventDefault?: () => any}) => any }>,
+        listWrapper: GQLFormStandardComponent,
+        listItem: GQLFormStandardComponent,
+        submitButton: React.FC<{text: string}>
+        input: ReactOnChangeHandler<string | number | Date>
+        ${Object.keys(typeComponentMap)
+          .filter((name) => !name.match(/AsList$/))
+          .map(
+            (scalarName) =>
+              `${scalarName.replace(
+                /FormInput$/,
+                ''
+              )}: React.FC<${scalarName}PropTypes> `
+          )
+          .join(',\n')},
+      }
+      export const defaultReactFormContext: GQLReactFormContext = {
+        form: 'form' as any,
         ${this.generatePassthroughComponent('div')},
         ${this.generatePassthroughComponent('label')},
         ${this.generatePassthroughComponent('labelTextWrapper', 'h4')},
         ${this.generatePassthroughComponent(
           'button',
           'button',
-          'onClick={e => {e.preventDefault(); props.onClick?.()}}'
+          'onClick={e => {e.preventDefault(); props.onClick?.()}}',
+          '{onClick?: (e?: {preventDefault: () => any}) => any}'
         )},
         ${this.generatePassthroughComponent('listWrapper', 'ol')},
         ${this.generatePassthroughComponent('listItem', 'li')},
-        submitButton: ((props) => <input type="submit" {...props} value={props.text} /> )as React.FunctionComponent<{text: string}>,
+        submitButton: ((props: {text: string}) => <input type="submit" {...props} value={props.text} /> ),
         input: ((props) => {
           const {path} = props
           ${this.initContext}
@@ -105,13 +130,16 @@ export class ComponentComposer {
         ${Object.keys(typeComponentMap)
           .filter((name) => !name.match(/AsList$/))
           .map(
-            (scalarName) => `get ${scalarName.replace(/FormInput$/, '')}() {
+            (scalarName) => `get ${scalarName.replace(
+              /FormInput$/,
+              ''
+            )}(): React.FC<${scalarName}PropTypes> {
             return ${scalarName}
           }`
           )
           .join(',\n')}
       }
-      export const GQLReactFormContext = React.createContext<Partial<typeof defaultReactFormContext>>(defaultReactFormContext)
+      export const GQLReactFormContext = React.createContext<Partial<GQLReactFormContext>>(defaultReactFormContext)
 
     `;
   }
