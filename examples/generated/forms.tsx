@@ -183,7 +183,7 @@ export const defaultUserInputScalar = {
 export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
-  value?: Scalars['String'];
+  value?: Maybe<Scalars['String']>;
   scalarName: string;
   name: string;
   parentPath: string;
@@ -198,7 +198,7 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
         <strong>{label}</strong>
         <br />
         <input
-          value={value === undefined ? '' : value}
+          value={value === undefined || value === null ? '' : value}
           onChange={(e) => onChange(e.target.value as any)}
         />
       </label>
@@ -209,7 +209,7 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
 export interface IntFormInputPropTypes {
   optional: boolean;
   label: string;
-  value?: Scalars['Int'];
+  value?: Maybe<Scalars['Int']>;
   scalarName: string;
   name: string;
   parentPath: string;
@@ -224,7 +224,7 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
         <strong>{label}</strong>
         <br />
         <input
-          value={value === undefined ? '' : value}
+          value={value === undefined || value === null ? '' : value}
           onChange={(e) => onChange(e.target.value as any)}
         />
       </label>
@@ -235,7 +235,7 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
 export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
-  value?: UserInput;
+  value?: Maybe<UserInput>;
   scalarName: string;
   name: string;
   parentPath: string;
@@ -247,7 +247,7 @@ export const UserInputFormInput = React.memo(
     const path = [parentPath, name].join('.');
     let [shouldRender, setShouldRender] = React.useState(false);
 
-    if (props.optional && !shouldRender) {
+    if (value === undefined || value === null) {
       return (
         <div>
           <button
@@ -337,7 +337,7 @@ export const UserInputFormInput = React.memo(
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
-  value?: UserInput[];
+  value?: Maybe<UserInput>[];
   scalarName: string;
   name: string;
   parentPath: string;
@@ -347,7 +347,7 @@ export const UserInputFormInputAsList = React.memo(
   (props: UserInputFormInputAsListPropTypes) => {
     const { parentPath, label, name, value, onChange } = props;
     const path = [parentPath, name].join('.');
-    const valueMapRef = React.useRef<{ id: string; value: UserInput }[]>(
+    const valueMapRef = React.useRef<{ id: string; value: Maybe<UserInput> }[]>(
       (value || []).map((v) => ({ id: uniqueId('friends'), value: v }))
     );
     const addItem = () => {
@@ -358,7 +358,13 @@ export const UserInputFormInputAsList = React.memo(
           value: JSON.parse(JSON.stringify(defaultUserInputScalar)),
         },
       ];
-      onChange(valueMapRef.current.map((i) => i.value));
+      onChange(
+        valueMapRef.current.map((i) =>
+          i.value === null
+            ? JSON.parse(JSON.stringify(defaultUserInputScalar))
+            : i.value
+        )
+      );
     };
     const insertItem = (index: number) => {
       valueMapRef.current = [
@@ -369,14 +375,26 @@ export const UserInputFormInputAsList = React.memo(
         },
         ...valueMapRef.current.slice(index),
       ];
-      onChange(valueMapRef.current.map((i) => i.value));
+      onChange(
+        valueMapRef.current.map((i) =>
+          i.value === null
+            ? JSON.parse(JSON.stringify(defaultUserInputScalar))
+            : i.value
+        )
+      );
     };
     const removeItem = (index: number) => {
       valueMapRef.current = [
         ...valueMapRef.current.slice(0, index),
         ...valueMapRef.current.slice(index + 1),
       ];
-      onChange(valueMapRef.current.map((i) => i.value));
+      onChange(
+        valueMapRef.current.map((i) =>
+          i.value === null
+            ? JSON.parse(JSON.stringify(defaultUserInputScalar))
+            : i.value
+        )
+      );
     };
     return (
       <div className="mutationFormNested mutationFormList">
@@ -396,11 +414,21 @@ export const UserInputFormInputAsList = React.memo(
                   scalarName={'UserInput'}
                   name={String(index)}
                   parentPath={path}
-                  onChange={(newValue) => {
+                  onChange={(
+                    newValue = JSON.parse(
+                      JSON.stringify(defaultUserInputScalar)
+                    )
+                  ) => {
                     valueMapRef.current = valueMapRef.current.map((i) =>
                       i.id === item.id ? { id: item.id, value: newValue } : i
                     );
-                    onChange(valueMapRef.current.map((i) => i.value));
+                    onChange(
+                      valueMapRef.current.map((i) =>
+                        i.value === null
+                          ? JSON.parse(JSON.stringify(defaultUserInputScalar))
+                          : i.value
+                      )
+                    );
                   }}
                 />
                 <button
@@ -456,8 +484,8 @@ export const AddUserForm = ({
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
-  const FormComponent = ctx.form;
-  const SubmitButton = ctx.submitButton;
+  const FormComponent = ctx.form || defaultReactFormContext.form;
+  const SubmitButton = ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
       onSubmit={(e) => {
@@ -478,6 +506,7 @@ export const AddUserForm = ({
         name={'email'}
         optional={false}
       />
+
       <StringFormInput
         value={value?.name}
         label={'Name'}
@@ -516,8 +545,8 @@ export const AddUserFromObjectForm = ({
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
-  const FormComponent = ctx.form;
-  const SubmitButton = ctx.submitButton;
+  const FormComponent = ctx.form || defaultReactFormContext.form;
+  const SubmitButton = ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
       onSubmit={(e) => {
@@ -564,8 +593,8 @@ export const AddUsersForm = ({
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
-  const FormComponent = ctx.form;
-  const SubmitButton = ctx.submitButton;
+  const FormComponent = ctx.form || defaultReactFormContext.form;
+  const SubmitButton = ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
       onSubmit={(e) => {

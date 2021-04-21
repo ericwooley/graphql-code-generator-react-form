@@ -5,23 +5,15 @@ import {
 } from '@graphql-codegen/visitor-plugin-common';
 import { ReactFormsRawPluginConfig } from './config';
 import autoBind from 'auto-bind';
-import {
-  GraphQLNamedType,
-  GraphQLScalarType,
-  GraphQLScalarTypeConfig,
-  GraphQLSchema,
-  OperationDefinitionNode,
-  TypeNode,
-  VariableDefinitionNode,
-  isNonNullType,
-  isListType,
-  GraphQLList,
-  GraphQLNonNull,
-  isNamedType,
-} from 'graphql';
+import { GraphQLSchema, OperationDefinitionNode } from 'graphql';
 import { Types } from '@graphql-codegen/plugin-helpers';
 import { camelCase, pascalCase, sentenceCase } from 'change-case-all';
-import { TypeMap } from 'graphql/type/schema';
+import { ComponentComposer } from './components';
+import {
+  TypeNodeMetaData,
+  varDefToVar,
+  PrimitiveMaps,
+} from './metaDataBuilder';
 
 export interface ReactFormsConfig extends ClientSideBasePluginConfig {}
 
@@ -45,7 +37,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     schema: GraphQLSchema,
     fragments: LoadedFragment[],
     protected rawConfig: ReactFormsRawPluginConfig,
-    documents: Types.DocumentFile[]
+    documents: Types.DocumentFile[],
+    private componentComposer = new ComponentComposer(rawConfig)
   ) {
     super(schema, fragments, rawConfig, {});
     this.schema = schema;
@@ -183,7 +176,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     const componentPropTypes = `export interface ${componentKey}PropTypes {
       optional: boolean,
       label: string,
-      value?: ${metaData.tsType}${metaData.asList ? '[]' : ''},
+      value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
       name: string,
       parentPath: string,
@@ -198,7 +191,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     ];
     let componentBody = [
       `
-      if(props.optional && !shouldRender){
+      if(value === undefined || value === null ){
         return <div><button onClick={(e) => {
           e.preventDefault();
           onChange(${this.getDefaultValueStringForTypeNodeMetaData(metaData)})
@@ -217,25 +210,31 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       const name = metaData.name;
       componentPreBody.push(
         `const valueMapRef = React.useRef<
-          {id: string, value: ${metaData.tsType}}[]
+          {id: string, value: Maybe<${metaData.tsType}>}[]
         >((value||[]).map(v => ({id: uniqueId(${JSON.stringify(
           metaData.name
         )}), value: v})))`,
 
         `const addItem=() => {
           valueMapRef.current = [...valueMapRef.current, {id: uniqueId('${name}'), value: ${defaultValueString}} ];
-          onChange(valueMapRef.current.map(i => i.value))
+          onChange(valueMapRef.current.map(i => i.value === null ? ${this.getDefaultValueStringForTypeNodeMetaData(
+            actualScalarMetaData
+          )}: i.value))
         }`,
         `const insertItem=(index: number) =>  {
             valueMapRef.current = [
               ...valueMapRef.current.slice(0, index),
               {id: uniqueId('${name}'), value: ${defaultValueString}},
               ...valueMapRef.current.slice(index) ];
-            onChange(valueMapRef.current.map(i => i.value))
+            onChange(valueMapRef.current.map(i => i.value === null ? ${this.getDefaultValueStringForTypeNodeMetaData(
+              actualScalarMetaData
+            )}: i.value))
         }`,
         `const removeItem=(index: number) => {
           valueMapRef.current = [...valueMapRef.current.slice(0, index), ...valueMapRef.current.slice(index+1) ]
-          onChange(valueMapRef.current.map(i => i.value))
+          onChange(valueMapRef.current.map(i => i.value === null ? ${this.getDefaultValueStringForTypeNodeMetaData(
+            actualScalarMetaData
+          )}: i.value))
         }`
       );
       componentBody = [
@@ -257,9 +256,13 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                   ...this.asPropString(metaData, ['optional']),
                   parentPath: `path`,
                   name: `String(index)`,
-                  onChange: `(newValue) => {
+                  onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
+                    actualScalarMetaData
+                  )}) => {
                       valueMapRef.current = valueMapRef.current.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
-                      onChange(valueMapRef.current.map(i => i.value))
+                      onChange(valueMapRef.current.map(i => i.value === null ?${this.getDefaultValueStringForTypeNodeMetaData(
+                        actualScalarMetaData
+                      )} : i.value))
                   }`,
                 }
               )}
@@ -316,7 +319,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     } else {
       componentPreBody.push();
       componentBody = [
-        `return <div><label><strong>{label}</strong><br /><input value={value === undefined? "" : value} onChange={(e) =>
+        `return <div><label><strong>{label}</strong><br /><input value={value === undefined || value===null? "" : value} onChange={(e) =>
           onChange(e.target.value as any)} /></label></div>`,
       ];
     }
@@ -331,45 +334,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     return componentRenderString;
   }
   public generateContext() {
-    return `
-      interface ReactOnChangeHandler<T> extends React.FC<{onChange: (value: T) => T, value?: T, label: string }> {
-
-      }
-      export const defaultReactFormContext = {
-        form: 'form' as any as React.FunctionComponent<{onSubmit: (e?: {preventDefault?: () => any}) => any}>,
-        submitButton: ((props) => <input type="submit" {...props} value={props.text} /> )as React.FunctionComponent<{text: string}>,
-        input: ((props) => {
-          const typeofValue = typeof props.value
-            return (
-            <div>
-              <label>
-                <strong>{props.label}</strong><br />
-                <input value={props.value === undefined
-                  ? "string"
-                  : typeofValue === 'string'
-                  ? 'text'
-                  : typeofValue === 'number'
-                  ? 'number'
-                  : props.value instanceof Date
-                  ? 'date'
-                  : ''
-                } onChange={(e) =>
-                  props.onChange(e.target.value)} />
-              </label>
-            </div>)
-          }) as ReactOnChangeHandler<string|number|Date>,
-        ${Object.keys(this._typeComponentMap)
-          .filter((name) => !name.match(/AsList$/))
-          .map(
-            (scalarName) => `get ${scalarName.replace(/FormInput$/, '')}() {
-            return ${scalarName}
-          }`
-          )
-          .join(',\n')}
-      }
-      export const GQLReactFormContext = React.createContext<Partial<typeof defaultReactFormContext>>(defaultReactFormContext)
-
-    `;
+    return this.componentComposer.generateContext(this._typeComponentMap);
   }
   public generateMutationsMetaDataExport() {
     return `
@@ -416,10 +381,10 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
   const [value, setValue]= React.useState(initialValues || {})
   const ctx = React.useContext(GQLReactFormContext)
-  const FormComponent = ctx.form
-  const SubmitButton = ctx.submitButton
+  const FormComponent = ctx.form || defaultReactFormContext.form
+  ${this.componentComposer.initSubmitButtonStr}
   return (
-      <FormComponent onSubmit={(e) => {
+      <${this.componentComposer.formComponent} onSubmit={(e) => {
         e?.preventDefault?.()
         onSubmit(value as any)
       }} {...formProps}>
@@ -437,8 +402,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             })
           )
           .join('\n    ')}
-        <SubmitButton text="submit" />
-      </FormComponent>
+        <${this.componentComposer.submitButton} text="submit" />
+      </${this.componentComposer.formComponent}>
   )
   };
     `;
@@ -468,287 +433,4 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   ${this.generateMutationsMetaDataExport()}
   `;
   }
-}
-
-const PrimitiveMaps: { [k: string]: { type: string; defaultVal: string } } = {
-  Int: { type: 'Scalars["Int"]', defaultVal: JSON.stringify(0) },
-  Float: { type: 'Scalars["Float"]', defaultVal: JSON.stringify(0) },
-  String: { type: 'Scalars["String"]', defaultVal: JSON.stringify('') },
-  Boolean: { type: 'Scalars["Boolean"]:', defaultVal: JSON.stringify(false) },
-  ID: { type: 'Scalars["ID"]', defaultVal: JSON.stringify('') },
-};
-
-export function varDefToVar(
-  varDef: VariableDefinitionNode,
-  types: TypeMap
-): TypeNodeMetaData {
-  return getTypeNodeMeta(varDef.type, varDef.variable.name.value, types, 0, []);
-}
-
-interface TypeNodeMetaData {
-  accessChain: string[];
-  endedFromCycle: boolean;
-  name: string;
-  tsType: string;
-  scalarName: string;
-  optional: boolean;
-  children?: Array<TypeNodeMetaData> | null;
-  asList: boolean;
-}
-
-export function namedTypeToTypeNodeMetaData(
-  typeDef: GraphQLNamedType & {
-    // seems like this is only for enums
-    _values?: GraphqlEnumValues[];
-    // this is the good stuff
-    _fields?: {
-      [key: string]: GraphQLScalarTypeConfig<unknown, unknown> & {
-        type?: string | ({ ofType?: GraphQLScalarType } & GraphQLScalarType);
-      };
-    };
-  },
-  name: string,
-  types: TypeMap,
-  depth: number,
-  parentTree: string[]
-): TypeNodeMetaData {
-  let tsType = typeDef.name;
-  const optional = true;
-  let children: TypeNodeMetaData[] | null = null;
-  let endedFromCycle = false;
-  if (parentTree.includes(typeDef.name)) {
-    endedFromCycle = true;
-  }
-  if (PrimitiveMaps[typeDef.name]) {
-    tsType = PrimitiveMaps[typeDef.name].type;
-  } else if (typeDef._fields && !endedFromCycle) {
-    const typeDefFields = Object.fromEntries(
-      Object.entries(typeDef._fields)
-        .filter(([, child]) => (child as any).type)
-        .map(([childName, child]) => {
-          return [
-            childName,
-            scalarTypeConfigToNodeMetaData(child, childName, types, depth + 1, [
-              ...parentTree,
-              typeDef.name,
-            ]),
-          ];
-        })
-    );
-    children = Object.values(typeDefFields);
-  }
-  return {
-    accessChain: [...parentTree, typeDef.name],
-    endedFromCycle,
-    scalarName: typeDef.name,
-    name,
-    tsType,
-    optional,
-    asList: false,
-    children,
-  };
-}
-
-export function listTypeConfigToNodeMetaData(
-  scalar: GraphQLList<any>,
-  name: string,
-  types: TypeMap,
-  depth: number,
-  parentTree: string[]
-): TypeNodeMetaData {
-  if (isNonNullType(scalar.ofType))
-    return {
-      ...nonNullTypeConfigToNodeMetaData(
-        scalar.ofType,
-        name,
-        types,
-        depth,
-        parentTree
-      ),
-      asList: true,
-    };
-  if (isNamedType(scalar.ofType))
-    return {
-      ...namedTypeToTypeNodeMetaData(
-        scalar.ofType,
-        name,
-        types,
-        depth,
-        parentTree
-      ),
-      asList: true,
-    };
-  throw new Error('unknown child type for list');
-}
-
-export function nonNullTypeConfigToNodeMetaData(
-  scalar: GraphQLNonNull<any>,
-  name: string,
-  types: TypeMap,
-  depth: number,
-  parentTree: string[]
-): TypeNodeMetaData {
-  if (isListType(scalar.ofType))
-    return {
-      ...listTypeConfigToNodeMetaData(
-        scalar.ofType,
-        name,
-        types,
-        depth,
-        parentTree
-      ),
-      optional: false,
-    };
-  if (isNamedType(scalar.ofType))
-    return {
-      ...namedTypeToTypeNodeMetaData(
-        scalar.ofType,
-        name,
-        types,
-        depth,
-        parentTree
-      ),
-      optional: false,
-    };
-  throw new Error('unknown child type for list');
-}
-export function scalarTypeConfigToNodeMetaData(
-  scalar: GraphQLScalarTypeConfig<unknown, unknown> & {
-    type?:
-      | string
-      | ({
-          ofType?: GraphQLList<any> | GraphQLNonNull<any> | GraphQLNamedType;
-        } & GraphQLScalarType);
-  },
-  name: string,
-  types: TypeMap,
-  depth: number,
-  parentTree: string[]
-): TypeNodeMetaData {
-  if (!scalar.type) {
-    throw new Error(`No type for ${scalar.name}`);
-  }
-  let scalarName = '';
-
-  if (typeof scalar.type === 'string') {
-    scalarName = scalar.type;
-  } else if (scalar.type['ofType']) {
-    const ofType: unknown = scalar.type.ofType;
-    const optional = !isNonNullType(scalar.type);
-    const asList = isListType(scalar.type);
-    if (isListType(ofType)) {
-      isNonNullType(ofType);
-      return {
-        ...listTypeConfigToNodeMetaData(ofType, name, types, depth, parentTree),
-        optional,
-        asList: true,
-      };
-    } else if (isNonNullType(ofType)) {
-      return {
-        ...nonNullTypeConfigToNodeMetaData(
-          ofType,
-          name,
-          types,
-          depth,
-          parentTree
-        ),
-        optional: false,
-        asList,
-      };
-    } else if (isNamedType(ofType)) {
-      return namedTypeToTypeNodeMetaData(
-        ofType,
-        name,
-        types,
-        depth,
-        parentTree
-      );
-    }
-  } else {
-    scalarName = scalar.type.name;
-  }
-
-  const type = types[scalarName];
-  if (!type) {
-    throw new Error(`scalar not found: ${scalarName}`);
-  }
-
-  return namedTypeToTypeNodeMetaData(type, name, types, depth, parentTree);
-}
-
-export function getTypeNodeMeta(
-  type: TypeNode,
-  name: string,
-  types: TypeMap,
-  depth: number,
-  parentTree: string[]
-): TypeNodeMetaData {
-  let tsType = '';
-  const optional = true;
-  let children: TypeNodeMetaData[] | null = null;
-  let scalarName = '';
-  if (type.kind === 'NamedType') {
-    scalarName = type.name.value;
-    tsType = type.name.value;
-    const typeDef: GraphQLNamedType & {
-      // seems like this is only for enums
-      _values?: GraphqlEnumValues[];
-      // this is the good stuff
-      _fields?: {
-        [key: string]: GraphQLScalarTypeConfig<unknown, unknown> & {
-          type?: string | ({ ofType?: GraphQLScalarType } & GraphQLScalarType);
-        };
-      };
-    } = types[type.name.value];
-    if (typeDef)
-      return namedTypeToTypeNodeMetaData(
-        typeDef,
-        name,
-        types,
-        depth + 1,
-        parentTree
-      );
-    return {
-      accessChain: parentTree,
-      endedFromCycle: false,
-      asList: false,
-      scalarName,
-      name,
-      tsType,
-      optional,
-      children,
-    };
-  }
-  if (type.kind === 'ListType') {
-    const child = getTypeNodeMeta(
-      type.type,
-      name,
-      types,
-      depth + 1,
-      parentTree
-    );
-
-    return {
-      ...child,
-      accessChain: parentTree,
-      endedFromCycle: false,
-      name,
-      children: [child],
-      asList: true,
-    };
-  } else if (type.kind === 'NonNullType') {
-    return {
-      ...getTypeNodeMeta(type.type, name, types, depth + 1, parentTree),
-      optional: false,
-    };
-  }
-  throw new Error('unknown kind');
-}
-
-export interface GraphqlEnumValues {
-  name: string;
-  description: string;
-  value: string;
-  isDeprecated: boolean;
-  deprecationReason: null;
 }
