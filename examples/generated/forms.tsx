@@ -144,7 +144,9 @@ export const defaultReactFormContext = {
     return UserInputFormInput;
   },
 };
-export const GQLReactFormContext = React.createContext(defaultReactFormContext);
+export const GQLReactFormContext = React.createContext<
+  Partial<typeof defaultReactFormContext>
+>(defaultReactFormContext);
 
 /**********************
  * Default Values
@@ -181,11 +183,11 @@ export const defaultUserInputScalar = {
 export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
-  value: Scalars['String'];
+  value?: Scalars['String'];
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value: Scalars['String']) => unknown;
+  onChange: (value?: Scalars['String']) => unknown;
 }
 export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
@@ -207,11 +209,11 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
 export interface IntFormInputPropTypes {
   optional: boolean;
   label: string;
-  value: Scalars['Int'];
+  value?: Scalars['Int'];
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value: Scalars['Int']) => unknown;
+  onChange: (value?: Scalars['Int']) => unknown;
 }
 export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
@@ -233,11 +235,11 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
 export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
-  value: UserInput;
+  value?: UserInput;
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value: UserInput) => unknown;
+  onChange: (value?: UserInput) => unknown;
 }
 export const UserInputFormInput = React.memo(
   (props: UserInputFormInputPropTypes) => {
@@ -264,58 +266,68 @@ export const UserInputFormInput = React.memo(
       <div className="mutationFormNested">
         <h4>{label}</h4>
         <IntFormInput
-          value={value?.id}
+          value={value?.id === null ? undefined : value?.id}
           scalarName={'Int'}
           name={'id'}
           optional={true}
           label={'Id'}
           parentPath={path}
-          onChange={(newValue) => onChange({ ...value, ['id']: newValue })}
+          onChange={(newValue = 0) => onChange({ ...value, ['id']: newValue })}
         />
         <StringFormInput
-          value={value?.name}
+          value={value?.name === null ? undefined : value?.name}
           scalarName={'String'}
           name={'name'}
           optional={true}
           label={'Name'}
           parentPath={path}
-          onChange={(newValue) => onChange({ ...value, ['name']: newValue })}
+          onChange={(newValue = '') =>
+            onChange({ ...value, ['name']: newValue })
+          }
         />
         <StringFormInput
-          value={value?.email}
+          value={value?.email === null ? undefined : value?.email}
           scalarName={'String'}
           name={'email'}
           optional={true}
           label={'Email'}
           parentPath={path}
-          onChange={(newValue) => onChange({ ...value, ['email']: newValue })}
+          onChange={(newValue = '') =>
+            onChange({ ...value, ['email']: newValue })
+          }
         />
         <UserInputFormInput
-          value={value?.mother}
+          value={value?.mother === null ? undefined : value?.mother}
           scalarName={'UserInput'}
           name={'mother'}
           optional={true}
           label={'Mother'}
           parentPath={path}
-          onChange={(newValue) => onChange({ ...value, ['mother']: newValue })}
+          onChange={(
+            newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
+          ) => onChange({ ...value, ['mother']: newValue })}
         />
         <UserInputFormInput
-          value={value?.father}
+          value={value?.father === null ? undefined : value?.father}
           scalarName={'UserInput'}
           name={'father'}
           optional={true}
           label={'Father'}
           parentPath={path}
-          onChange={(newValue) => onChange({ ...value, ['father']: newValue })}
+          onChange={(
+            newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
+          ) => onChange({ ...value, ['father']: newValue })}
         />
         <UserInputFormInputAsList
-          value={value?.friends}
+          value={value?.friends === null ? undefined : value?.friends}
           scalarName={'UserInput'}
           name={'friends'}
           optional={false}
           label={'Friends'}
           parentPath={path}
-          onChange={(newValue) => onChange({ ...value, ['friends']: newValue })}
+          onChange={(newValue = []) =>
+            onChange({ ...value, ['friends']: newValue })
+          }
         />
       </div>
     );
@@ -325,11 +337,11 @@ export const UserInputFormInput = React.memo(
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
-  value: UserInput[];
+  value?: UserInput[];
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value: UserInput[]) => unknown;
+  onChange: (value?: UserInput[]) => unknown;
 }
 export const UserInputFormInputAsList = React.memo(
   (props: UserInputFormInputAsListPropTypes) => {

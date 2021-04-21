@@ -137,7 +137,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
           return JSON.parse(JSON.stringify(${defaultVal}))
         `;
 
-        // TODO: everything seems to be optional
         return `
           get ${c.name} (): ${type} {
             ${content}
@@ -184,11 +183,11 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     const componentPropTypes = `export interface ${componentKey}PropTypes {
       optional: boolean,
       label: string,
-      value: ${metaData.tsType}${metaData.asList ? '[]' : ''},
+      value?: ${metaData.tsType}${metaData.asList ? '[]' : ''},
       scalarName: string,
       name: string,
       parentPath: string,
-      onChange: (value: ${metaData.tsType}${
+      onChange: (value?: ${metaData.tsType}${
       metaData.asList ? '[]' : ''
     }) => unknown
     }`;
@@ -303,11 +302,13 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         ${metaData.children
           .map((md) =>
             this.renderComponentFor(md, {
-              value: `value?.${md.name}`,
+              value: `value?.${md.name} === null? undefined : value?.${md.name}`,
               ...this.asPropString(md),
               label: JSON.stringify(sentenceCase(md.name)),
               parentPath: `path`,
-              onChange: `(newValue) => onChange({...value, ['${md.name}']: newValue})`,
+              onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
+                md
+              )}) => onChange({...value, ['${md.name}']: newValue})`,
             })
           )
           .join('\n  ')}</div>`
@@ -366,7 +367,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
           )
           .join(',\n')}
       }
-      export const GQLReactFormContext = React.createContext(defaultReactFormContext)
+      export const GQLReactFormContext = React.createContext<Partial<typeof defaultReactFormContext>>(defaultReactFormContext)
 
     `;
   }
