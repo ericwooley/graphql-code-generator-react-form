@@ -38,7 +38,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     fragments: LoadedFragment[],
     protected rawConfig: ReactFormsRawPluginConfig,
     documents: Types.DocumentFile[],
-    private componentComposer = new ComponentComposer(rawConfig)
+    private cc = new ComponentComposer(rawConfig)
   ) {
     super(schema, fragments, rawConfig, {});
     this.schema = schema;
@@ -188,15 +188,26 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     let componentPreBody = [
       `const {parentPath, label, name, value, onChange } = props`,
       `const path = [parentPath, name].join('.')`,
+      this.cc.initContext,
+      this.cc.div.init,
+      this.cc.button.init,
+      this.cc.labelTextWrapper.init,
     ];
     let componentBody = [
       `
       if(value === undefined || value === null ){
-        return <div><button onClick={(e) => {
-          e.preventDefault();
-          onChange(${this.getDefaultValueStringForTypeNodeMetaData(metaData)})
-          setShouldRender(true)
-        }}>Add {label}</button></div>
+        return ${this.cc.div.render(
+          {},
+          this.cc.button.render(
+            {
+              onClick: `() => onChange(${this.getDefaultValueStringForTypeNodeMetaData(
+                metaData
+              )})
+          `,
+            },
+            `Add {label}`
+          )
+        )}
       }`,
     ];
     const componentDefinitionTail = `})`;
@@ -209,6 +220,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       );
       const name = metaData.name;
       componentPreBody.push(
+        this.cc.listItem.init,
         `const valueMapRef = React.useRef<
           {id: string, value: Maybe<${metaData.tsType}>}[]
         >((value||[]).map(v => ({id: uniqueId(${JSON.stringify(
@@ -235,92 +247,115 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
           onChange(valueMapRef.current.map(i => i.value === null ? ${this.getDefaultValueStringForTypeNodeMetaData(
             actualScalarMetaData
           )}: i.value))
-        }`
+        }`,
+        this.cc.listWrapper.init
       );
       componentBody = [
         `return (
-    <div className="${[this.nestedFormClassName, this.FormListClassName].join(
-      ' '
-    )}">
-    {label && <h3>{label} {path}</h3>}
-    <ol>
+    ${this.cc.div.render(
+      {
+        className: JSON.stringify(
+          [this.nestedFormClassName, this.FormListClassName].join(' ')
+        ),
+      },
+      `
+    {label && ${this.cc.labelTextWrapper.render({}, `{label}`)}}
+    ${this.cc.listWrapper.render(
+      {},
+      `
         {valueMapRef.current.length > 0 ? (
           valueMapRef.current.map((item, index) => (
-            <li key={item.id}>
-              ${this.renderComponentFor(
-                { ...metaData, optional: false, asList: false },
-                {
-                  optional: JSON.stringify(false),
-                  label: JSON.stringify(''),
-                  value: 'item.value',
-                  ...this.asPropString(metaData, ['optional']),
-                  parentPath: `path`,
-                  name: `String(index)`,
-                  onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
-                    actualScalarMetaData
-                  )}) => {
-                      valueMapRef.current = valueMapRef.current.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
-                      onChange(valueMapRef.current.map(i => i.value === null ?${this.getDefaultValueStringForTypeNodeMetaData(
-                        actualScalarMetaData
-                      )} : i.value))
-                  }`,
-                }
+            ${this.cc.listItem.render(
+              {
+                key: 'item.id',
+              },
+              `${this.cc.button.render(
+                { onClick: `() => removeItem(index)` },
+                `X`
               )}
-              <button
-                type="button"
-                onClick={() => removeItem(index)} // remove a friend from the list
-              >
-                -
-              </button>
 
-              <button
-                type="button"
-                onClick={() => insertItem(index)} // insert an empty string at a position
-              >
-                +
-              </button>
-            </li>
+            ${this.cc.button.render(
+              { onClick: '() => insertItem(index)' },
+              '+'
+            )}
+            ${this.renderComponentFor(
+              { ...metaData, optional: false, asList: false },
+              {
+                optional: JSON.stringify(false),
+                label: JSON.stringify(''),
+                value: 'item.value',
+                ...this.asPropString(metaData, ['optional']),
+                parentPath: `path`,
+                name: `String(index)`,
+                onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
+                  actualScalarMetaData
+                )}) => {
+                    valueMapRef.current = valueMapRef.current.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
+                    onChange(valueMapRef.current.map(i => i.value === null ?${this.getDefaultValueStringForTypeNodeMetaData(
+                      actualScalarMetaData
+                    )} : i.value))
+                }`,
+              }
+            )}`
+            )}
           ))
         ) : (
-          <button type="button" onClick={addItem}>
-          +
-          </button>
-        )}
-    </ol>
-    </div>
+          ${this.cc.button.render({ onClick: 'addItem' }, `+`)}
+        )}`
+    )}
+      `
+    )}
     )`,
       ];
     } else if (metaData.endedFromCycle) {
       componentPreBody.push();
       componentBody.push(
-        `return <div><strong>{label}</strong>: <button>Add {label}</button></div>`
+        `return (
+          ${this.cc.div.render(
+            {},
+            [
+              this.cc.labelTextWrapper.render({}, `{label}`),
+              this.cc.button.render({}, `Add {label}`),
+            ].join('\n')
+          )}`
       );
     } else if (metaData.children) {
-      componentPreBody.push(
-        `let [shouldRender, setShouldRender] = React.useState(false)`
-      );
+      componentPreBody.push();
       componentBody.push(
-        `return <div className="${this.nestedFormClassName}">
-        <h4>{label}</h4>
-        ${metaData.children
-          .map((md) =>
-            this.renderComponentFor(md, {
-              value: `value?.${md.name} === null? undefined : value?.${md.name}`,
-              ...this.asPropString(md),
-              label: JSON.stringify(sentenceCase(md.name)),
-              parentPath: `path`,
-              onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
-                md
-              )}) => onChange({...value, ['${md.name}']: newValue})`,
-            })
-          )
-          .join('\n  ')}</div>`
+        `return ${this.cc.div.render(
+          { className: JSON.stringify(this.nestedFormClassName) },
+          `
+            ${this.cc.labelTextWrapper.render({}, `{label}`)}
+            ${metaData.children
+              .map((md) =>
+                this.renderComponentFor(md, {
+                  value: `value?.${md.name} === null? undefined : value?.${md.name}`,
+                  ...this.asPropString(md),
+                  label: JSON.stringify(sentenceCase(md.name)),
+                  parentPath: `path`,
+                  onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
+                    md
+                  )}) => onChange({...value, ['${md.name}']: newValue})`,
+                })
+              )
+              .join('\n  ')}
+        `
+        )}`
       );
     } else {
-      componentPreBody.push();
+      componentPreBody.push(this.cc.label.init);
       componentBody = [
-        `return <div><label><strong>{label}</strong><br /><input value={value === undefined || value===null? "" : value} onChange={(e) =>
-          onChange(e.target.value as any)} /></label></div>`,
+        `return (${this.cc.div.render(
+          {},
+          this.cc.label.render(
+            {},
+            [
+              this.cc.labelTextWrapper.render({}, `{label}`),
+              `<input value={value === undefined || value===null? "" : value} onChange={(e) => onChange(e.target.value as any)} />`,
+            ].join('\n')
+          )
+        )}
+      )`,
       ];
     }
     const component = `
@@ -334,7 +369,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     return componentRenderString;
   }
   public generateContext() {
-    return this.componentComposer.generateContext(this._typeComponentMap);
+    return this.cc.generateContext(this._typeComponentMap);
   }
   public generateMutationsMetaDataExport() {
     return `
@@ -380,11 +415,11 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   HTMLFormElement
   > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
   const [value, setValue]= React.useState(initialValues || {})
-  const ctx = React.useContext(GQLReactFormContext)
-  const FormComponent = ctx.form || defaultReactFormContext.form
-  ${this.componentComposer.initSubmitButtonStr}
+  ${this.cc.initContext}
+  ${this.cc.form.init}
+  ${this.cc.submitButton.init}
   return (
-      <${this.componentComposer.formComponent} onSubmit={(e) => {
+      <${this.cc.form.tagName} onSubmit={(e) => {
         e?.preventDefault?.()
         onSubmit(value as any)
       }} {...formProps}>
@@ -402,8 +437,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             })
           )
           .join('\n    ')}
-        <${this.componentComposer.submitButton} text="submit" />
-      </${this.componentComposer.formComponent}>
+        <${this.cc.submitButton.tagName} text="submit" />
+      </${this.cc.form.tagName}>
   )
   };
     `;

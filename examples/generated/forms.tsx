@@ -100,19 +100,45 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
 let idNonce = 0;
 const uniqueId = (inStr: string) => inStr + idNonce++;
 
+interface StandardProps {
+  onClick?: () => any;
+  children?: React.ReactNode;
+  path: string;
+  id?: string;
+  className?: string;
+}
 interface ReactOnChangeHandler<T>
-  extends React.FC<{ onChange: (value: T) => T; value?: T; label: string }> {}
+  extends React.FC<
+    { onChange: (value: T) => T; value?: T; label: string } & StandardProps
+  > {}
 export const defaultReactFormContext = {
   form: ('form' as any) as React.FunctionComponent<{
     onSubmit: (e?: { preventDefault?: () => any }) => any;
   }>,
+  div: ({ ...props }: StandardProps) => <div {...props} />,
+  label: ({ ...props }: StandardProps) => <label {...props} />,
+  labelTextWrapper: ({ ...props }: StandardProps) => <h4 {...props} />,
+  button: ({ ...props }: StandardProps) => (
+    <button
+      {...props}
+      onClick={(e) => {
+        e.preventDefault();
+        props.onClick?.();
+      }}
+    />
+  ),
+  listWrapper: ({ ...props }: StandardProps) => <ol {...props} />,
+  listItem: ({ ...props }: StandardProps) => <li {...props} />,
   submitButton: ((props) => (
     <input type="submit" {...props} value={props.text} />
   )) as React.FunctionComponent<{ text: string }>,
   input: ((props) => {
+    const { path } = props;
+    const ctx = React.useContext(GQLReactFormContext);
+    const DivComponent = ctx.div || defaultReactFormContext.div;
     const typeofValue = typeof props.value;
     return (
-      <div>
+      <DivComponent path={path}>
         <label>
           <strong>{props.label}</strong>
           <br />
@@ -131,7 +157,7 @@ export const defaultReactFormContext = {
             onChange={(e) => props.onChange(e.target.value)}
           />
         </label>
-      </div>
+      </DivComponent>
     );
   }) as ReactOnChangeHandler<string | number | Date>,
   get String() {
@@ -192,17 +218,24 @@ export interface StringFormInputPropTypes {
 export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
+  const ctx = React.useContext(GQLReactFormContext);
+  const DivComponent = ctx.div || defaultReactFormContext.div;
+  const ButtonComponent = ctx.button || defaultReactFormContext.button;
+  const LabelTextWrapperComponent =
+    ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
+  const LabelComponent = ctx.label || defaultReactFormContext.label;
   return (
-    <div>
-      <label>
-        <strong>{label}</strong>
-        <br />
+    <DivComponent path={path}>
+      <LabelComponent path={path}>
+        <LabelTextWrapperComponent path={path}>
+          {label}
+        </LabelTextWrapperComponent>
         <input
           value={value === undefined || value === null ? '' : value}
           onChange={(e) => onChange(e.target.value as any)}
         />
-      </label>
-    </div>
+      </LabelComponent>
+    </DivComponent>
   );
 });
 
@@ -218,17 +251,24 @@ export interface IntFormInputPropTypes {
 export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
   const path = [parentPath, name].join('.');
+  const ctx = React.useContext(GQLReactFormContext);
+  const DivComponent = ctx.div || defaultReactFormContext.div;
+  const ButtonComponent = ctx.button || defaultReactFormContext.button;
+  const LabelTextWrapperComponent =
+    ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
+  const LabelComponent = ctx.label || defaultReactFormContext.label;
   return (
-    <div>
-      <label>
-        <strong>{label}</strong>
-        <br />
+    <DivComponent path={path}>
+      <LabelComponent path={path}>
+        <LabelTextWrapperComponent path={path}>
+          {label}
+        </LabelTextWrapperComponent>
         <input
           value={value === undefined || value === null ? '' : value}
           onChange={(e) => onChange(e.target.value as any)}
         />
-      </label>
-    </div>
+      </LabelComponent>
+    </DivComponent>
   );
 });
 
@@ -245,26 +285,31 @@ export const UserInputFormInput = React.memo(
   (props: UserInputFormInputPropTypes) => {
     const { parentPath, label, name, value, onChange } = props;
     const path = [parentPath, name].join('.');
-    let [shouldRender, setShouldRender] = React.useState(false);
+    const ctx = React.useContext(GQLReactFormContext);
+    const DivComponent = ctx.div || defaultReactFormContext.div;
+    const ButtonComponent = ctx.button || defaultReactFormContext.button;
+    const LabelTextWrapperComponent =
+      ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
 
     if (value === undefined || value === null) {
       return (
-        <div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)));
-              setShouldRender(true);
-            }}
+        <DivComponent path={path}>
+          <ButtonComponent
+            onClick={() =>
+              onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)))
+            }
+            path={path}
           >
             Add {label}
-          </button>
-        </div>
+          </ButtonComponent>
+        </DivComponent>
       );
     }
     return (
-      <div className="mutationFormNested">
-        <h4>{label}</h4>
+      <DivComponent className={'mutationFormNested'} path={path}>
+        <LabelTextWrapperComponent path={path}>
+          {label}
+        </LabelTextWrapperComponent>
         <IntFormInput
           value={value?.id === null ? undefined : value?.id}
           scalarName={'Int'}
@@ -329,7 +374,7 @@ export const UserInputFormInput = React.memo(
             onChange({ ...value, ['friends']: newValue })
           }
         />
-      </div>
+      </DivComponent>
     );
   }
 );
@@ -347,6 +392,12 @@ export const UserInputFormInputAsList = React.memo(
   (props: UserInputFormInputAsListPropTypes) => {
     const { parentPath, label, name, value, onChange } = props;
     const path = [parentPath, name].join('.');
+    const ctx = React.useContext(GQLReactFormContext);
+    const DivComponent = ctx.div || defaultReactFormContext.div;
+    const ButtonComponent = ctx.button || defaultReactFormContext.button;
+    const LabelTextWrapperComponent =
+      ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
+    const ListItemComponent = ctx.listItem || defaultReactFormContext.listItem;
     const valueMapRef = React.useRef<{ id: string; value: Maybe<UserInput> }[]>(
       (value || []).map((v) => ({ id: uniqueId('friends'), value: v }))
     );
@@ -396,17 +447,29 @@ export const UserInputFormInputAsList = React.memo(
         )
       );
     };
+    const ListWrapperComponent =
+      ctx.listWrapper || defaultReactFormContext.listWrapper;
     return (
-      <div className="mutationFormNested mutationFormList">
+      <DivComponent
+        className={'mutationFormNested mutationFormList'}
+        path={path}
+      >
         {label && (
-          <h3>
-            {label} {path}
-          </h3>
+          <LabelTextWrapperComponent path={path}>
+            {label}
+          </LabelTextWrapperComponent>
         )}
-        <ol>
+        <ListWrapperComponent path={path}>
           {valueMapRef.current.length > 0 ? (
             valueMapRef.current.map((item, index) => (
-              <li key={item.id}>
+              <ListItemComponent key={item.id} path={path}>
+                <ButtonComponent onClick={() => removeItem(index)} path={path}>
+                  X
+                </ButtonComponent>
+
+                <ButtonComponent onClick={() => insertItem(index)} path={path}>
+                  +
+                </ButtonComponent>
                 <UserInputFormInput
                   optional={false}
                   label={''}
@@ -431,28 +494,15 @@ export const UserInputFormInputAsList = React.memo(
                     );
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={() => removeItem(index)} // remove a friend from the list
-                >
-                  -
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => insertItem(index)} // insert an empty string at a position
-                >
-                  +
-                </button>
-              </li>
+              </ListItemComponent>
             ))
           ) : (
-            <button type="button" onClick={addItem}>
+            <ButtonComponent onClick={addItem} path={path}>
               +
-            </button>
+            </ButtonComponent>
           )}
-        </ol>
-      </div>
+        </ListWrapperComponent>
+      </DivComponent>
     );
   }
 );
@@ -485,7 +535,8 @@ export const AddUserForm = ({
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
   const FormComponent = ctx.form || defaultReactFormContext.form;
-  const SubmitButton = ctx.submitButton || defaultReactFormContext.submitButton;
+  const SubmitButtonComponent =
+    ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
       onSubmit={(e) => {
@@ -506,7 +557,6 @@ export const AddUserForm = ({
         name={'email'}
         optional={false}
       />
-
       <StringFormInput
         value={value?.name}
         label={'Name'}
@@ -519,7 +569,7 @@ export const AddUserForm = ({
         name={'name'}
         optional={false}
       />
-      <SubmitButton text="submit" />
+      <SubmitButtonComponent text="submit" />
     </FormComponent>
   );
 };
@@ -546,7 +596,8 @@ export const AddUserFromObjectForm = ({
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
   const FormComponent = ctx.form || defaultReactFormContext.form;
-  const SubmitButton = ctx.submitButton || defaultReactFormContext.submitButton;
+  const SubmitButtonComponent =
+    ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
       onSubmit={(e) => {
@@ -567,7 +618,7 @@ export const AddUserFromObjectForm = ({
         name={'user'}
         optional={false}
       />
-      <SubmitButton text="submit" />
+      <SubmitButtonComponent text="submit" />
     </FormComponent>
   );
 };
@@ -594,7 +645,8 @@ export const AddUsersForm = ({
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
   const FormComponent = ctx.form || defaultReactFormContext.form;
-  const SubmitButton = ctx.submitButton || defaultReactFormContext.submitButton;
+  const SubmitButtonComponent =
+    ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
       onSubmit={(e) => {
@@ -615,7 +667,7 @@ export const AddUsersForm = ({
         name={'users'}
         optional={false}
       />
-      <SubmitButton text="submit" />
+      <SubmitButtonComponent text="submit" />
     </FormComponent>
   );
 };
