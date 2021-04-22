@@ -108,9 +108,10 @@ interface StandardProps {
   path: string;
   id?: string;
   className?: string;
+  name: string;
+  scalar: string;
 }
-interface OnChangeProps<T> {}
-interface ReactOnChangeHandler
+interface FormPrimeInput
   extends React.FC<
     {
       onChange: (value: number | string) => number | string;
@@ -133,7 +134,7 @@ export interface GQLReactFormContext {
   listWrapper: GQLFormStandardComponent;
   listItem: GQLFormStandardComponent;
   submitButton: React.FC<{ text: string }>;
-  input: ReactOnChangeHandler;
+  input: FormPrimeInput;
   UserInput?: React.FC<UserInputFormInputPropTypes>;
 }
 export const defaultReactFormContext: GQLReactFormContext = {
@@ -160,17 +161,18 @@ export const defaultReactFormContext: GQLReactFormContext = {
     <input type="submit" {...props} value={props.text} />
   ),
   input: (props) => {
-    const { path } = props;
+    const { path, scalar, name } = props;
     const ctx = React.useContext(GQLReactFormContext);
     const DivComponent = ctx.div || defaultReactFormContext.div;
     const typeofValue = typeof props.value;
     return (
-      <DivComponent path={path}>
+      <DivComponent path={path} scalar={scalar} name={name}>
         <label>
           <strong>{props.label}</strong>
           <br />
           <input
-            value={
+            value={props.value}
+            type={
               props.value === undefined
                 ? 'string'
                 : typeofValue === 'string'
@@ -237,6 +239,7 @@ export interface StringFormInputPropTypes {
 }
 export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
+  const scalar = 'String';
   const path = [parentPath, name].join('.');
   const ctx = React.useContext(GQLReactFormContext);
   const DivComponent = ctx.div || defaultReactFormContext.div;
@@ -250,6 +253,8 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
       value={value === undefined || value === null ? '' : value}
       label={label}
       path={path}
+      scalar={scalar}
+      name={name}
     ></InputComponent>
   );
 });
@@ -265,6 +270,7 @@ export interface IntFormInputPropTypes {
 }
 export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
+  const scalar = 'Int';
   const path = [parentPath, name].join('.');
   const ctx = React.useContext(GQLReactFormContext);
   const DivComponent = ctx.div || defaultReactFormContext.div;
@@ -278,6 +284,8 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
       value={value === undefined || value === null ? '' : value}
       label={label}
       path={path}
+      scalar={scalar}
+      name={name}
     ></InputComponent>
   );
 });
@@ -294,6 +302,7 @@ export interface UserInputFormInputPropTypes {
 export const UserInputFormInput = React.memo(
   (props: UserInputFormInputPropTypes) => {
     const { parentPath, label, name, value, onChange } = props;
+    const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
     const ctx = React.useContext(GQLReactFormContext);
     const DivComponent = ctx.div || defaultReactFormContext.div;
@@ -303,12 +312,14 @@ export const UserInputFormInput = React.memo(
 
     if (value === undefined || value === null) {
       return (
-        <DivComponent path={path}>
+        <DivComponent path={path} scalar={scalar} name={name}>
           <ButtonComponent
             onClick={() =>
               onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)))
             }
             path={path}
+            scalar={scalar}
+            name={name}
           >
             Add {label}
           </ButtonComponent>
@@ -316,8 +327,13 @@ export const UserInputFormInput = React.memo(
       );
     }
     return (
-      <DivComponent className={'mutationFormNested'} path={path}>
-        <LabelTextWrapperComponent path={path}>
+      <DivComponent
+        className={'mutationFormNested'}
+        path={path}
+        scalar={scalar}
+        name={name}
+      >
+        <LabelTextWrapperComponent path={path} scalar={scalar} name={name}>
           {label}
         </LabelTextWrapperComponent>
         <IntFormInput
@@ -412,6 +428,7 @@ export interface UserInputFormInputAsListPropTypes {
 export const UserInputFormInputAsList = React.memo(
   (props: UserInputFormInputAsListPropTypes) => {
     const { parentPath, label, name, value, onChange } = props;
+    const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
     const ctx = React.useContext(GQLReactFormContext);
     const DivComponent = ctx.div || defaultReactFormContext.div;
@@ -474,21 +491,38 @@ export const UserInputFormInputAsList = React.memo(
       <DivComponent
         className={'mutationFormNested mutationFormList'}
         path={path}
+        scalar={scalar}
+        name={name}
       >
         {label && (
-          <LabelTextWrapperComponent path={path}>
+          <LabelTextWrapperComponent path={path} scalar={scalar} name={name}>
             {label}
           </LabelTextWrapperComponent>
         )}
-        <ListWrapperComponent path={path}>
+        <ListWrapperComponent path={path} scalar={scalar} name={name}>
           {valueMapRef.current.length > 0 ? (
             valueMapRef.current.map((item, index) => (
-              <ListItemComponent key={item.id} path={path}>
-                <ButtonComponent onClick={() => removeItem(index)} path={path}>
+              <ListItemComponent
+                key={item.id}
+                path={path}
+                scalar={scalar}
+                name={name}
+              >
+                <ButtonComponent
+                  onClick={() => removeItem(index)}
+                  path={path}
+                  scalar={scalar}
+                  name={name}
+                >
                   X
                 </ButtonComponent>
 
-                <ButtonComponent onClick={() => insertItem(index)} path={path}>
+                <ButtonComponent
+                  onClick={() => insertItem(index)}
+                  path={path}
+                  scalar={scalar}
+                  name={name}
+                >
                   +
                 </ButtonComponent>
                 <UserInputFormInput
@@ -518,7 +552,12 @@ export const UserInputFormInputAsList = React.memo(
               </ListItemComponent>
             ))
           ) : (
-            <ButtonComponent onClick={addItem} path={path}>
+            <ButtonComponent
+              onClick={addItem}
+              path={path}
+              scalar={scalar}
+              name={name}
+            >
               +
             </ButtonComponent>
           )}
@@ -562,6 +601,8 @@ export const AddUserForm = ({
     ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
+      scalar=""
+      name=""
       onSubmit={(e) => {
         e?.preventDefault?.();
         onSubmit(value as any);
@@ -636,6 +677,8 @@ export const AddUserFromObjectForm = ({
     ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
+      scalar=""
+      name=""
       onSubmit={(e) => {
         e?.preventDefault?.();
         onSubmit(value as any);
@@ -686,6 +729,8 @@ export const AddUsersForm = ({
     ctx.submitButton || defaultReactFormContext.submitButton;
   return (
     <FormComponent
+      scalar=""
+      name=""
       onSubmit={(e) => {
         e?.preventDefault?.();
         onSubmit(value as any);

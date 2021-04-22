@@ -11,7 +11,7 @@ export class ComponentComposer {
       render: (props: { [key: string]: string }, children: string) => {
         return `<${tagName} ${Object.entries(props)
           .map(([key, val]) => `${key}={${val}}`)
-          .join(' ')} path={path}>
+          .join(' ')} path={path} scalar={scalar} name={name}>
           ${children}
           </${tagName}>`;
       },
@@ -77,9 +77,10 @@ export class ComponentComposer {
         path: string
         id?: string
         className?: string
+        name: string
+        scalar: string
       }
-      interface OnChangeProps<T> { }
-      interface ReactOnChangeHandler extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & StandardProps> {}
+      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & StandardProps> {}
       interface GQLFormStandardComponent<T = {}> extends React.FC<StandardProps & T> { }
       export interface GQLReactFormContext {
         form: GQLFormStandardComponent< {onSubmit: (e?: {preventDefault?: () => any}) => any} >,
@@ -90,7 +91,7 @@ export class ComponentComposer {
         listWrapper: GQLFormStandardComponent,
         listItem: GQLFormStandardComponent,
         submitButton: React.FC<{text: string}>
-        input: ReactOnChangeHandler,
+        input: FormPrimeInput,
         ${dynamicComponentTypeList
           .map(
             (scalarName) =>
@@ -116,7 +117,7 @@ export class ComponentComposer {
         ${this.generatePassthroughComponent('listItem', 'li')},
         submitButton: ((props: {text: string}) => <input type="submit" {...props} value={props.text} /> ),
         input: ((props) => {
-          const {path} = props
+          const {path, scalar, name} = props
           ${this.initContext}
           ${this.div.init}
           const typeofValue = typeof props.value
@@ -126,7 +127,7 @@ export class ComponentComposer {
               `
             <label>
               <strong>{props.label}</strong><br />
-              <input value={props.value === undefined
+              <input value={props.value} type={props.value === undefined
                 ? "string"
                 : typeofValue === 'string'
                 ? 'text'

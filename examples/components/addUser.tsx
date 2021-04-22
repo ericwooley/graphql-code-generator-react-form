@@ -11,6 +11,7 @@ import {
 } from '@material-ui/core';
 export const AddUser = () => {
   const [useCustomComponents, setUseCustomComponents] = React.useState(true);
+  const [showPassword, setShowPassword] = React.useState(false);
   const demoContent = (
     <ExampleContent
       options={
@@ -28,6 +29,7 @@ export const AddUser = () => {
     >
       {({ onSubmit }) => (
         <AddUserForm
+          key="user-form"
           initialValues={{
             email: 'bob@gmail.com',
             name: 'test name',
@@ -47,17 +49,35 @@ export const AddUser = () => {
             </Button>
           </Box>
         ),
-        input: (props) => (
-          <Box m={2}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label={props.label}
-              value={props.value}
-              onChange={(e) => props.onChange(e.target.value)}
-            />
-          </Box>
-        ),
+        input: (props) => {
+          return (
+            <Box m={2}>
+              <TextField
+                type={
+                  props.name === 'password' && !showPassword
+                    ? 'password'
+                    : 'text'
+                }
+                fullWidth
+                variant="outlined"
+                label={props.label}
+                value={props.value}
+                onChange={(e) => props.onChange(e.target.value)}
+              />
+              {props.name === 'password' && (
+                <FormControlLabel
+                  label="show password"
+                  control={
+                    <Switch
+                      checked={showPassword}
+                      onChange={(e) => setShowPassword(e.target.checked)}
+                    />
+                  }
+                ></FormControlLabel>
+              )}
+            </Box>
+          );
+        },
       }}
     >
       {demoContent}

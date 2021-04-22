@@ -187,6 +187,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     const componentDefinitionHead = `export const ${componentKey} = React.memo((props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
       `const {parentPath, label, name, value, onChange } = props`,
+      `const scalar = ${JSON.stringify(metaData.scalarName)}`,
       `const path = [parentPath, name].join('.')`,
       this.cc.initContext,
       this.cc.div.init,
@@ -417,7 +418,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   ${this.cc.form.init}
   ${this.cc.submitButton.init}
   return (
-      <${this.cc.form.tagName} onSubmit={(e) => {
+      <${this.cc.form.tagName} scalar="" name="" onSubmit={(e) => {
         e?.preventDefault?.()
         onSubmit(value as any)
       }} {...formProps} path="">
