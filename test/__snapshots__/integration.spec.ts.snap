@@ -30,7 +30,7 @@ exports[`React Apollo Forms should generate a Form 1`] = `
         listItem: GQLFormStandardComponent,
         submitButton: React.FC<{text: string}>
         input: FormPrimeInput,
-        UserInput?: React.FC<UserInputFormInputPropTypes> ,
+        UserInput?: React.FC<UserInputFormInputPropTypes> 
       }
       export const defaultReactFormContext: GQLReactFormContext = {
         form: 'form' as any,
@@ -82,14 +82,14 @@ exports[`React Apollo Forms should generate a Form 1`] = `
           },
     
 
-          get name (): Scalars[\\"String\\"]|undefined {
+          get name (): Scalars[\\"String\\"] {
             
           return JSON.parse(JSON.stringify(\\"\\"))
         
           },
     
 
-          get email (): Scalars[\\"String\\"]|undefined {
+          get email (): Scalars[\\"String\\"] {
             
           return JSON.parse(JSON.stringify(\\"\\"))
         
@@ -120,7 +120,7 @@ exports[`React Apollo Forms should generate a Form 1`] = `
           },
     
 
-          get followers (): UserInput|undefined {
+          get followers (): UserInput[]|undefined {
             return undefined
           },
     
@@ -383,7 +383,7 @@ const ListWrapperComponent = ctx.listWrapper || defaultReactFormContext.listWrap
                 \\"scalarName\\": \\"String\\",
                 \\"name\\": \\"name\\",
                 \\"tsType\\": \\"Scalars[\\\\\\"String\\\\\\"]\\",
-                \\"optional\\": true,
+                \\"optional\\": false,
                 \\"asList\\": false,
                 \\"children\\": null
               },
@@ -396,7 +396,7 @@ const ListWrapperComponent = ctx.listWrapper || defaultReactFormContext.listWrap
                 \\"scalarName\\": \\"String\\",
                 \\"name\\": \\"email\\",
                 \\"tsType\\": \\"Scalars[\\\\\\"String\\\\\\"]\\",
-                \\"optional\\": true,
+                \\"optional\\": false,
                 \\"asList\\": false,
                 \\"children\\": null
               },
@@ -462,7 +462,7 @@ const ListWrapperComponent = ctx.listWrapper || defaultReactFormContext.listWrap
                 \\"name\\": \\"followers\\",
                 \\"tsType\\": \\"UserInput\\",
                 \\"optional\\": true,
-                \\"asList\\": false,
+                \\"asList\\": true,
                 \\"children\\": null
               }
             ]
@@ -475,3 +475,102 @@ const ListWrapperComponent = ctx.listWrapper || defaultReactFormContext.listWrap
   
   "
 `;
+
+exports[`React Apollo Imports should import React and forms dependencies 1`] = `
+Array [
+  "import * as React from 'react';",
+]
+`;
+
+exports[`React Apollo Imports should import React and forms dependencies 2`] = `
+"
+    /**************************
+     * utilities
+     *************************/
+    let idNonce = 0;
+    const uniqueId = (inStr: string) => inStr+(idNonce++)
+    
+
+    
+      interface StandardProps {
+        children?: React.ReactNode
+        path: string
+        id?: string
+        className?: string
+        name: string
+        scalar: string
+      }
+      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & StandardProps> {}
+      interface GQLFormStandardComponent<T = {}> extends React.FC<StandardProps & T> { }
+      export interface GQLReactFormContext {
+        form: GQLFormStandardComponent< {onSubmit: (e?: {preventDefault?: () => any}) => any} >,
+        div: GQLFormStandardComponent,
+        label: GQLFormStandardComponent,
+        labelTextWrapper: GQLFormStandardComponent,
+        button: GQLFormStandardComponent<{onClick?: (e?: {preventDefault?: () => any}) => any }>,
+        listWrapper: GQLFormStandardComponent,
+        listItem: GQLFormStandardComponent,
+        submitButton: React.FC<{text: string}>
+        input: FormPrimeInput,
+        
+      }
+      export const defaultReactFormContext: GQLReactFormContext = {
+        form: 'form' as any,
+        div: ({...props}: StandardProps) => <div {...props} />,
+        label: ({...props}: StandardProps) => <label {...props} />,
+        labelTextWrapper: ({...props}: StandardProps) => <h4 {...props} />,
+        button: ({...props}: StandardProps & {onClick?: (e?: {preventDefault: () => any}) => any}) => <button {...props} onClick={e => {e.preventDefault(); props.onClick?.()}}/>,
+        listWrapper: ({...props}: StandardProps) => <ol {...props} />,
+        listItem: ({...props}: StandardProps) => <li {...props} />,
+        submitButton: ((props: {text: string}) => <input type=\\"submit\\" {...props} value={props.text} /> ),
+        input: ((props) => {
+          const {path, scalar, name} = props
+          const ctx = React.useContext(GQLReactFormContext)
+          const DivComponent = ctx.div || defaultReactFormContext.div
+          const typeofValue = typeof props.value
+            return (
+            <DivComponent  path={path} scalar={scalar} name={name}>
+          
+            <label>
+              <strong>{props.label}</strong><br />
+              <input value={props.value} type={props.value === undefined
+                ? \\"string\\"
+                : typeofValue === 'string'
+                ? 'text'
+                : typeofValue === 'number'
+                ? 'number'
+                : ''
+              } onChange={(e) =>
+                props.onChange(e.target.value)} />
+            </label>
+            
+          </DivComponent>)
+
+          }),
+
+      }
+      export const GQLReactFormContext = React.createContext<Partial<GQLReactFormContext>>(defaultReactFormContext)
+
+    
+/**********************
+ * Default Values
+ * *******************/
+  
+/**********************
+ * Scalar Form Fragments
+ * *******************/
+  
+/***************************
+* forms Forms
+* *************************/
+  
+/***************************
+ * MetaData Export
+ * *************************/
+  
+  export const mutationsMetaData = []
+  
+  "
+`;
+
+exports[`React Apollo Imports should import React and forms dependencies 3`] = `undefined`;

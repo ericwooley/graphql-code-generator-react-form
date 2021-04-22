@@ -89,24 +89,24 @@ export function validateTs(
           shouldCreateNewSourceFile
         );
       },
-      writeFile: function() {},
-      useCaseSensitiveFileNames: function() {
+      writeFile: function () {},
+      useCaseSensitiveFileNames: function () {
         return false;
       },
-      getCanonicalFileName: function(filename) {
+      getCanonicalFileName: function (filename) {
         return filename;
       },
-      getCurrentDirectory: function() {
+      getCurrentDirectory: function () {
         return '';
       },
-      getNewLine: function() {
+      getNewLine: function () {
         return '\n';
       },
     });
     const emitResult = program.emit();
     const allDiagnostics = emitResult.diagnostics;
 
-    allDiagnostics.forEach(diagnostic => {
+    allDiagnostics.forEach((diagnostic) => {
       if (diagnostic.file) {
         const {
           line,
@@ -119,7 +119,9 @@ export function validateTs(
           '\n'
         );
         errors.push(`${line + 1},${character + 1}: ${message} ->
-    ${contents.split('\n')[line]}`);
+    ${contents.split('\n')[line - 1]}
+    ${contents.split('\n')[line]} <-
+    ${contents.split('\n')[line + 1]}`);
       } else {
         errors.push(
           `${flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`
@@ -138,7 +140,7 @@ export function validateTs(
     const allDiagnostics = result.parseDiagnostics;
 
     if (allDiagnostics && allDiagnostics.length > 0) {
-      allDiagnostics.forEach(diagnostic => {
+      allDiagnostics.forEach((diagnostic) => {
         if (diagnostic.file) {
           const {
             line,
@@ -149,7 +151,9 @@ export function validateTs(
             '\n'
           );
           errors.push(`${line + 1},${character + 1}: ${message} ->
-  ${contents.split('\n')[line]}`);
+          ${contents.split('\n')[line - 1]}
+          ${contents.split('\n')[line]} <-
+          ${contents.split('\n')[line + 1]}`);
         } else {
           errors.push(
             `${flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`
@@ -159,7 +163,7 @@ export function validateTs(
     }
   }
 
-  const relevantErrors = errors.filter(e => {
+  const relevantErrors = errors.filter((e) => {
     if (e.includes('Cannot find module')) {
       return false;
     }
@@ -233,17 +237,17 @@ export function compileTs(
           shouldCreateNewSourceFile
         );
       },
-      writeFile: function() {},
-      useCaseSensitiveFileNames: function() {
+      writeFile: function () {},
+      useCaseSensitiveFileNames: function () {
         return false;
       },
-      getCanonicalFileName: function(filename) {
+      getCanonicalFileName: function (filename) {
         return filename;
       },
-      getCurrentDirectory: function() {
+      getCurrentDirectory: function () {
         return '';
       },
-      getNewLine: function() {
+      getNewLine: function () {
         return '\n';
       },
     });
@@ -251,7 +255,7 @@ export function compileTs(
     const allDiagnostics = emitResult.diagnostics;
     const errors: string[] = [];
 
-    allDiagnostics.forEach(diagnostic => {
+    allDiagnostics.forEach((diagnostic) => {
       if (diagnostic.file) {
         const {
           line,
@@ -273,7 +277,7 @@ export function compileTs(
     });
 
     const relevantErrors = errors.filter(
-      e => !e.includes('Cannot find module')
+      (e) => !e.includes('Cannot find module')
     );
 
     if (relevantErrors && relevantErrors.length > 0) {

@@ -75,6 +75,9 @@ describe('React Apollo', () => {
       )) as Types.ComplexPluginOutput;
 
       expect(content.prepend).toContain(`import * as React from 'react';`);
+      expect(content.prepend).toMatchSnapshot();
+      expect(content.content).toMatchSnapshot();
+      expect(content.append).toMatchSnapshot();
       await validateTypeScript(content, schema, docs, {});
     });
   });

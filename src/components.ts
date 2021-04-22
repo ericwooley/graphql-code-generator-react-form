@@ -100,7 +100,7 @@ export class ComponentComposer {
                 ''
               )}?: React.FC<${scalarName}PropTypes> `
           )
-          .join(',\n')},
+          .join(',\n')}
       }
       export const defaultReactFormContext: GQLReactFormContext = {
         form: 'form' as any,
