@@ -190,9 +190,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       `const scalar = ${JSON.stringify(metaData.scalarName)}`,
       `const path = [parentPath, name].join('.')`,
       this.cc.initContext,
-      this.cc.div.init,
-      this.cc.button.init,
-      this.cc.labelTextWrapper.init,
     ];
     let componentBody = [
       `
@@ -221,7 +218,12 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       );
       const name = metaData.name;
       componentPreBody.push(
+        this.cc.addButton.init,
+        this.cc.removeButton.init,
         this.cc.listItem.init,
+        this.cc.div.init,
+        this.cc.button.init,
+        this.cc.labelTextWrapper.init,
         `const valueMapRef = React.useRef<
           {id: string, value: Maybe<${metaData.tsType}>}[]
         >((value||[]).map(v => ({id: uniqueId(${JSON.stringify(
@@ -264,18 +266,18 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     ${this.cc.listWrapper.render(
       {},
       `
-        {valueMapRef.current.length > 0 ? (
+        {
           valueMapRef.current.map((item, index) => (
             ${this.cc.listItem.render(
               {
                 key: 'item.id',
               },
-              `${this.cc.button.render(
+              `${this.cc.removeButton.render(
                 { onClick: `() => removeItem(index)` },
                 `X`
               )}
 
-            ${this.cc.button.render(
+            ${this.cc.addButton.render(
               { onClick: '() => insertItem(index)' },
               '+'
             )}
@@ -300,16 +302,19 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             )}`
             )}
           ))
-        ) : (
-          ${this.cc.button.render({ onClick: 'addItem' }, `+`)}
-        )}`
+        }
+        ${this.cc.button.render({ onClick: 'addItem' }, `+`)}`
     )}
       `
     )}
     )`,
       ];
     } else if (metaData.endedFromCycle) {
-      componentPreBody.push();
+      componentPreBody.push(
+        this.cc.div.init,
+        this.cc.button.init,
+        this.cc.labelTextWrapper.init
+      );
       componentBody.push(
         `return (
           ${this.cc.div.render(
@@ -321,7 +326,11 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
           )}`
       );
     } else if (metaData.children) {
-      componentPreBody.push();
+      componentPreBody.push(
+        this.cc.div.init,
+        this.cc.button.init,
+        this.cc.labelTextWrapper.init
+      );
       componentBody.push(
         `return ${this.cc.div.render(
           { className: JSON.stringify(this.nestedFormClassName) },
@@ -349,7 +358,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         `return (
         ${this.cc.input.render(
           {
-            onChange: 'props.onChange as any',
+            onChange: 'onChange as any',
             value: 'value === undefined || value===null? "" : value',
             label: 'label',
           },

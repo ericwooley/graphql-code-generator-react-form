@@ -4,7 +4,7 @@ import { ReactFormsRawPluginConfig } from './config';
 export class ComponentComposer {
   constructor(protected rawConfig: ReactFormsRawPluginConfig) {}
 
-  private lookupComponent(name: string) {
+  private generateComponent(name: string) {
     const tagName = `${pascalCase(name)}Component`;
     return {
       init: `const ${tagName} = ctx.${name} || defaultReactFormContext.${name}`,
@@ -22,31 +22,37 @@ export class ComponentComposer {
     return `const ctx = React.useContext(GQLReactFormContext)`;
   }
   get form() {
-    return this.lookupComponent('form');
+    return this.generateComponent('form');
   }
   get submitButton() {
-    return this.lookupComponent('submitButton');
+    return this.generateComponent('submitButton');
   }
   get div() {
-    return this.lookupComponent('div');
+    return this.generateComponent('div');
   }
   get listItem() {
-    return this.lookupComponent('listItem');
+    return this.generateComponent('listItem');
   }
   get button() {
-    return this.lookupComponent('button');
+    return this.generateComponent('button');
   }
   get label() {
-    return this.lookupComponent('label');
+    return this.generateComponent('label');
   }
   get listWrapper() {
-    return this.lookupComponent('listWrapper');
+    return this.generateComponent('listWrapper');
   }
   get labelTextWrapper() {
-    return this.lookupComponent('labelTextWrapper');
+    return this.generateComponent('labelTextWrapper');
   }
   get input() {
-    return this.lookupComponent('input');
+    return this.generateComponent('input');
+  }
+  get addButton() {
+    return this.generateComponent('addButton');
+  }
+  get removeButton() {
+    return this.generateComponent('removeButton');
   }
   private generatePassthroughComponent(
     name: string,
@@ -54,7 +60,10 @@ export class ComponentComposer {
     extra = '',
     extraPropTypes: string = ''
   ) {
-    return `${name}: ({...props}: ${['StandardProps', extraPropTypes]
+    return `${name}: ({...props}: ${[
+      'GQLReactFormStandardProps',
+      extraPropTypes,
+    ]
       .filter((i) => i)
       .join(' & ')}) => <${componentType} {...props} ${extra}/>`;
   }
@@ -72,7 +81,7 @@ export class ComponentComposer {
       )
       .filter((name) => !name.match(/AsList$/));
     return `
-      interface StandardProps {
+      export interface GQLReactFormStandardProps {
         children?: React.ReactNode
         path: string
         id?: string
@@ -80,14 +89,16 @@ export class ComponentComposer {
         name: string
         scalar: string
       }
-      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & StandardProps> {}
-      interface GQLFormStandardComponent<T = {}> extends React.FC<StandardProps & T> { }
+      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & GQLReactFormStandardProps> {}
+      interface GQLFormStandardComponent<T = {}> extends React.FC<GQLReactFormStandardProps & T> { }
       export interface GQLReactFormContext {
         form: GQLFormStandardComponent< {onSubmit: (e?: {preventDefault?: () => any}) => any} >,
         div: GQLFormStandardComponent,
         label: GQLFormStandardComponent,
         labelTextWrapper: GQLFormStandardComponent,
         button: GQLFormStandardComponent<{onClick?: (e?: {preventDefault?: () => any}) => any }>,
+        addButton: GQLFormStandardComponent<{onClick?: (e?: {preventDefault?: () => any}) => any }>,
+        removeButton: GQLFormStandardComponent<{onClick?: (e?: {preventDefault?: () => any}) => any }>,
         listWrapper: GQLFormStandardComponent,
         listItem: GQLFormStandardComponent,
         submitButton: React.FC<{text: string}>
@@ -109,6 +120,18 @@ export class ComponentComposer {
         ${this.generatePassthroughComponent('labelTextWrapper', 'h4')},
         ${this.generatePassthroughComponent(
           'button',
+          'button',
+          'onClick={e => {e.preventDefault(); props.onClick?.()}}',
+          '{onClick?: (e?: {preventDefault: () => any}) => any}'
+        )},
+        ${this.generatePassthroughComponent(
+          'addButton',
+          'button',
+          'onClick={e => {e.preventDefault(); props.onClick?.()}}',
+          '{onClick?: (e?: {preventDefault: () => any}) => any}'
+        )},
+        ${this.generatePassthroughComponent(
+          'removeButton',
           'button',
           'onClick={e => {e.preventDefault(); props.onClick?.()}}',
           '{onClick?: (e?: {preventDefault: () => any}) => any}'
