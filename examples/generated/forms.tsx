@@ -63,6 +63,7 @@ export type UserInput = {
   mother?: Maybe<UserInput>;
   father?: Maybe<UserInput>;
   friends: Array<Maybe<UserInput>>;
+  followers?: Maybe<Array<Maybe<UserInput>>>;
 };
 
 export type AddUserMutationVariables = Exact<{
@@ -222,6 +223,10 @@ export const defaultUserInputScalar = {
 
   get friends(): UserInput[] {
     return JSON.parse(JSON.stringify([]));
+  },
+
+  get followers(): UserInput | undefined {
+    return undefined;
   },
 };
 /**********************
@@ -410,6 +415,17 @@ export const UserInputFormInput = React.memo(
           onChange={(newValue = []) =>
             onChange({ ...value, ['friends']: newValue })
           }
+        />
+        <UserInputFormInput
+          value={value?.followers === null ? undefined : value?.followers}
+          scalarName={'UserInput'}
+          name={'followers'}
+          optional={true}
+          label={'Followers'}
+          parentPath={path}
+          onChange={(
+            newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
+          ) => onChange({ ...value, ['followers']: newValue })}
         />
       </DivComponent>
     );
@@ -877,6 +893,16 @@ export const mutationsMetaData = [
             asList: true,
             children: null,
           },
+          {
+            accessChain: ['UserInput', 'UserInput'],
+            endedFromCycle: true,
+            scalarName: 'UserInput',
+            name: 'followers',
+            tsType: 'UserInput',
+            optional: true,
+            asList: false,
+            children: null,
+          },
         ],
       },
     ],
@@ -970,6 +996,16 @@ export const mutationsMetaData = [
                 tsType: 'UserInput',
                 optional: false,
                 asList: true,
+                children: null,
+              },
+              {
+                accessChain: ['UserInput', 'UserInput'],
+                endedFromCycle: true,
+                scalarName: 'UserInput',
+                name: 'followers',
+                tsType: 'UserInput',
+                optional: true,
+                asList: false,
                 children: null,
               },
             ],
