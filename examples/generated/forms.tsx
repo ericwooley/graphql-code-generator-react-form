@@ -201,11 +201,11 @@ export const defaultUserInputScalar = {
     return JSON.parse(JSON.stringify(0));
   },
 
-  get name(): Scalars['String'] | undefined {
+  get name(): Scalars['String'] {
     return JSON.parse(JSON.stringify(''));
   },
 
-  get email(): Scalars['String'] | undefined {
+  get email(): Scalars['String'] {
     return JSON.parse(JSON.stringify(''));
   },
 
@@ -225,7 +225,7 @@ export const defaultUserInputScalar = {
     return JSON.parse(JSON.stringify([]));
   },
 
-  get followers(): UserInput | undefined {
+  get followers(): UserInput[] | undefined {
     return undefined;
   },
 };
@@ -354,7 +354,7 @@ export const UserInputFormInput = React.memo(
           value={value?.name === null ? undefined : value?.name}
           scalarName={'String'}
           name={'name'}
-          optional={true}
+          optional={false}
           label={'Name'}
           parentPath={path}
           onChange={(newValue = '') =>
@@ -365,7 +365,7 @@ export const UserInputFormInput = React.memo(
           value={value?.email === null ? undefined : value?.email}
           scalarName={'String'}
           name={'email'}
-          optional={true}
+          optional={false}
           label={'Email'}
           parentPath={path}
           onChange={(newValue = '') =>
@@ -416,16 +416,16 @@ export const UserInputFormInput = React.memo(
             onChange({ ...value, ['friends']: newValue })
           }
         />
-        <UserInputFormInput
+        <UserInputFormInputAsList
           value={value?.followers === null ? undefined : value?.followers}
           scalarName={'UserInput'}
           name={'followers'}
           optional={true}
           label={'Followers'}
           parentPath={path}
-          onChange={(
-            newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
-          ) => onChange({ ...value, ['followers']: newValue })}
+          onChange={(newValue = []) =>
+            onChange({ ...value, ['followers']: newValue })
+          }
         />
       </DivComponent>
     );
@@ -839,7 +839,7 @@ export const mutationsMetaData = [
             scalarName: 'String',
             name: 'name',
             tsType: 'Scalars["String"]',
-            optional: true,
+            optional: false,
             asList: false,
             children: null,
           },
@@ -849,7 +849,7 @@ export const mutationsMetaData = [
             scalarName: 'String',
             name: 'email',
             tsType: 'Scalars["String"]',
-            optional: true,
+            optional: false,
             asList: false,
             children: null,
           },
@@ -900,7 +900,7 @@ export const mutationsMetaData = [
             name: 'followers',
             tsType: 'UserInput',
             optional: true,
-            asList: false,
+            asList: true,
             children: null,
           },
         ],
@@ -944,7 +944,7 @@ export const mutationsMetaData = [
                 scalarName: 'String',
                 name: 'name',
                 tsType: 'Scalars["String"]',
-                optional: true,
+                optional: false,
                 asList: false,
                 children: null,
               },
@@ -954,7 +954,7 @@ export const mutationsMetaData = [
                 scalarName: 'String',
                 name: 'email',
                 tsType: 'Scalars["String"]',
-                optional: true,
+                optional: false,
                 asList: false,
                 children: null,
               },
@@ -1005,7 +1005,7 @@ export const mutationsMetaData = [
                 name: 'followers',
                 tsType: 'UserInput',
                 optional: true,
-                asList: false,
+                asList: true,
                 children: null,
               },
             ],

@@ -199,13 +199,11 @@ export function scalarTypeConfigToNodeMetaData(
         asList,
       };
     } else if (isNamedType(ofType)) {
-      return namedTypeToTypeNodeMetaData(
-        ofType,
-        name,
-        types,
-        depth,
-        parentTree
-      );
+      return {
+        ...namedTypeToTypeNodeMetaData(ofType, name, types, depth, parentTree),
+        optional,
+        asList,
+      };
     }
   } else {
     scalarName = scalar.type.name;
@@ -226,13 +224,7 @@ export function getTypeNodeMeta(
   depth: number,
   parentTree: string[]
 ): TypeNodeMetaData {
-  let tsType = '';
-  const optional = true;
-  let children: TypeNodeMetaData[] | null = null;
-  let scalarName = '';
   if (type.kind === 'NamedType') {
-    scalarName = type.name.value;
-    tsType = type.name.value;
     const typeDef: GraphQLNamedType & {
       // seems like this is only for enums
       _values?: GraphqlEnumValues[];
@@ -255,11 +247,11 @@ export function getTypeNodeMeta(
       accessChain: parentTree,
       endedFromCycle: false,
       asList: false,
-      scalarName,
+      scalarName: type.name.value,
       name,
-      tsType,
-      optional,
-      children,
+      tsType: type.name.value,
+      optional: true,
+      children: null,
     };
   }
   if (type.kind === 'ListType') {

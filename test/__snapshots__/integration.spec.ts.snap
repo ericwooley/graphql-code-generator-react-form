@@ -2,169 +2,353 @@
 
 exports[`React Apollo Forms should generate a Form 1`] = `
 "
+    /**************************
+     * utilities
+     *************************/
+    let idNonce = 0;
+    const uniqueId = (inStr: string) => inStr+(idNonce++)
+    
+
+    
+      interface StandardProps {
+        children?: React.ReactNode
+        path: string
+        id?: string
+        className?: string
+        name: string
+        scalar: string
+      }
+      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & StandardProps> {}
+      interface GQLFormStandardComponent<T = {}> extends React.FC<StandardProps & T> { }
+      export interface GQLReactFormContext {
+        form: GQLFormStandardComponent< {onSubmit: (e?: {preventDefault?: () => any}) => any} >,
+        div: GQLFormStandardComponent,
+        label: GQLFormStandardComponent,
+        labelTextWrapper: GQLFormStandardComponent,
+        button: GQLFormStandardComponent<{onClick?: (e?: {preventDefault?: () => any}) => any }>,
+        listWrapper: GQLFormStandardComponent,
+        listItem: GQLFormStandardComponent,
+        submitButton: React.FC<{text: string}>
+        input: FormPrimeInput,
+        UserInput?: React.FC<UserInputFormInputPropTypes> ,
+      }
+      export const defaultReactFormContext: GQLReactFormContext = {
+        form: 'form' as any,
+        div: ({...props}: StandardProps) => <div {...props} />,
+        label: ({...props}: StandardProps) => <label {...props} />,
+        labelTextWrapper: ({...props}: StandardProps) => <h4 {...props} />,
+        button: ({...props}: StandardProps & {onClick?: (e?: {preventDefault: () => any}) => any}) => <button {...props} onClick={e => {e.preventDefault(); props.onClick?.()}}/>,
+        listWrapper: ({...props}: StandardProps) => <ol {...props} />,
+        listItem: ({...props}: StandardProps) => <li {...props} />,
+        submitButton: ((props: {text: string}) => <input type=\\"submit\\" {...props} value={props.text} /> ),
+        input: ((props) => {
+          const {path, scalar, name} = props
+          const ctx = React.useContext(GQLReactFormContext)
+          const DivComponent = ctx.div || defaultReactFormContext.div
+          const typeofValue = typeof props.value
+            return (
+            <DivComponent  path={path} scalar={scalar} name={name}>
+          
+            <label>
+              <strong>{props.label}</strong><br />
+              <input value={props.value} type={props.value === undefined
+                ? \\"string\\"
+                : typeofValue === 'string'
+                ? 'text'
+                : typeofValue === 'number'
+                ? 'number'
+                : ''
+              } onChange={(e) =>
+                props.onChange(e.target.value)} />
+            </label>
+            
+          </DivComponent>)
+
+          }),
+
+      }
+      export const GQLReactFormContext = React.createContext<Partial<GQLReactFormContext>>(defaultReactFormContext)
+
+    
 /**********************
  * Default Values
  * *******************/
   export const defaultUserInputScalar = {
 
-      get id (): Scalars[\\"Int\\"]|undefined {
-        return 0
-      },
+          get id (): Scalars[\\"Int\\"]|undefined {
+            
+          return JSON.parse(JSON.stringify(0))
+        
+          },
     
 
-      get name (): Scalars[\\"String\\"]|undefined {
-        return \\"\\"
-      },
+          get name (): Scalars[\\"String\\"]|undefined {
+            
+          return JSON.parse(JSON.stringify(\\"\\"))
+        
+          },
     
 
-      get email (): Scalars[\\"String\\"]|undefined {
-        return \\"\\"
-      },
+          get email (): Scalars[\\"String\\"]|undefined {
+            
+          return JSON.parse(JSON.stringify(\\"\\"))
+        
+          },
     
 
-      get mother (): UserInput|undefined {
-        return undefined
-      },
+          get password (): Scalars[\\"String\\"]|undefined {
+            
+          return JSON.parse(JSON.stringify(\\"\\"))
+        
+          },
     
 
-      get father (): UserInput|undefined {
-        return undefined
-      },
+          get mother (): UserInput|undefined {
+            return undefined
+          },
     
 
-      get friends (): UserInput[]|undefined {
-        return undefined
-      },
+          get father (): UserInput|undefined {
+            return undefined
+          },
+    
+
+          get friends (): UserInput[] {
+            
+          return JSON.parse(JSON.stringify([]))
+        
+          },
+    
+
+          get followers (): UserInput|undefined {
+            return undefined
+          },
     
 }
+/**********************
+ * Scalar Form Fragments
+ * *******************/
   
-/******************************
- * Scalar Components
- * ****************************/
-
-
-    
     export interface IntFormInputPropTypes {
       optional: boolean,
       label: string,
-      value: Scalars[\\"Int\\"],
+      value?: Maybe<Scalars[\\"Int\\"]>,
       scalarName: string,
-      name: string
+      name: string,
+      parentPath: string,
+      onChange: (value?: Scalars[\\"Int\\"]) => any
     }
-        export const IntFormInput = (props: IntFormInputPropTypes) => {
-          let [shouldRender, setShouldRender] = React.useState(false)
-const {label, value: initialValue = 0} = props
-const [value, setValue] = React.useState(initialValue)
-          return <div><label><strong>{label}</strong><br /><input value={value} onChange={(e) =>
-          setValue(e.target.value as any)} /></label></div>
-        }
+        export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
+          const {parentPath, label, name, value, onChange } = props
+const scalar = \\"Int\\"
+const path = [parentPath, name].join('.')
+const ctx = React.useContext(GQLReactFormContext)
+const DivComponent = ctx.div || defaultReactFormContext.div
+const ButtonComponent = ctx.button || defaultReactFormContext.button
+const LabelTextWrapperComponent = ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper
+const InputComponent = ctx.input || defaultReactFormContext.input
+          return (
+        <InputComponent onChange={props.onChange as any} value={value === undefined || value===null? \\"\\" : value} label={label} path={path} scalar={scalar} name={name}>
+          
+          </InputComponent>)
+        })
     
 
 
     export interface StringFormInputPropTypes {
       optional: boolean,
       label: string,
-      value: Scalars[\\"String\\"],
+      value?: Maybe<Scalars[\\"String\\"]>,
       scalarName: string,
-      name: string
+      name: string,
+      parentPath: string,
+      onChange: (value?: Scalars[\\"String\\"]) => any
     }
-        export const StringFormInput = (props: StringFormInputPropTypes) => {
-          let [shouldRender, setShouldRender] = React.useState(false)
-const {label, value: initialValue = \\"\\"} = props
-const [value, setValue] = React.useState(initialValue)
-          return <div><label><strong>{label}</strong><br /><input value={value} onChange={(e) =>
-          setValue(e.target.value as any)} /></label></div>
-        }
+        export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
+          const {parentPath, label, name, value, onChange } = props
+const scalar = \\"String\\"
+const path = [parentPath, name].join('.')
+const ctx = React.useContext(GQLReactFormContext)
+const DivComponent = ctx.div || defaultReactFormContext.div
+const ButtonComponent = ctx.button || defaultReactFormContext.button
+const LabelTextWrapperComponent = ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper
+const InputComponent = ctx.input || defaultReactFormContext.input
+          return (
+        <InputComponent onChange={props.onChange as any} value={value === undefined || value===null? \\"\\" : value} label={label} path={path} scalar={scalar} name={name}>
+          
+          </InputComponent>)
+        })
     
 
 
     export interface UserInputFormInputPropTypes {
       optional: boolean,
       label: string,
-      value: UserInput,
+      value?: Maybe<UserInput>,
       scalarName: string,
-      name: string
+      name: string,
+      parentPath: string,
+      onChange: (value?: UserInput) => any
     }
-        export const UserInputFormInput = (props: UserInputFormInputPropTypes) => {
-          let [shouldRender, setShouldRender] = React.useState(false)
-const {label, value: initialValue = defaultUserInputScalar} = props
-const [value, setValue] = React.useState(initialValue)
+        export const UserInputFormInput = React.memo((props: UserInputFormInputPropTypes) => {
+          const {parentPath, label, name, value, onChange } = props
+const scalar = \\"UserInput\\"
+const path = [parentPath, name].join('.')
+const ctx = React.useContext(GQLReactFormContext)
+const DivComponent = ctx.div || defaultReactFormContext.div
+const ButtonComponent = ctx.button || defaultReactFormContext.button
+const LabelTextWrapperComponent = ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper
           
-      if(props.optional && !shouldRender){
-        return <div><button onClick={(e) => {
-          e.preventDefault();
-          setShouldRender(true)
-        }}>Add {label}</button></div>
+      if(value === undefined || value === null ){
+        return <DivComponent  path={path} scalar={scalar} name={name}>
+          <ButtonComponent onClick={() => onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)))
+          } path={path} scalar={scalar} name={name}>
+          Add {label}
+          </ButtonComponent>
+          </DivComponent>
       }
-return <div className=\\"mutationFormNested\\">
-        <h4>{label}</h4>
-        <UserInputFormInput value={value.users} scalarName={\\"UserInput\\"} name={\\"users\\"} optional={true} label={\\"Users\\"} /></div>
-        }
+return <DivComponent className={\\"mutationFormNested\\"} path={path} scalar={scalar} name={name}>
+          
+            <LabelTextWrapperComponent  path={path} scalar={scalar} name={name}>
+          {label}
+          </LabelTextWrapperComponent>
+            <UserInputFormInput value={value?.users === null? undefined : value?.users} scalarName={\\"UserInput\\"} name={\\"users\\"} optional={true} label={\\"Users\\"} parentPath={path} onChange={(newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))) => onChange({...value, ['users']: newValue})} />
+        
+          </DivComponent>
+        })
     
 
 
     export interface UserInputFormInputAsListPropTypes {
       optional: boolean,
       label: string,
-      value: UserInput[],
+      value?: Maybe<UserInput>[],
       scalarName: string,
-      name: string
+      name: string,
+      parentPath: string,
+      onChange: (value?: UserInput[]) => any
     }
-        export const UserInputFormInputAsList = (props: UserInputFormInputAsListPropTypes) => {
-          let [shouldRender, setShouldRender] = React.useState(false)
-const {label, value: initialValue = []} = props
-const [value, setValue] = React.useState(initialValue)
-const addItem=() => setValue(old => [...old, defaultUserInputScalar ])
-const insertItem=(index: number) => setValue(old => [...old.slice(0, index), defaultUserInputScalar, ...old.slice(index) ])
-const removeItem=(index: number) => setValue(old => [...old.slice(0, index), ...old.slice(index+1) ])
+        export const UserInputFormInputAsList = React.memo((props: UserInputFormInputAsListPropTypes) => {
+          const {parentPath, label, name, value, onChange } = props
+const scalar = \\"UserInput\\"
+const path = [parentPath, name].join('.')
+const ctx = React.useContext(GQLReactFormContext)
+const DivComponent = ctx.div || defaultReactFormContext.div
+const ButtonComponent = ctx.button || defaultReactFormContext.button
+const LabelTextWrapperComponent = ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper
+const ListItemComponent = ctx.listItem || defaultReactFormContext.listItem
+const valueMapRef = React.useRef<
+          {id: string, value: Maybe<UserInput>}[]
+        >((value||[]).map(v => ({id: uniqueId(\\"users\\"), value: v})))
+const addItem=() => {
+          valueMapRef.current = [...valueMapRef.current, {id: uniqueId('users'), value: JSON.parse(JSON.stringify(defaultUserInputScalar))} ];
+          onChange(valueMapRef.current.map(i => i.value === null ? JSON.parse(JSON.stringify(defaultUserInputScalar)): i.value))
+        }
+const insertItem=(index: number) =>  {
+            valueMapRef.current = [
+              ...valueMapRef.current.slice(0, index),
+              {id: uniqueId('users'), value: JSON.parse(JSON.stringify(defaultUserInputScalar))},
+              ...valueMapRef.current.slice(index) ];
+            onChange(valueMapRef.current.map(i => i.value === null ? JSON.parse(JSON.stringify(defaultUserInputScalar)): i.value))
+        }
+const removeItem=(index: number) => {
+          valueMapRef.current = [...valueMapRef.current.slice(0, index), ...valueMapRef.current.slice(index+1) ]
+          onChange(valueMapRef.current.map(i => i.value === null ? JSON.parse(JSON.stringify(defaultUserInputScalar)): i.value))
+        }
+const ListWrapperComponent = ctx.listWrapper || defaultReactFormContext.listWrapper
           return (
-    <div className=\\"mutationFormNested mutationFormList\\">
-    {label && <h3>{label}</h3>}
-    <ol>
-        {value.length > 0 ? (
-          value.map((item, index) => (
-            <li key={index}>
-              <UserInputFormInput optional={false} label={\\"\\"} value={item} name={\\"users\\"} scalarName={\\"UserInput\\"} />
-              <button
-                type=\\"button\\"
-                onClick={() => removeItem(index)} // remove a friend from the list
-              >
-                -
-              </button>
+    <DivComponent className={\\"mutationFormNested mutationFormList\\"} path={path} scalar={scalar} name={name}>
+          
+    {label && <LabelTextWrapperComponent  path={path} scalar={scalar} name={name}>
+          {label}
+          </LabelTextWrapperComponent>}
+    <ListWrapperComponent  path={path} scalar={scalar} name={name}>
+          
+        {valueMapRef.current.length > 0 ? (
+          valueMapRef.current.map((item, index) => (
+            <ListItemComponent key={item.id} path={path} scalar={scalar} name={name}>
+          <ButtonComponent onClick={() => removeItem(index)} path={path} scalar={scalar} name={name}>
+          X
+          </ButtonComponent>
 
-              <button
-                type=\\"button\\"
-                onClick={() => insertItem(index)} // insert an empty string at a position
-              >
-                +
-              </button>
-            </li>
+            <ButtonComponent onClick={() => insertItem(index)} path={path} scalar={scalar} name={name}>
+          +
+          </ButtonComponent>
+            <UserInputFormInput optional={false} label={\\"\\"} value={item.value} scalarName={\\"UserInput\\"} name={String(index)} parentPath={path} onChange={(newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))) => {
+                    valueMapRef.current = valueMapRef.current.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
+                    onChange(valueMapRef.current.map(i => i.value === null ?JSON.parse(JSON.stringify(defaultUserInputScalar)) : i.value))
+                }} />
+          </ListItemComponent>
           ))
         ) : (
-          <button type=\\"button\\" onClick={addItem}>
+          <ButtonComponent onClick={addItem} path={path} scalar={scalar} name={name}>
           +
-          </button>
+          </ButtonComponent>
         )}
-    </ol>
-    </div>
+          </ListWrapperComponent>
+      
+          </DivComponent>
     )
-        }
+        })
     
+/***************************
+* forms Forms
+* *************************/
   
 
+  export const addUsersDefaultValues = {
+  users: []
+  };
 
-/****************************
- * forms Forms
+
+  export interface AddUsersFormVariables {
+  users: UserInput[]
+  }
+
+
+
+  export const AddUsersForm = (
+  {
+    initialValues = addUsersDefaultValues,
+    onSubmit,
+    ...formProps} : React.DetailedHTMLProps<
+  React.FormHTMLAttributes<HTMLFormElement>,
+  HTMLFormElement
+  > & { initialValues?: Partial<AddUsersFormVariables>, onSubmit: (values: AddUsersFormVariables)=> any}) => {
+  const [value, setValue]= React.useState(initialValues || {})
+  const ctx = React.useContext(GQLReactFormContext)
+  const FormComponent = ctx.form || defaultReactFormContext.form
+  const SubmitButtonComponent = ctx.submitButton || defaultReactFormContext.submitButton
+  return (
+      <FormComponent scalar=\\"\\" name=\\"\\" onSubmit={(e) => {
+        e?.preventDefault?.()
+        onSubmit(value as any)
+      }} {...formProps} path=\\"\\">
+        <UserInputFormInputAsList value={value?.users} label={\\"Users\\"} parentPath={\\"root\\"} onChange={(value) => {
+                console.log('onChange users', value)
+                setValue(oldVal => ({...oldVal, ['users']: value}))
+              }} scalarName={\\"UserInput\\"} name={\\"users\\"} optional={false} />
+        <SubmitButtonComponent text=\\"submit\\" />
+      </FormComponent>
+  )
+  };
+    
+/***************************
+ * MetaData Export
  * *************************/
-export const mutationsMetaData = [
+  
+  export const mutationsMetaData = [
   {
     \\"name\\": \\"addUsers\\",
     \\"variables\\": [
       {
         \\"accessChain\\": [],
         \\"endedFromCycle\\": false,
+        \\"scalarName\\": \\"UserInput\\",
         \\"name\\": \\"users\\",
+        \\"tsType\\": \\"UserInput\\",
         \\"optional\\": false,
+        \\"asList\\": true,
         \\"children\\": [
           {
             \\"accessChain\\": [
@@ -174,7 +358,6 @@ export const mutationsMetaData = [
             \\"scalarName\\": \\"UserInput\\",
             \\"name\\": \\"users\\",
             \\"tsType\\": \\"UserInput\\",
-            \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
             \\"optional\\": true,
             \\"asList\\": false,
             \\"children\\": [
@@ -187,7 +370,6 @@ export const mutationsMetaData = [
                 \\"scalarName\\": \\"Int\\",
                 \\"name\\": \\"id\\",
                 \\"tsType\\": \\"Scalars[\\\\\\"Int\\\\\\"]\\",
-                \\"defaultVal\\": \\"0\\",
                 \\"optional\\": true,
                 \\"asList\\": false,
                 \\"children\\": null
@@ -201,7 +383,6 @@ export const mutationsMetaData = [
                 \\"scalarName\\": \\"String\\",
                 \\"name\\": \\"name\\",
                 \\"tsType\\": \\"Scalars[\\\\\\"String\\\\\\"]\\",
-                \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
                 \\"optional\\": true,
                 \\"asList\\": false,
                 \\"children\\": null
@@ -215,7 +396,19 @@ export const mutationsMetaData = [
                 \\"scalarName\\": \\"String\\",
                 \\"name\\": \\"email\\",
                 \\"tsType\\": \\"Scalars[\\\\\\"String\\\\\\"]\\",
-                \\"defaultVal\\": \\"\\\\\\"\\\\\\"\\",
+                \\"optional\\": true,
+                \\"asList\\": false,
+                \\"children\\": null
+              },
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"String\\"
+                ],
+                \\"endedFromCycle\\": false,
+                \\"scalarName\\": \\"String\\",
+                \\"name\\": \\"password\\",
+                \\"tsType\\": \\"Scalars[\\\\\\"String\\\\\\"]\\",
                 \\"optional\\": true,
                 \\"asList\\": false,
                 \\"children\\": null
@@ -229,7 +422,6 @@ export const mutationsMetaData = [
                 \\"scalarName\\": \\"UserInput\\",
                 \\"name\\": \\"mother\\",
                 \\"tsType\\": \\"UserInput\\",
-                \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
                 \\"optional\\": true,
                 \\"asList\\": false,
                 \\"children\\": null
@@ -243,7 +435,6 @@ export const mutationsMetaData = [
                 \\"scalarName\\": \\"UserInput\\",
                 \\"name\\": \\"father\\",
                 \\"tsType\\": \\"UserInput\\",
-                \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
                 \\"optional\\": true,
                 \\"asList\\": false,
                 \\"children\\": null
@@ -257,51 +448,30 @@ export const mutationsMetaData = [
                 \\"scalarName\\": \\"UserInput\\",
                 \\"name\\": \\"friends\\",
                 \\"tsType\\": \\"UserInput\\",
-                \\"defaultVal\\": \\"\\\\\\"undefined\\\\\\"\\",
-                \\"optional\\": true,
+                \\"optional\\": false,
                 \\"asList\\": true,
+                \\"children\\": null
+              },
+              {
+                \\"accessChain\\": [
+                  \\"UserInput\\",
+                  \\"UserInput\\"
+                ],
+                \\"endedFromCycle\\": true,
+                \\"scalarName\\": \\"UserInput\\",
+                \\"name\\": \\"followers\\",
+                \\"tsType\\": \\"UserInput\\",
+                \\"optional\\": true,
+                \\"asList\\": false,
                 \\"children\\": null
               }
             ]
           }
-        ],
-        \\"tsType\\": \\"UserInput\\",
-        \\"defaultVal\\": \\"[]\\",
-        \\"scalarName\\": \\"UserInput\\",
-        \\"asList\\": true
+        ]
       }
     ]
   }
 ]
-
-export const addUsersDefaultValues = {
-  users: []
-};
-
-export interface AddUsersFormVariables {
-  users: UserInput[]
-}
-
-
-
-export const AddUsersForm = (
-  {
-    initialValues = addUsersDefaultValues,
-    onSubmit,
-    ...formProps} : React.DetailedHTMLProps<
-  React.FormHTMLAttributes<HTMLFormElement>,
-  HTMLFormElement
-> & { initialValues?: Partial<AddUsersFormVariables>, onSubmit: (values: AddUsersFormVariables)=> unknown }) => {
-  return (<form onSubmit={(e) => {
-    e.preventDefault()
-    // TODO: This needs to be real values from the form
-    onSubmit(initialValues as any)
-  }} {...formProps}>
-    <UserInputFormInputAsList value={initialValues.users} label={\\"Users\\"} name={\\"users\\"} optional={false} scalarName={\\"UserInput\\"} />
-    <input type=\\"submit\\" value=\\"submit\\" />
-  </form>
-  )
-};
-    
+  
   "
 `;
