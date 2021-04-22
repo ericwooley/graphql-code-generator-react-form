@@ -9,6 +9,7 @@ import {
   Switch,
   TextField,
 } from '@material-ui/core';
+import { baseMaterialUIComponents } from './baseMaterialUIComponents';
 export const AddUser = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   return (
@@ -32,18 +33,7 @@ export const AddUser = () => {
         return useCustomComponents ? (
           <GQLReactFormContext.Provider
             value={{
-              submitButton: (props) => (
-                <Box m={2}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    type="submit"
-                  >
-                    {props.text}
-                  </Button>
-                </Box>
-              ),
+              ...baseMaterialUIComponents,
               input: (props) => {
                 return (
                   <Box m={2}>

@@ -1,12 +1,13 @@
 import React from 'react';
-import { AddUsersForm } from '../generated/forms';
+import { AddUsersForm, GQLReactFormContext } from '../generated/forms';
 import addUsersDocument from '../documents/addUsers.graphql';
 import { ExampleContent } from './exampleContent';
+import { baseMaterialUIComponents } from './baseMaterialUIComponents';
 export const RecursiveUserExample = () => {
   return (
     <ExampleContent document={addUsersDocument}>
-      {({ onSubmit, useInitialValues }) => {
-        const demoContent = (
+      {({ onSubmit, useInitialValues, useCustomComponents }) => {
+        const content = (
           <AddUsersForm
             key={`AddUsersForm-${useInitialValues}`}
             initialValues={
@@ -42,7 +43,13 @@ export const RecursiveUserExample = () => {
           />
         );
 
-        return demoContent;
+        return useCustomComponents ? (
+          <GQLReactFormContext.Provider value={baseMaterialUIComponents}>
+            {content}
+          </GQLReactFormContext.Provider>
+        ) : (
+          content
+        );
       }}
     </ExampleContent>
   );
