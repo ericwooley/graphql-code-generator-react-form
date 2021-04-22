@@ -385,10 +385,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   export const ${camelCase(m.name + 'DefaultValues')} = {
   ${m.variables
     .map(
-      (v) =>
-        `${v.name}${
-          v.optional ? '?' : ''
-        }: ${this.getDefaultValueStringForTypeNodeMetaData(v)}`
+      (v) => `${v.name}: ${this.getDefaultValueStringForTypeNodeMetaData(v)}`
     )
     .join(',\n')}
   };
