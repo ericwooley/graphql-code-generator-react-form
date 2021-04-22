@@ -10,30 +10,47 @@ import {
   TextField,
 } from '@material-ui/core';
 export const AddUser = () => {
+  const [useInitialValues, setUserInitialValues] = React.useState(false);
   const [useCustomComponents, setUseCustomComponents] = React.useState(true);
   const [showPassword, setShowPassword] = React.useState(false);
   const demoContent = (
     <ExampleContent
       options={
-        <FormControlLabel
-          label="Use Custom Components"
-          control={
-            <Switch
-              checked={useCustomComponents}
-              onChange={(e) => setUseCustomComponents(e.target.checked)}
-            />
-          }
-        ></FormControlLabel>
+        <>
+          <FormControlLabel
+            label="Use Custom Components"
+            control={
+              <Switch
+                checked={useCustomComponents}
+                onChange={(e) => setUseCustomComponents(e.target.checked)}
+              />
+            }
+          ></FormControlLabel>
+          <FormControlLabel
+            label="Use Initial Values"
+            control={
+              <Switch
+                checked={useInitialValues}
+                onChange={(e) => setUserInitialValues(e.target.checked)}
+              />
+            }
+          ></FormControlLabel>
+        </>
       }
       document={addUserDocument}
     >
       {({ onSubmit }) => (
         <AddUserForm
-          key="user-form"
-          initialValues={{
-            email: 'bob@gmail.com',
-            name: 'test name',
-          }}
+          key={`user-form-${useInitialValues}`}
+          initialValues={
+            useInitialValues
+              ? {
+                  email: 'bob@gmail.com',
+                  name: 'test name',
+                  password: 'test123',
+                }
+              : undefined
+          }
           onSubmit={onSubmit}
         />
       )}
