@@ -45,6 +45,9 @@ export class ComponentComposer {
   get labelTextWrapper() {
     return this.lookupComponent('labelTextWrapper');
   }
+  get input() {
+    return this.lookupComponent('input');
+  }
   private generatePassthroughComponent(
     name: string,
     componentType = name,
@@ -56,6 +59,18 @@ export class ComponentComposer {
       .join(' & ')}) => <${componentType} {...props} ${extra}/>`;
   }
   public generateContext(typeComponentMap: { [key: string]: any }) {
+    const dynamicComponentTypeList = Object.keys(typeComponentMap)
+      .filter(
+        (name) =>
+          ![
+            'StringFormInput',
+            'IntFormInput',
+            'FloatFormInput',
+            'BooleanFormInput',
+            'IDFormInput',
+          ].includes(name)
+      )
+      .filter((name) => !name.match(/AsList$/));
     return `
       interface StandardProps {
         children?: React.ReactNode
@@ -63,7 +78,8 @@ export class ComponentComposer {
         id?: string
         className?: string
       }
-      interface ReactOnChangeHandler<T> extends React.FC<{onChange: (value: T) => T, value?: T, label: string } & StandardProps> {}
+      interface OnChangeProps<T> { }
+      interface ReactOnChangeHandler extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & StandardProps> {}
       interface GQLFormStandardComponent<T = {}> extends React.FC<StandardProps & T> { }
       export interface GQLReactFormContext {
         form: GQLFormStandardComponent< {onSubmit: (e?: {preventDefault?: () => any}) => any} >,
@@ -74,15 +90,14 @@ export class ComponentComposer {
         listWrapper: GQLFormStandardComponent,
         listItem: GQLFormStandardComponent,
         submitButton: React.FC<{text: string}>
-        input: ReactOnChangeHandler<string | number | Date>
-        ${Object.keys(typeComponentMap)
-          .filter((name) => !name.match(/AsList$/))
+        input: ReactOnChangeHandler,
+        ${dynamicComponentTypeList
           .map(
             (scalarName) =>
               `${scalarName.replace(
                 /FormInput$/,
                 ''
-              )}: React.FC<${scalarName}PropTypes> `
+              )}?: React.FC<${scalarName}PropTypes> `
           )
           .join(',\n')},
       }
@@ -117,8 +132,6 @@ export class ComponentComposer {
                 ? 'text'
                 : typeofValue === 'number'
                 ? 'number'
-                : props.value instanceof Date
-                ? 'date'
                 : ''
               } onChange={(e) =>
                 props.onChange(e.target.value)} />
@@ -126,18 +139,8 @@ export class ComponentComposer {
             `
             )})
 
-          }) as ReactOnChangeHandler<string|number|Date>,
-        ${Object.keys(typeComponentMap)
-          .filter((name) => !name.match(/AsList$/))
-          .map(
-            (scalarName) => `get ${scalarName.replace(
-              /FormInput$/,
-              ''
-            )}(): React.FC<${scalarName}PropTypes> {
-            return ${scalarName}
-          }`
-          )
-          .join(',\n')}
+          }),
+
       }
       export const GQLReactFormContext = React.createContext<Partial<GQLReactFormContext>>(defaultReactFormContext)
 

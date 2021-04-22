@@ -1,6 +1,7 @@
 type User {
   id: Int!
   name: String!
+  password: String
   email: String!
   friends: [User]!
 }
@@ -9,6 +10,7 @@ input UserInput {
   id: Int
   name: String!
   email: String!
+  password: String
   mother: UserInput
   father: UserInput
   friends: [UserInput]!

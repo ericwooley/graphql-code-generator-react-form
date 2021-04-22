@@ -14,10 +14,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 export const ExampleContent: React.FunctionComponent<{
   document: string;
+  options?: JSX.Element | JSX.Element[];
   children: (childProps: {
     onSubmit: (value: any) => unknown;
   }) => JSX.Element | JSX.Element[];
-}> = ({ document, children }) => {
+}> = ({ document, children, options }) => {
   const classes = useStyles();
   const [result, setResult] = React.useState(null);
   return (
@@ -26,6 +27,13 @@ export const ExampleContent: React.FunctionComponent<{
         <Typography variant="h5">Graphql Mutation Source</Typography>
         <GraphqlCode>{document}</GraphqlCode>
         <Divider />
+        {options && (
+          <>
+            <Typography variant="h5">Options</Typography>
+            {options}
+            <Divider />
+          </>
+        )}
         <Typography variant="h5">Generated Form</Typography>
         <ErrorBoundary>
           {children({

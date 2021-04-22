@@ -50,6 +50,7 @@ export type User = {
   __typename?: 'User';
   id: Scalars['Int'];
   name: Scalars['String'];
+  password?: Maybe<Scalars['String']>;
   email: Scalars['String'];
   friends: Array<Maybe<User>>;
 };
@@ -58,6 +59,7 @@ export type UserInput = {
   id?: Maybe<Scalars['Int']>;
   name: Scalars['String'];
   email: Scalars['String'];
+  password?: Maybe<Scalars['String']>;
   mother?: Maybe<UserInput>;
   father?: Maybe<UserInput>;
   friends: Array<Maybe<UserInput>>;
@@ -66,6 +68,7 @@ export type UserInput = {
 export type AddUserMutationVariables = Exact<{
   email: Scalars['String'];
   name: Scalars['String'];
+  password?: Maybe<Scalars['String']>;
 }>;
 
 export type AddUserMutation = { __typename?: 'MutationRoot' } & {
@@ -106,9 +109,14 @@ interface StandardProps {
   id?: string;
   className?: string;
 }
-interface ReactOnChangeHandler<T>
+interface OnChangeProps<T> {}
+interface ReactOnChangeHandler
   extends React.FC<
-    { onChange: (value: T) => T; value?: T; label: string } & StandardProps
+    {
+      onChange: (value: number | string) => number | string;
+      value?: number | string;
+      label: string;
+    } & StandardProps
   > {}
 interface GQLFormStandardComponent<T = {}>
   extends React.FC<StandardProps & T> {}
@@ -125,10 +133,8 @@ export interface GQLReactFormContext {
   listWrapper: GQLFormStandardComponent;
   listItem: GQLFormStandardComponent;
   submitButton: React.FC<{ text: string }>;
-  input: ReactOnChangeHandler<string | number | Date>;
-  String: React.FC<StringFormInputPropTypes>;
-  Int: React.FC<IntFormInputPropTypes>;
-  UserInput: React.FC<UserInputFormInputPropTypes>;
+  input: ReactOnChangeHandler;
+  UserInput?: React.FC<UserInputFormInputPropTypes>;
 }
 export const defaultReactFormContext: GQLReactFormContext = {
   form: 'form' as any,
@@ -153,7 +159,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
   submitButton: (props: { text: string }) => (
     <input type="submit" {...props} value={props.text} />
   ),
-  input: ((props) => {
+  input: (props) => {
     const { path } = props;
     const ctx = React.useContext(GQLReactFormContext);
     const DivComponent = ctx.div || defaultReactFormContext.div;
@@ -171,8 +177,6 @@ export const defaultReactFormContext: GQLReactFormContext = {
                 ? 'text'
                 : typeofValue === 'number'
                 ? 'number'
-                : props.value instanceof Date
-                ? 'date'
                 : ''
             }
             onChange={(e) => props.onChange(e.target.value)}
@@ -180,15 +184,6 @@ export const defaultReactFormContext: GQLReactFormContext = {
         </label>
       </DivComponent>
     );
-  }) as ReactOnChangeHandler<string | number | Date>,
-  get String(): React.FC<StringFormInputPropTypes> {
-    return StringFormInput;
-  },
-  get Int(): React.FC<IntFormInputPropTypes> {
-    return IntFormInput;
-  },
-  get UserInput(): React.FC<UserInputFormInputPropTypes> {
-    return UserInputFormInput;
   },
 };
 export const GQLReactFormContext = React.createContext<
@@ -208,6 +203,10 @@ export const defaultUserInputScalar = {
   },
 
   get email(): Scalars['String'] | undefined {
+    return JSON.parse(JSON.stringify(''));
+  },
+
+  get password(): Scalars['String'] | undefined {
     return JSON.parse(JSON.stringify(''));
   },
 
@@ -234,7 +233,7 @@ export interface StringFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value?: Scalars['String']) => unknown;
+  onChange: (value?: Scalars['String']) => any;
 }
 export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
@@ -244,19 +243,14 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const ButtonComponent = ctx.button || defaultReactFormContext.button;
   const LabelTextWrapperComponent =
     ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
-  const LabelComponent = ctx.label || defaultReactFormContext.label;
+  const InputComponent = ctx.input || defaultReactFormContext.input;
   return (
-    <DivComponent path={path}>
-      <LabelComponent path={path}>
-        <LabelTextWrapperComponent path={path}>
-          {label}
-        </LabelTextWrapperComponent>
-        <input
-          value={value === undefined || value === null ? '' : value}
-          onChange={(e) => onChange(e.target.value as any)}
-        />
-      </LabelComponent>
-    </DivComponent>
+    <InputComponent
+      onChange={props.onChange as any}
+      value={value === undefined || value === null ? '' : value}
+      label={label}
+      path={path}
+    ></InputComponent>
   );
 });
 
@@ -267,7 +261,7 @@ export interface IntFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value?: Scalars['Int']) => unknown;
+  onChange: (value?: Scalars['Int']) => any;
 }
 export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange } = props;
@@ -277,19 +271,14 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const ButtonComponent = ctx.button || defaultReactFormContext.button;
   const LabelTextWrapperComponent =
     ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
-  const LabelComponent = ctx.label || defaultReactFormContext.label;
+  const InputComponent = ctx.input || defaultReactFormContext.input;
   return (
-    <DivComponent path={path}>
-      <LabelComponent path={path}>
-        <LabelTextWrapperComponent path={path}>
-          {label}
-        </LabelTextWrapperComponent>
-        <input
-          value={value === undefined || value === null ? '' : value}
-          onChange={(e) => onChange(e.target.value as any)}
-        />
-      </LabelComponent>
-    </DivComponent>
+    <InputComponent
+      onChange={props.onChange as any}
+      value={value === undefined || value === null ? '' : value}
+      label={label}
+      path={path}
+    ></InputComponent>
   );
 });
 
@@ -300,7 +289,7 @@ export interface UserInputFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value?: UserInput) => unknown;
+  onChange: (value?: UserInput) => any;
 }
 export const UserInputFormInput = React.memo(
   (props: UserInputFormInputPropTypes) => {
@@ -362,6 +351,17 @@ export const UserInputFormInput = React.memo(
             onChange({ ...value, ['email']: newValue })
           }
         />
+        <StringFormInput
+          value={value?.password === null ? undefined : value?.password}
+          scalarName={'String'}
+          name={'password'}
+          optional={true}
+          label={'Password'}
+          parentPath={path}
+          onChange={(newValue = '') =>
+            onChange({ ...value, ['password']: newValue })
+          }
+        />
         <UserInputFormInput
           value={value?.mother === null ? undefined : value?.mother}
           scalarName={'UserInput'}
@@ -407,7 +407,7 @@ export interface UserInputFormInputAsListPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
-  onChange: (value?: UserInput[]) => unknown;
+  onChange: (value?: UserInput[]) => any;
 }
 export const UserInputFormInputAsList = React.memo(
   (props: UserInputFormInputAsListPropTypes) => {
@@ -535,11 +535,13 @@ export const UserInputFormInputAsList = React.memo(
 export const addUserDefaultValues = {
   email: '',
   name: '',
+  password: '',
 };
 
 export interface AddUserFormVariables {
   email: Scalars['String'];
   name: Scalars['String'];
+  password?: Scalars['String'];
 }
 
 export const AddUserForm = ({
@@ -551,7 +553,7 @@ export const AddUserForm = ({
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFormVariables>;
-  onSubmit: (values: AddUserFormVariables) => unknown;
+  onSubmit: (values: AddUserFormVariables) => any;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
@@ -591,6 +593,18 @@ export const AddUserForm = ({
         name={'name'}
         optional={false}
       />
+      <StringFormInput
+        value={value?.password}
+        label={'Password'}
+        parentPath={'root'}
+        onChange={(value) => {
+          console.log('onChange password', value);
+          setValue((oldVal) => ({ ...oldVal, ['password']: value }));
+        }}
+        scalarName={'String'}
+        name={'password'}
+        optional={true}
+      />
       <SubmitButtonComponent text="submit" />
     </FormComponent>
   );
@@ -613,7 +627,7 @@ export const AddUserFromObjectForm = ({
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFromObjectFormVariables>;
-  onSubmit: (values: AddUserFromObjectFormVariables) => unknown;
+  onSubmit: (values: AddUserFromObjectFormVariables) => any;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
@@ -663,7 +677,7 @@ export const AddUsersForm = ({
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUsersFormVariables>;
-  onSubmit: (values: AddUsersFormVariables) => unknown;
+  onSubmit: (values: AddUsersFormVariables) => any;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
   const ctx = React.useContext(GQLReactFormContext);
@@ -724,6 +738,16 @@ export const mutationsMetaData = [
         asList: false,
         children: null,
       },
+      {
+        accessChain: ['String'],
+        endedFromCycle: false,
+        scalarName: 'String',
+        name: 'password',
+        tsType: 'Scalars["String"]',
+        optional: true,
+        asList: false,
+        children: null,
+      },
     ],
   },
   {
@@ -763,6 +787,16 @@ export const mutationsMetaData = [
             endedFromCycle: false,
             scalarName: 'String',
             name: 'email',
+            tsType: 'Scalars["String"]',
+            optional: true,
+            asList: false,
+            children: null,
+          },
+          {
+            accessChain: ['UserInput', 'String'],
+            endedFromCycle: false,
+            scalarName: 'String',
+            name: 'password',
             tsType: 'Scalars["String"]',
             optional: true,
             asList: false,
@@ -848,6 +882,16 @@ export const mutationsMetaData = [
                 endedFromCycle: false,
                 scalarName: 'String',
                 name: 'email',
+                tsType: 'Scalars["String"]',
+                optional: true,
+                asList: false,
+                children: null,
+              },
+              {
+                accessChain: ['UserInput', 'String'],
+                endedFromCycle: false,
+                scalarName: 'String',
+                name: 'password',
                 tsType: 'Scalars["String"]',
                 optional: true,
                 asList: false,

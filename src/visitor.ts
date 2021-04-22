@@ -182,7 +182,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       parentPath: string,
       onChange: (value?: ${metaData.tsType}${
       metaData.asList ? '[]' : ''
-    }) => unknown
+    }) => any
     }`;
     const componentDefinitionHead = `export const ${componentKey} = React.memo((props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
@@ -343,19 +343,17 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         )}`
       );
     } else {
-      componentPreBody.push(this.cc.label.init);
+      componentPreBody.push(this.cc.input.init);
       componentBody = [
-        `return (${this.cc.div.render(
-          {},
-          this.cc.label.render(
-            {},
-            [
-              this.cc.labelTextWrapper.render({}, `{label}`),
-              `<input value={value === undefined || value===null? "" : value} onChange={(e) => onChange(e.target.value as any)} />`,
-            ].join('\n')
-          )
-        )}
-      )`,
+        `return (
+        ${this.cc.input.render(
+          {
+            onChange: 'props.onChange as any',
+            value: 'value === undefined || value===null? "" : value',
+            label: 'label',
+          },
+          ''
+        )})`,
       ];
     }
     const component = `
@@ -413,7 +411,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     ...formProps} : React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-  > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> unknown }) => {
+  > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> any}) => {
   const [value, setValue]= React.useState(initialValues || {})
   ${this.cc.initContext}
   ${this.cc.form.init}
