@@ -1,5 +1,11 @@
 import { ErrorBoundary as _ErrorBoundary } from 'react-error-boundary';
-export function ErrorFallback({ error, resetErrorBoundary }) {
+export function ErrorFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: any;
+  resetErrorBoundary: () => any;
+}) {
   return (
     <div role="alert">
       <p>Something went wrong:</p>
