@@ -180,13 +180,14 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       scalarName: string,
       name: string,
       parentPath: string,
+      depth: number,
       onChange: (value?: ${metaData.tsType}${
       metaData.asList ? '[]' : ''
     }) => any
     }`;
     const componentDefinitionHead = `export const ${componentKey} = React.memo((props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
-      `const {parentPath, label, name, value, onChange } = props`,
+      `const {parentPath, label, name, value, onChange, depth } = props`,
       `const scalar = ${JSON.stringify(metaData.scalarName)}`,
       `const path = [parentPath, name].join('.')`,
       this.cc.initContext,
@@ -294,6 +295,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                   ...this.asPropString(metaData, ['optional']),
                   parentPath: `path`,
                   name: `String(index)`,
+                  depth: 'depth',
                   onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
                     actualScalarMetaData
                   )}) => {
@@ -343,6 +345,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             ${metaData.children
               .map((md) =>
                 this.renderComponentFor(md, {
+                  depth: 'depth+1',
                   value: `value?.${md.name} === null? undefined : value?.${md.name}`,
                   ...this.asPropString(md),
                   label: JSON.stringify(sentenceCase(md.name)),
@@ -428,7 +431,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   ${this.cc.form.init}
   ${this.cc.submitButton.init}
   return (
-      <${this.cc.form.tagName} scalar="" name="" onSubmit={(e) => {
+      <${this.cc.form.tagName} scalar="" name="" depth={0} onSubmit={(e) => {
         e?.preventDefault?.()
         onSubmit(value as any)
       }} {...formProps} path="">
@@ -438,6 +441,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
               value: `value?.${v.name}`,
               label: JSON.stringify(sentenceCase(v.name)),
               parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
+              depth: '0',
               onChange: `(value) => {
                 console.log('onChange ${v.name}', value)
                 setValue(oldVal => ({...oldVal, ['${v.name}']: value}))

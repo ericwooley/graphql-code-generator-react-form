@@ -4,10 +4,6 @@ import {
   Button,
   ButtonProps,
   Paper,
-  Step,
-  StepContent,
-  StepLabel,
-  Stepper,
   TextField,
   useTheme,
 } from '@material-ui/core';
@@ -61,16 +57,16 @@ export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
             height: '100%',
           }}
         >
-          <Avatar style={{ background: theme.palette.primary.dark }}>
+          <Avatar
+            style={{
+              background:
+                props.depth % 2 === 0
+                  ? theme.palette.primary.dark
+                  : theme.palette.secondary.dark,
+            }}
+          >
             {String(props.idx + 1)}
           </Avatar>
-          <div
-            style={{
-              height: '100%',
-              borderLeft: '1px solid grey',
-              margin: '0 auto',
-            }}
-          ></div>
         </div>
         <div style={{ flex: 1 }}>{props.children}</div>
       </div>

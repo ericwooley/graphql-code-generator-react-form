@@ -11,7 +11,9 @@ export class ComponentComposer {
       render: (props: { [key: string]: string }, children: string) => {
         return `<${tagName} ${Object.entries(props)
           .map(([key, val]) => `${key}={${val}}`)
-          .join(' ')} path={path} scalar={scalar} name={name}>
+          .join(' ')} path={path} scalar={scalar} name={name} ${
+          props.depth ? '' : 'depth={depth}'
+        }>
           ${children}
           </${tagName}>`;
       },
@@ -80,8 +82,18 @@ export class ComponentComposer {
     return `
       export interface GQLReactFormStandardProps {
         children?: React.ReactNode
+        /**
+         * path of properties to get to this item, separated by a dot
+         * @example
+         * // path = 'UserInput.friends.id'
+         * const childOfUser = Boolean(path.split('.').includes('UserInput'))
+         **/
         path: string
         id?: string
+        /**
+         * Number of Scalar Objects deep this property is
+         **/
+        depth: number,
         className?: string
         name: string
         scalar: string
@@ -152,7 +164,7 @@ export class ComponentComposer {
         },
         submitButton: ((props: {text: string}) => <input type="submit" {...props} value={props.text} /> ),
         input: ((props) => {
-          const {path, scalar, name} = props
+          const {path, scalar, name, depth} = props
           ${this.initContext}
           ${this.div.init}
           ${this.labelTextWrapper.init}

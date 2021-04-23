@@ -106,8 +106,18 @@ const uniqueId = (inStr: string) => inStr + idNonce++;
 
 export interface GQLReactFormStandardProps {
   children?: React.ReactNode;
+  /**
+   * path of properties to get to this item, separated by a dot
+   * @example
+   * // path = 'UserInput.friends.id'
+   * const childOfUser = Boolean(path.split('.').includes('UserInput'))
+   **/
   path: string;
   id?: string;
+  /**
+   * Number of Scalar Objects deep this property is
+   **/
+  depth: number;
   className?: string;
   name: string;
   scalar: string;
@@ -203,7 +213,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
     <input type="submit" {...props} value={props.text} />
   ),
   input: (props) => {
-    const { path, scalar, name } = props;
+    const { path, scalar, name, depth } = props;
     const ctx = React.useContext(GQLReactFormContext);
     const DivComponent = ctx.div || defaultReactFormContext.div;
     const LabelTextWrapperComponent =
@@ -211,9 +221,14 @@ export const defaultReactFormContext: GQLReactFormContext = {
     const typeofValue = typeof props.value;
     const LabelComponent = ctx.label || defaultReactFormContext.label;
     return (
-      <DivComponent path={path} scalar={scalar} name={name}>
-        <LabelComponent path={path} scalar={scalar} name={name}>
-          <LabelTextWrapperComponent path={path} scalar={scalar} name={name}>
+      <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
+        <LabelComponent path={path} scalar={scalar} name={name} depth={depth}>
+          <LabelTextWrapperComponent
+            path={path}
+            scalar={scalar}
+            name={name}
+            depth={depth}
+          >
             {props.label}
           </LabelTextWrapperComponent>
           <input
@@ -285,10 +300,11 @@ export interface StringFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  depth: number;
   onChange: (value?: Scalars['String']) => any;
 }
 export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
-  const { parentPath, label, name, value, onChange } = props;
+  const { parentPath, label, name, value, onChange, depth } = props;
   const scalar = 'String';
   const path = [parentPath, name].join('.');
   const ctx = React.useContext(GQLReactFormContext);
@@ -301,6 +317,7 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
       path={path}
       scalar={scalar}
       name={name}
+      depth={depth}
     ></InputComponent>
   );
 });
@@ -312,10 +329,11 @@ export interface IntFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  depth: number;
   onChange: (value?: Scalars['Int']) => any;
 }
 export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
-  const { parentPath, label, name, value, onChange } = props;
+  const { parentPath, label, name, value, onChange, depth } = props;
   const scalar = 'Int';
   const path = [parentPath, name].join('.');
   const ctx = React.useContext(GQLReactFormContext);
@@ -328,6 +346,7 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
       path={path}
       scalar={scalar}
       name={name}
+      depth={depth}
     ></InputComponent>
   );
 });
@@ -339,11 +358,12 @@ export interface UserInputFormInputPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  depth: number;
   onChange: (value?: UserInput) => any;
 }
 export const UserInputFormInput = React.memo(
   (props: UserInputFormInputPropTypes) => {
-    const { parentPath, label, name, value, onChange } = props;
+    const { parentPath, label, name, value, onChange, depth } = props;
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
     const ctx = React.useContext(GQLReactFormContext);
@@ -354,7 +374,7 @@ export const UserInputFormInput = React.memo(
 
     if (value === undefined || value === null) {
       return (
-        <DivComponent path={path} scalar={scalar} name={name}>
+        <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
           <ButtonComponent
             onClick={() =>
               onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)))
@@ -362,6 +382,7 @@ export const UserInputFormInput = React.memo(
             path={path}
             scalar={scalar}
             name={name}
+            depth={depth}
           >
             Add {label}
           </ButtonComponent>
@@ -374,11 +395,18 @@ export const UserInputFormInput = React.memo(
         path={path}
         scalar={scalar}
         name={name}
+        depth={depth}
       >
-        <LabelTextWrapperComponent path={path} scalar={scalar} name={name}>
+        <LabelTextWrapperComponent
+          path={path}
+          scalar={scalar}
+          name={name}
+          depth={depth}
+        >
           {label}
         </LabelTextWrapperComponent>
         <IntFormInput
+          depth={depth + 1}
           value={value?.id === null ? undefined : value?.id}
           scalarName={'Int'}
           name={'id'}
@@ -388,6 +416,7 @@ export const UserInputFormInput = React.memo(
           onChange={(newValue = 0) => onChange({ ...value, ['id']: newValue })}
         />
         <StringFormInput
+          depth={depth + 1}
           value={value?.name === null ? undefined : value?.name}
           scalarName={'String'}
           name={'name'}
@@ -399,6 +428,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <StringFormInput
+          depth={depth + 1}
           value={value?.email === null ? undefined : value?.email}
           scalarName={'String'}
           name={'email'}
@@ -410,6 +440,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <StringFormInput
+          depth={depth + 1}
           value={value?.password === null ? undefined : value?.password}
           scalarName={'String'}
           name={'password'}
@@ -421,6 +452,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <UserInputFormInput
+          depth={depth + 1}
           value={value?.mother === null ? undefined : value?.mother}
           scalarName={'UserInput'}
           name={'mother'}
@@ -432,6 +464,7 @@ export const UserInputFormInput = React.memo(
           ) => onChange({ ...value, ['mother']: newValue })}
         />
         <UserInputFormInput
+          depth={depth + 1}
           value={value?.father === null ? undefined : value?.father}
           scalarName={'UserInput'}
           name={'father'}
@@ -443,6 +476,7 @@ export const UserInputFormInput = React.memo(
           ) => onChange({ ...value, ['father']: newValue })}
         />
         <UserInputFormInputAsList
+          depth={depth + 1}
           value={value?.friends === null ? undefined : value?.friends}
           scalarName={'UserInput'}
           name={'friends'}
@@ -454,6 +488,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <UserInputFormInputAsList
+          depth={depth + 1}
           value={value?.followers === null ? undefined : value?.followers}
           scalarName={'UserInput'}
           name={'followers'}
@@ -476,11 +511,12 @@ export interface UserInputFormInputAsListPropTypes {
   scalarName: string;
   name: string;
   parentPath: string;
+  depth: number;
   onChange: (value?: UserInput[]) => any;
 }
 export const UserInputFormInputAsList = React.memo(
   (props: UserInputFormInputAsListPropTypes) => {
-    const { parentPath, label, name, value, onChange } = props;
+    const { parentPath, label, name, value, onChange, depth } = props;
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
     const ctx = React.useContext(GQLReactFormContext);
@@ -550,9 +586,15 @@ export const UserInputFormInputAsList = React.memo(
         path={path}
         scalar={scalar}
         name={name}
+        depth={depth}
       >
         {label && (
-          <LabelTextWrapperComponent path={path} scalar={scalar} name={name}>
+          <LabelTextWrapperComponent
+            path={path}
+            scalar={scalar}
+            name={name}
+            depth={depth}
+          >
             {label}
           </LabelTextWrapperComponent>
         )}
@@ -561,6 +603,7 @@ export const UserInputFormInputAsList = React.memo(
           path={path}
           scalar={scalar}
           name={name}
+          depth={depth}
         >
           {valueMapRef.current.map((item, index) => (
             <ListItemComponent
@@ -572,6 +615,7 @@ export const UserInputFormInputAsList = React.memo(
                   path={path}
                   scalar={scalar}
                   name={name}
+                  depth={depth}
                 >
                   +
                 </AddButtonComponent>
@@ -582,6 +626,7 @@ export const UserInputFormInputAsList = React.memo(
                   path={path}
                   scalar={scalar}
                   name={name}
+                  depth={depth}
                 >
                   X
                 </RemoveButtonComponent>
@@ -589,6 +634,7 @@ export const UserInputFormInputAsList = React.memo(
               path={path}
               scalar={scalar}
               name={name}
+              depth={depth}
             >
               <UserInputFormInput
                 optional={false}
@@ -597,6 +643,7 @@ export const UserInputFormInputAsList = React.memo(
                 scalarName={'UserInput'}
                 name={String(index)}
                 parentPath={path}
+                depth={depth}
                 onChange={(
                   newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
                 ) => {
@@ -619,6 +666,7 @@ export const UserInputFormInputAsList = React.memo(
             path={path}
             scalar={scalar}
             name={name}
+            depth={depth}
           >
             +
           </AddButtonComponent>
@@ -664,6 +712,7 @@ export const AddUserForm = ({
     <FormComponent
       scalar=""
       name=""
+      depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
         onSubmit(value as any);
@@ -675,6 +724,7 @@ export const AddUserForm = ({
         value={value?.email}
         label={'Email'}
         parentPath={'root'}
+        depth={0}
         onChange={(value) => {
           console.log('onChange email', value);
           setValue((oldVal) => ({ ...oldVal, ['email']: value }));
@@ -687,6 +737,7 @@ export const AddUserForm = ({
         value={value?.name}
         label={'Name'}
         parentPath={'root'}
+        depth={0}
         onChange={(value) => {
           console.log('onChange name', value);
           setValue((oldVal) => ({ ...oldVal, ['name']: value }));
@@ -699,6 +750,7 @@ export const AddUserForm = ({
         value={value?.password}
         label={'Password'}
         parentPath={'root'}
+        depth={0}
         onChange={(value) => {
           console.log('onChange password', value);
           setValue((oldVal) => ({ ...oldVal, ['password']: value }));
@@ -740,6 +792,7 @@ export const AddUserFromObjectForm = ({
     <FormComponent
       scalar=""
       name=""
+      depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
         onSubmit(value as any);
@@ -751,6 +804,7 @@ export const AddUserFromObjectForm = ({
         value={value?.user}
         label={'User'}
         parentPath={'root'}
+        depth={0}
         onChange={(value) => {
           console.log('onChange user', value);
           setValue((oldVal) => ({ ...oldVal, ['user']: value }));
@@ -792,6 +846,7 @@ export const AddUsersForm = ({
     <FormComponent
       scalar=""
       name=""
+      depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
         onSubmit(value as any);
@@ -803,6 +858,7 @@ export const AddUsersForm = ({
         value={value?.users}
         label={'Users'}
         parentPath={'root'}
+        depth={0}
         onChange={(value) => {
           console.log('onChange users', value);
           setValue((oldVal) => ({ ...oldVal, ['users']: value }));
