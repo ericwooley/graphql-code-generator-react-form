@@ -2,13 +2,7 @@ import React from 'react';
 import { AddUserForm, GQLReactFormContext } from '../generated/forms';
 import addUserDocument from '../documents/addUser.graphql';
 import { ExampleContent } from './exampleContent';
-import {
-  Box,
-  Button,
-  FormControlLabel,
-  Switch,
-  TextField,
-} from '@material-ui/core';
+import { Box, FormControlLabel, Switch, TextField } from '@material-ui/core';
 import { baseMaterialUIComponents } from './baseMaterialUIComponents';
 export const AddUser = () => {
   const [showPassword, setShowPassword] = React.useState(false);

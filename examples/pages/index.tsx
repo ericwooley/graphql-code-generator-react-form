@@ -62,7 +62,7 @@ export default function Home() {
                 React Form Plugin
               </Typography>
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <Todo />
             </Grid>
           </Grid>

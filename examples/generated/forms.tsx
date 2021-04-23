@@ -112,6 +112,9 @@ export interface GQLReactFormStandardProps {
   name: string;
   scalar: string;
 }
+export interface GQLReactFormButtonProps extends GQLReactFormStandardProps {
+  onClick?: (e?: { preventDefault: () => any }) => any;
+}
 interface FormPrimeInput
   extends React.FC<
     {
@@ -120,26 +123,34 @@ interface FormPrimeInput
       label: string;
     } & GQLReactFormStandardProps
   > {}
-interface GQLFormStandardComponent<T = {}>
-  extends React.FC<GQLReactFormStandardProps & T> {}
+export interface GQLFormStandardComponent<
+  T extends GQLReactFormStandardProps = GQLReactFormStandardProps
+> extends React.FC<T> {}
+export interface GQLReactFormListItemProps extends GQLReactFormStandardProps {
+  removeButton: JSX.Element | JSX.Element[];
+  insertAboveButton: JSX.Element | JSX.Element[];
+  idx: number;
+}
+export interface GQLReactFormListWrapperProps
+  extends GQLReactFormStandardProps {
+  // idx: number
+  totalInList: number;
+}
+
 export interface GQLReactFormContext {
-  form: GQLFormStandardComponent<{
-    onSubmit: (e?: { preventDefault?: () => any }) => any;
-  }>;
+  form: GQLFormStandardComponent<
+    GQLReactFormStandardProps & {
+      onSubmit: (e?: { preventDefault?: () => any }) => any;
+    }
+  >;
   div: GQLFormStandardComponent;
   label: GQLFormStandardComponent;
   labelTextWrapper: GQLFormStandardComponent;
-  button: GQLFormStandardComponent<{
-    onClick?: (e?: { preventDefault?: () => any }) => any;
-  }>;
-  addButton: GQLFormStandardComponent<{
-    onClick?: (e?: { preventDefault?: () => any }) => any;
-  }>;
-  removeButton: GQLFormStandardComponent<{
-    onClick?: (e?: { preventDefault?: () => any }) => any;
-  }>;
-  listWrapper: GQLFormStandardComponent;
-  listItem: GQLFormStandardComponent;
+  button: GQLFormStandardComponent<GQLReactFormButtonProps>;
+  addButton: GQLFormStandardComponent<GQLReactFormButtonProps>;
+  removeButton: GQLFormStandardComponent<GQLReactFormButtonProps>;
+  listWrapper: GQLFormStandardComponent<GQLReactFormListWrapperProps>;
+  listItem: GQLFormStandardComponent<GQLReactFormListItemProps>;
   submitButton: React.FC<{ text: string }>;
   input: FormPrimeInput;
   UserInput?: React.FC<UserInputFormInputPropTypes>;
@@ -151,11 +162,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
   labelTextWrapper: ({ ...props }: GQLReactFormStandardProps) => (
     <h4 {...props} />
   ),
-  button: ({
-    ...props
-  }: GQLReactFormStandardProps & {
-    onClick?: (e?: { preventDefault: () => any }) => any;
-  }) => (
+  button: ({ ...props }: GQLReactFormButtonProps) => (
     <button
       {...props}
       onClick={(e) => {
@@ -164,11 +171,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
       }}
     />
   ),
-  addButton: ({
-    ...props
-  }: GQLReactFormStandardProps & {
-    onClick?: (e?: { preventDefault: () => any }) => any;
-  }) => (
+  addButton: ({ ...props }: GQLReactFormButtonProps) => (
     <button
       {...props}
       onClick={(e) => {
@@ -177,11 +180,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
       }}
     />
   ),
-  removeButton: ({
-    ...props
-  }: GQLReactFormStandardProps & {
-    onClick?: (e?: { preventDefault: () => any }) => any;
-  }) => (
+  removeButton: ({ ...props }: GQLReactFormButtonProps) => (
     <button
       {...props}
       onClick={(e) => {
@@ -191,7 +190,15 @@ export const defaultReactFormContext: GQLReactFormContext = {
     />
   ),
   listWrapper: ({ ...props }: GQLReactFormStandardProps) => <ol {...props} />,
-  listItem: ({ ...props }: GQLReactFormStandardProps) => <li {...props} />,
+  listItem: (props: GQLReactFormListItemProps) => {
+    return (
+      <li>
+        {props.insertAboveButton}
+        {props.removeButton}
+        {props.children}
+      </li>
+    );
+  },
   submitButton: (props: { text: string }) => (
     <input type="submit" {...props} value={props.text} />
   ),
@@ -199,12 +206,16 @@ export const defaultReactFormContext: GQLReactFormContext = {
     const { path, scalar, name } = props;
     const ctx = React.useContext(GQLReactFormContext);
     const DivComponent = ctx.div || defaultReactFormContext.div;
+    const LabelTextWrapperComponent =
+      ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
     const typeofValue = typeof props.value;
+    const LabelComponent = ctx.label || defaultReactFormContext.label;
     return (
       <DivComponent path={path} scalar={scalar} name={name}>
-        <label>
-          <strong>{props.label}</strong>
-          <br />
+        <LabelComponent path={path} scalar={scalar} name={name}>
+          <LabelTextWrapperComponent path={path} scalar={scalar} name={name}>
+            {props.label}
+          </LabelTextWrapperComponent>
           <input
             value={props.value}
             type={
@@ -218,7 +229,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
             }
             onChange={(e) => props.onChange(e.target.value)}
           />
-        </label>
+        </LabelComponent>
       </DivComponent>
     );
   },
@@ -545,31 +556,40 @@ export const UserInputFormInputAsList = React.memo(
             {label}
           </LabelTextWrapperComponent>
         )}
-        <ListWrapperComponent path={path} scalar={scalar} name={name}>
+        <ListWrapperComponent
+          totalInList={valueMapRef.current.length}
+          path={path}
+          scalar={scalar}
+          name={name}
+        >
           {valueMapRef.current.map((item, index) => (
             <ListItemComponent
+              idx={index}
               key={item.id}
+              insertAboveButton={
+                <AddButtonComponent
+                  onClick={() => insertItem(index)}
+                  path={path}
+                  scalar={scalar}
+                  name={name}
+                >
+                  +
+                </AddButtonComponent>
+              }
+              removeButton={
+                <RemoveButtonComponent
+                  onClick={() => removeItem(index)}
+                  path={path}
+                  scalar={scalar}
+                  name={name}
+                >
+                  X
+                </RemoveButtonComponent>
+              }
               path={path}
               scalar={scalar}
               name={name}
             >
-              <RemoveButtonComponent
-                onClick={() => removeItem(index)}
-                path={path}
-                scalar={scalar}
-                name={name}
-              >
-                X
-              </RemoveButtonComponent>
-
-              <AddButtonComponent
-                onClick={() => insertItem(index)}
-                path={path}
-                scalar={scalar}
-                name={name}
-              >
-                +
-              </AddButtonComponent>
               <UserInputFormInput
                 optional={false}
                 label={''}
@@ -594,14 +614,14 @@ export const UserInputFormInputAsList = React.memo(
               />
             </ListItemComponent>
           ))}
-          <ButtonComponent
+          <AddButtonComponent
             onClick={addItem}
             path={path}
             scalar={scalar}
             name={name}
           >
             +
-          </ButtonComponent>
+          </AddButtonComponent>
         </ListWrapperComponent>
       </DivComponent>
     );

@@ -264,46 +264,50 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       `
     {label && ${this.cc.labelTextWrapper.render({}, `{label}`)}}
     ${this.cc.listWrapper.render(
-      {},
+      {
+        totalInList: 'valueMapRef.current.length',
+      },
       `
         {
           valueMapRef.current.map((item, index) => (
             ${this.cc.listItem.render(
               {
+                idx: 'index',
                 key: 'item.id',
+                insertAboveButton: this.cc.addButton.render(
+                  { onClick: '() => insertItem(index)' },
+                  '+'
+                ),
+                removeButton: `
+                  ${this.cc.removeButton.render(
+                    { onClick: `() => removeItem(index)` },
+                    `X`
+                  )}
+                `,
               },
-              `${this.cc.removeButton.render(
-                { onClick: `() => removeItem(index)` },
-                `X`
-              )}
-
-            ${this.cc.addButton.render(
-              { onClick: '() => insertItem(index)' },
-              '+'
-            )}
-            ${this.renderComponentFor(
-              { ...metaData, optional: false, asList: false },
-              {
-                optional: JSON.stringify(false),
-                label: JSON.stringify(''),
-                value: 'item.value',
-                ...this.asPropString(metaData, ['optional']),
-                parentPath: `path`,
-                name: `String(index)`,
-                onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
-                  actualScalarMetaData
-                )}) => {
-                    valueMapRef.current = valueMapRef.current.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
-                    onChange(valueMapRef.current.map(i => i.value === null ?${this.getDefaultValueStringForTypeNodeMetaData(
-                      actualScalarMetaData
-                    )} : i.value))
-                }`,
-              }
-            )}`
+              this.renderComponentFor(
+                { ...metaData, optional: false, asList: false },
+                {
+                  optional: JSON.stringify(false),
+                  label: JSON.stringify(''),
+                  value: 'item.value',
+                  ...this.asPropString(metaData, ['optional']),
+                  parentPath: `path`,
+                  name: `String(index)`,
+                  onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
+                    actualScalarMetaData
+                  )}) => {
+                        valueMapRef.current = valueMapRef.current.map(i => i.id === item.id ? {id: item.id, value: newValue} : i)
+                        onChange(valueMapRef.current.map(i => i.value === null ?${this.getDefaultValueStringForTypeNodeMetaData(
+                          actualScalarMetaData
+                        )} : i.value))
+                    }`,
+                }
+              )
             )}
           ))
         }
-        ${this.cc.button.render({ onClick: 'addItem' }, `+`)}`
+        ${this.cc.addButton.render({ onClick: 'addItem' }, `+`)}`
     )}
       `
     )}
