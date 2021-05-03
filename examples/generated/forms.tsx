@@ -214,12 +214,12 @@ export const defaultReactFormContext: GQLReactFormContext = {
   ),
   input: (props) => {
     const { path, scalar, name, depth } = props;
-    const ctx = React.useContext(GQLReactFormContext);
-    const DivComponent = ctx.div || defaultReactFormContext.div;
-    const LabelTextWrapperComponent =
-      ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
+    const DivComponent = useCustomizedComponent('div');
+    const LabelTextWrapperComponent = useCustomizedComponent(
+      'labelTextWrapper'
+    );
     const typeofValue = typeof props.value;
-    const LabelComponent = ctx.label || defaultReactFormContext.label;
+    const LabelComponent = useCustomizedComponent('label');
     return (
       <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
         <LabelComponent path={path} scalar={scalar} name={name} depth={depth}>
@@ -252,6 +252,14 @@ export const defaultReactFormContext: GQLReactFormContext = {
 export const GQLReactFormContext = React.createContext<
   Partial<GQLReactFormContext>
 >(defaultReactFormContext);
+function useCustomizedComponent<T extends keyof GQLReactFormContext>(
+  name: T
+): GQLReactFormContext[T] {
+  const ctx = React.useContext(GQLReactFormContext);
+  const c: GQLReactFormContext[T] = (ctx[name] ||
+    defaultReactFormContext[name]) as GQLReactFormContext[T];
+  return c;
+}
 
 /**********************
  * Default Values
@@ -307,8 +315,7 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange, depth } = props;
   const scalar = 'String';
   const path = [parentPath, name].join('.');
-  const ctx = React.useContext(GQLReactFormContext);
-  const InputComponent = ctx.input || defaultReactFormContext.input;
+  const InputComponent = useCustomizedComponent('input');
   return (
     <InputComponent
       onChange={onChange as any}
@@ -336,8 +343,7 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const { parentPath, label, name, value, onChange, depth } = props;
   const scalar = 'Int';
   const path = [parentPath, name].join('.');
-  const ctx = React.useContext(GQLReactFormContext);
-  const InputComponent = ctx.input || defaultReactFormContext.input;
+  const InputComponent = useCustomizedComponent('input');
   return (
     <InputComponent
       onChange={onChange as any}
@@ -366,11 +372,11 @@ export const UserInputFormInput = React.memo(
     const { parentPath, label, name, value, onChange, depth } = props;
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
-    const ctx = React.useContext(GQLReactFormContext);
-    const DivComponent = ctx.div || defaultReactFormContext.div;
-    const ButtonComponent = ctx.button || defaultReactFormContext.button;
-    const LabelTextWrapperComponent =
-      ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
+    const DivComponent = useCustomizedComponent('div');
+    const ButtonComponent = useCustomizedComponent('button');
+    const LabelTextWrapperComponent = useCustomizedComponent(
+      'labelTextWrapper'
+    );
 
     if (value === undefined || value === null) {
       return (
@@ -519,16 +525,13 @@ export const UserInputFormInputAsList = React.memo(
     const { parentPath, label, name, value, onChange, depth } = props;
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
-    const ctx = React.useContext(GQLReactFormContext);
-    const AddButtonComponent =
-      ctx.addButton || defaultReactFormContext.addButton;
-    const RemoveButtonComponent =
-      ctx.removeButton || defaultReactFormContext.removeButton;
-    const ListItemComponent = ctx.listItem || defaultReactFormContext.listItem;
-    const DivComponent = ctx.div || defaultReactFormContext.div;
-    const ButtonComponent = ctx.button || defaultReactFormContext.button;
-    const LabelTextWrapperComponent =
-      ctx.labelTextWrapper || defaultReactFormContext.labelTextWrapper;
+    const AddButtonComponent = useCustomizedComponent('addButton');
+    const RemoveButtonComponent = useCustomizedComponent('removeButton');
+    const ListItemComponent = useCustomizedComponent('listItem');
+    const DivComponent = useCustomizedComponent('div');
+    const LabelTextWrapperComponent = useCustomizedComponent(
+      'labelTextWrapper'
+    );
     const valueMapRef = React.useRef<{ id: string; value: Maybe<UserInput> }[]>(
       (value || []).map((v) => ({ id: uniqueId('friends'), value: v }))
     );
@@ -578,8 +581,7 @@ export const UserInputFormInputAsList = React.memo(
         )
       );
     };
-    const ListWrapperComponent =
-      ctx.listWrapper || defaultReactFormContext.listWrapper;
+    const ListWrapperComponent = useCustomizedComponent('listWrapper');
     return (
       <DivComponent
         className={'mutationFormNested mutationFormList'}
@@ -704,10 +706,8 @@ export const AddUserForm = ({
   onSubmit: (values: AddUserFormVariables) => any;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
-  const ctx = React.useContext(GQLReactFormContext);
-  const FormComponent = ctx.form || defaultReactFormContext.form;
-  const SubmitButtonComponent =
-    ctx.submitButton || defaultReactFormContext.submitButton;
+  const FormComponent = useCustomizedComponent('form');
+  const SubmitButtonComponent = useCustomizedComponent('submitButton');
   return (
     <FormComponent
       scalar=""
@@ -784,10 +784,8 @@ export const AddUserFromObjectForm = ({
   onSubmit: (values: AddUserFromObjectFormVariables) => any;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
-  const ctx = React.useContext(GQLReactFormContext);
-  const FormComponent = ctx.form || defaultReactFormContext.form;
-  const SubmitButtonComponent =
-    ctx.submitButton || defaultReactFormContext.submitButton;
+  const FormComponent = useCustomizedComponent('form');
+  const SubmitButtonComponent = useCustomizedComponent('submitButton');
   return (
     <FormComponent
       scalar=""
@@ -838,10 +836,8 @@ export const AddUsersForm = ({
   onSubmit: (values: AddUsersFormVariables) => any;
 }) => {
   const [value, setValue] = React.useState(initialValues || {});
-  const ctx = React.useContext(GQLReactFormContext);
-  const FormComponent = ctx.form || defaultReactFormContext.form;
-  const SubmitButtonComponent =
-    ctx.submitButton || defaultReactFormContext.submitButton;
+  const FormComponent = useCustomizedComponent('form');
+  const SubmitButtonComponent = useCustomizedComponent('submitButton');
   return (
     <FormComponent
       scalar=""

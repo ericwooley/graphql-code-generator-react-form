@@ -190,7 +190,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       `const {parentPath, label, name, value, onChange, depth } = props`,
       `const scalar = ${JSON.stringify(metaData.scalarName)}`,
       `const path = [parentPath, name].join('.')`,
-      this.cc.initContext,
     ];
     let componentBody = [
       `
@@ -223,7 +222,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         this.cc.removeButton.init,
         this.cc.listItem.init,
         this.cc.div.init,
-        this.cc.button.init,
         this.cc.labelTextWrapper.init,
         `const valueMapRef = React.useRef<
           {id: string, value: Maybe<${metaData.tsType}>}[]
@@ -427,7 +425,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   HTMLFormElement
   > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> any}) => {
   const [value, setValue]= React.useState(initialValues || {})
-  ${this.cc.initContext}
   ${this.cc.form.init}
   ${this.cc.submitButton.init}
   return (

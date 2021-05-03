@@ -4,10 +4,12 @@ import { ReactFormsRawPluginConfig } from './config';
 export class ComponentComposer {
   constructor(protected rawConfig: ReactFormsRawPluginConfig) {}
 
-  private generateComponent(name: string) {
+  private generateComponentRenderer(name: string) {
     const tagName = `${pascalCase(name)}Component`;
     return {
-      init: `const ${tagName} = ctx.${name} || defaultReactFormContext.${name}`,
+      init: `const ${tagName} = useCustomizedComponent(${JSON.stringify(
+        name
+      )})`,
       render: (props: { [key: string]: string }, children: string) => {
         return `<${tagName} ${Object.entries(props)
           .map(([key, val]) => `${key}={${val}}`)
@@ -20,41 +22,38 @@ export class ComponentComposer {
       tagName,
     };
   }
-  get initContext() {
-    return `const ctx = React.useContext(GQLReactFormContext)`;
-  }
   get form() {
-    return this.generateComponent('form');
+    return this.generateComponentRenderer('form');
   }
   get submitButton() {
-    return this.generateComponent('submitButton');
+    return this.generateComponentRenderer('submitButton');
   }
   get div() {
-    return this.generateComponent('div');
+    return this.generateComponentRenderer('div');
   }
   get listItem() {
-    return this.generateComponent('listItem');
+    return this.generateComponentRenderer('listItem');
   }
   get button() {
-    return this.generateComponent('button');
+    return this.generateComponentRenderer('button');
   }
   get label() {
-    return this.generateComponent('label');
+    return this.generateComponentRenderer('label');
   }
   get listWrapper() {
-    return this.generateComponent('listWrapper');
+    return this.generateComponentRenderer('listWrapper');
   }
   get labelTextWrapper() {
-    return this.generateComponent('labelTextWrapper');
+    return this.generateComponentRenderer('labelTextWrapper');
   }
   get input() {
-    return this.generateComponent('input');
+    return this.generateComponentRenderer('input');
   }
   get addButton() {
-    return this.generateComponent('addButton');
+    return this.generateComponentRenderer('addButton');
   }
   get removeButton() {
-    return this.generateComponent('removeButton');
+    return this.generateComponentRenderer('removeButton');
   }
   private generatePassthroughComponent(
     name: string,
@@ -165,7 +164,6 @@ export class ComponentComposer {
         submitButton: ((props: {text: string}) => <input type="submit" {...props} value={props.text} /> ),
         input: ((props) => {
           const {path, scalar, name, depth} = props
-          ${this.initContext}
           ${this.div.init}
           ${this.labelTextWrapper.init}
           const typeofValue = typeof props.value
@@ -196,6 +194,11 @@ export class ComponentComposer {
 
       }
       export const GQLReactFormContext = React.createContext<Partial<GQLReactFormContext>>(defaultReactFormContext)
+      function useCustomizedComponent <T extends keyof GQLReactFormContext>(name: T): GQLReactFormContext[T] {
+        const ctx = React.useContext(GQLReactFormContext)
+        const c: GQLReactFormContext[T] = (ctx[name] || defaultReactFormContext[name]) as GQLReactFormContext[T]
+        return c
+      }
 
     `;
   }
