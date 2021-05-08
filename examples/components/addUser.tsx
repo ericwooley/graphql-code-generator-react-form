@@ -1,5 +1,9 @@
 import React from 'react';
-import { AddUserForm, GQLReactFormContext } from '../generated/forms';
+import {
+  AddUserForm,
+  GQLReactFormContext,
+  UserInputFormInputPropTypes,
+} from '../generated/forms';
 import addUserDocument from '../documents/addUser.graphql';
 import { ExampleContent } from './exampleContent';
 import { Box, FormControlLabel, Switch, TextField } from '@material-ui/core';

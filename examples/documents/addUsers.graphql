@@ -1,4 +1,4 @@
-mutation addUsers($users: [UserInput]!) {
+mutation addUsersFromList($users: [UserInput]!) {
   addUsers(users: $users) {
     id
   }

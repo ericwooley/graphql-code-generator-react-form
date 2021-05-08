@@ -84,11 +84,11 @@ export type AddUserFromObjectMutation = { __typename?: 'MutationRoot' } & {
   addUser?: Maybe<{ __typename?: 'User' } & Pick<User, 'id'>>;
 };
 
-export type AddUsersMutationVariables = Exact<{
+export type AddUsersFromListMutationVariables = Exact<{
   users: Array<Maybe<UserInput>> | Maybe<UserInput>;
 }>;
 
-export type AddUsersMutation = { __typename?: 'MutationRoot' } & {
+export type AddUsersFromListMutation = { __typename?: 'MutationRoot' } & {
   addUsers?: Maybe<Array<Maybe<{ __typename?: 'User' } & Pick<User, 'id'>>>>;
 };
 
@@ -101,6 +101,7 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
 /**************************
  * utilities
  *************************/
+
 let idNonce = 0;
 const uniqueId = (inStr: string) => inStr + idNonce++;
 
@@ -252,11 +253,17 @@ export const defaultReactFormContext: GQLReactFormContext = {
 export const GQLReactFormContext = React.createContext<
   Partial<GQLReactFormContext>
 >(defaultReactFormContext);
+const _emptyFormContext = {};
+export const InternalGQLReactFormContext = React.createContext<
+  Partial<GQLReactFormContext>
+>(_emptyFormContext);
 function useCustomizedComponent<T extends keyof GQLReactFormContext>(
   name: T
 ): GQLReactFormContext[T] {
   const ctx = React.useContext(GQLReactFormContext);
-  const c: GQLReactFormContext[T] = (ctx[name] ||
+  const _ctx = React.useContext(InternalGQLReactFormContext);
+  let c: GQLReactFormContext[T] = (_ctx[name] ||
+    ctx[name] ||
     defaultReactFormContext[name]) as GQLReactFormContext[T];
   return c;
 }
@@ -377,6 +384,9 @@ export const UserInputFormInput = React.memo(
     const LabelTextWrapperComponent = useCustomizedComponent(
       'labelTextWrapper'
     );
+
+    const UserComponent = useCustomizedComponent(scalar);
+    if (UserComponent) return <UserComponent {...props} />;
 
     if (value === undefined || value === null) {
       return (
@@ -693,18 +703,18 @@ export interface AddUserFormVariables {
   name: Scalars['String'];
   password?: Scalars['String'];
 }
-
-export const AddUserForm = ({
-  initialValues = addUserDefaultValues,
-  onSubmit,
-  ...formProps
-}: React.DetailedHTMLProps<
+type AddUserFormProps = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFormVariables>;
   onSubmit: (values: AddUserFormVariables) => any;
-}) => {
+};
+export const _AddUserForm = ({
+  initialValues = addUserDefaultValues,
+  onSubmit,
+  ...formProps
+}: AddUserFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
@@ -763,6 +773,16 @@ export const AddUserForm = ({
     </FormComponent>
   );
 };
+export const AddUserForm = ({
+  customComponents = _emptyFormContext,
+  ...props
+}: AddUserFormProps & { customComponents?: Partial<GQLReactFormContext> }) => {
+  return (
+    <InternalGQLReactFormContext.Provider value={customComponents}>
+      <_AddUserForm {...props} />
+    </InternalGQLReactFormContext.Provider>
+  );
+};
 
 export const addUserFromObjectDefaultValues = {
   user: JSON.parse(JSON.stringify(defaultUserInputScalar)),
@@ -771,18 +791,18 @@ export const addUserFromObjectDefaultValues = {
 export interface AddUserFromObjectFormVariables {
   user: UserInput;
 }
-
-export const AddUserFromObjectForm = ({
-  initialValues = addUserFromObjectDefaultValues,
-  onSubmit,
-  ...formProps
-}: React.DetailedHTMLProps<
+type AddUserFromObjectFormProps = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFromObjectFormVariables>;
   onSubmit: (values: AddUserFromObjectFormVariables) => any;
-}) => {
+};
+export const _AddUserFromObjectForm = ({
+  initialValues = addUserFromObjectDefaultValues,
+  onSubmit,
+  ...formProps
+}: AddUserFromObjectFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
@@ -815,26 +835,38 @@ export const AddUserFromObjectForm = ({
     </FormComponent>
   );
 };
+export const AddUserFromObjectForm = ({
+  customComponents = _emptyFormContext,
+  ...props
+}: AddUserFromObjectFormProps & {
+  customComponents?: Partial<GQLReactFormContext>;
+}) => {
+  return (
+    <InternalGQLReactFormContext.Provider value={customComponents}>
+      <_AddUserFromObjectForm {...props} />
+    </InternalGQLReactFormContext.Provider>
+  );
+};
 
-export const addUsersDefaultValues = {
+export const addUsersFromListDefaultValues = {
   users: [],
 };
 
-export interface AddUsersFormVariables {
+export interface AddUsersFromListFormVariables {
   users: UserInput[];
 }
-
-export const AddUsersForm = ({
-  initialValues = addUsersDefaultValues,
-  onSubmit,
-  ...formProps
-}: React.DetailedHTMLProps<
+type AddUsersFromListFormProps = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
 > & {
-  initialValues?: Partial<AddUsersFormVariables>;
-  onSubmit: (values: AddUsersFormVariables) => any;
-}) => {
+  initialValues?: Partial<AddUsersFromListFormVariables>;
+  onSubmit: (values: AddUsersFromListFormVariables) => any;
+};
+export const _AddUsersFromListForm = ({
+  initialValues = addUsersFromListDefaultValues,
+  onSubmit,
+  ...formProps
+}: AddUsersFromListFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
@@ -865,6 +897,18 @@ export const AddUsersForm = ({
       />
       <SubmitButtonComponent text="submit" />
     </FormComponent>
+  );
+};
+export const AddUsersFromListForm = ({
+  customComponents = _emptyFormContext,
+  ...props
+}: AddUsersFromListFormProps & {
+  customComponents?: Partial<GQLReactFormContext>;
+}) => {
+  return (
+    <InternalGQLReactFormContext.Provider value={customComponents}>
+      <_AddUsersFromListForm {...props} />
+    </InternalGQLReactFormContext.Provider>
   );
 };
 
@@ -1005,7 +1049,7 @@ export const mutationsMetaData = [
     ],
   },
   {
-    name: 'addUsers',
+    name: 'addUsersFromList',
     variables: [
       {
         accessChain: [],

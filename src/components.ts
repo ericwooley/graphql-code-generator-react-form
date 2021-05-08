@@ -194,9 +194,12 @@ export class ComponentComposer {
 
       }
       export const GQLReactFormContext = React.createContext<Partial<GQLReactFormContext>>(defaultReactFormContext)
+      const _emptyFormContext = {};
+      export const InternalGQLReactFormContext = React.createContext<Partial<GQLReactFormContext>>(_emptyFormContext)
       function useCustomizedComponent <T extends keyof GQLReactFormContext>(name: T): GQLReactFormContext[T] {
         const ctx = React.useContext(GQLReactFormContext)
-        const c: GQLReactFormContext[T] = (ctx[name] || defaultReactFormContext[name]) as GQLReactFormContext[T]
+        const _ctx = React.useContext(InternalGQLReactFormContext)
+        let c: GQLReactFormContext[T] = (_ctx[name] || ctx[name] || defaultReactFormContext[name]) as GQLReactFormContext[T]
         return c
       }
 

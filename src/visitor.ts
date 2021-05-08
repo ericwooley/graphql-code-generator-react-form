@@ -62,6 +62,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     /**************************
      * utilities
      *************************/
+
+
     let idNonce = 0;
     const uniqueId = (inStr: string) => inStr+(idNonce++)
     `;
@@ -330,10 +332,15 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
           )}`
       );
     } else if (metaData.children) {
+      const tagName = `${pascalCase(metaData.name)}Component`;
       componentPreBody.push(
         this.cc.div.init,
         this.cc.button.init,
-        this.cc.labelTextWrapper.init
+        this.cc.labelTextWrapper.init,
+        `
+        const ${tagName} = useCustomizedComponent(scalar)
+        if(${tagName}) return <${tagName} {...props} />
+        `
       );
       componentBody.push(
         `return ${this.cc.div.render(
@@ -413,43 +420,51 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     )
     .join(',\n')}
   }
-
-
-
-  export const ${baseName} = (
-  {
-    initialValues = ${camelCase(m.name + 'DefaultValues')},
-    onSubmit,
-    ...formProps} : React.DetailedHTMLProps<
+  type ${baseName}Props = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
-  > & { initialValues?: Partial<${baseName}Variables>, onSubmit: (values: ${baseName}Variables)=> any}) => {
-  const [value, setValue]= React.useState(initialValues || {})
-  ${this.cc.form.init}
-  ${this.cc.submitButton.init}
-  return (
-      <${this.cc.form.tagName} scalar="" name="" depth={0} onSubmit={(e) => {
-        e?.preventDefault?.()
-        onSubmit(value as any)
-      }} {...formProps} path="">
-        ${m.variables
-          .map((v) =>
-            this.renderComponentFor(v, {
-              value: `value?.${v.name}`,
-              label: JSON.stringify(sentenceCase(v.name)),
-              parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
-              depth: '0',
-              onChange: `(value) => {
-                console.log('onChange ${v.name}', value)
-                setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
-              }`,
-              ...this.asPropString(v),
-            })
-          )
-          .join('\n    ')}
-        <${this.cc.submitButton.tagName} text="submit" />
-      </${this.cc.form.tagName}>
-  )
+  > & {
+    initialValues?: Partial<${baseName}Variables>,
+    onSubmit: (values: ${baseName}Variables)=> any,
+  }
+  export const _${baseName} = ({
+    initialValues = ${camelCase(m.name + 'DefaultValues')},
+    onSubmit,
+    ...formProps}: ${baseName}Props) => {
+    const [value, setValue]= React.useState(initialValues || {})
+    ${this.cc.form.init}
+    ${this.cc.submitButton.init}
+    return (
+        <${this.cc.form.tagName} scalar="" name="" depth={0} onSubmit={(e) => {
+          e?.preventDefault?.()
+          onSubmit(value as any)
+        }} {...formProps} path="">
+          ${m.variables
+            .map((v) =>
+              this.renderComponentFor(v, {
+                value: `value?.${v.name}`,
+                label: JSON.stringify(sentenceCase(v.name)),
+                parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
+                depth: '0',
+                onChange: `(value) => {
+                  console.log('onChange ${v.name}', value)
+                  setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
+                }`,
+                ...this.asPropString(v),
+              })
+            )
+            .join('\n    ')}
+          <${this.cc.submitButton.tagName} text="submit" />
+        </${this.cc.form.tagName}>
+    )
+  }
+  export const ${baseName} = (
+    {customComponents = _emptyFormContext, ...props}: ${baseName}Props & {customComponents?: Partial<GQLReactFormContext>}) => {
+    return (
+      <InternalGQLReactFormContext.Provider value={customComponents}>
+        <_${baseName} {...props} />
+      </InternalGQLReactFormContext.Provider>
+    )
   };
     `;
       })
