@@ -34,16 +34,8 @@ export default function Todo() {
       <List component="nav" aria-label="secondary mailbox folders">
         {[
           {
-            title: 'Customization through context',
-            inProgress: true,
-          },
-          {
             title: 'Validation',
-            inProgress: false,
-          },
-          {
-            title: 'Optional React Native Support',
-            inProgress: false,
+            inProgress: true,
           },
         ].map(({ title, inProgress }) => {
           return (
