@@ -72,29 +72,7 @@ export const RecursiveUserExample = () => {
             initialValues={
               useInitialValues
                 ? {
-                    users: [
-                      {
-                        email: 'test-email@gmail.com',
-                        name: 'test user',
-                        mother: {
-                          email: 'test-mother@gmail.com',
-                          name: 'Test user mother',
-                          friends: [],
-                        },
-                        friends: [],
-                      },
-                      {
-                        email: 'test-email2@gmail.com',
-                        name: 'test user 2',
-                        friends: [
-                          {
-                            email: 'nested-test-email2@gmail.com',
-                            name: 'nested test user 2',
-                            friends: [],
-                          },
-                        ],
-                      },
-                    ],
+                    users: [users['Michael Scott']],
                   }
                 : undefined
             }

@@ -367,9 +367,13 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     } else {
       componentPreBody.push(this.cc.input.init);
       componentBody = [
+        `const [touched, setTouched] = React.useState(value !== undefined && value !== null)`,
+        `const setTouchedTrue = React.useCallback(() => setTouched(true), [setTouched])`,
         `return (
         ${this.cc.input.render(
           {
+            onBlur: 'setTouchedTrue',
+            touched: 'touched',
             onChange: 'onChange as any',
             value: 'value === undefined || value===null? "" : value',
             label: 'label',
@@ -391,10 +395,34 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   public generateContext() {
     return this.cc.generateContext(this._typeComponentMap);
   }
+
   public generateMutationsMetaDataExport() {
     return `
   export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
   `;
+  }
+  private generateValidation(node: TypeNodeMetaData, name = node.name): string {
+    if (node.asList) {
+      return `
+        ${name}List: (value: ${
+        node.tsType
+      }[]) => string;${this.generateValidation(
+        {
+          ...node,
+          asList: false,
+        },
+        name + 'Children'
+      )}
+      `;
+    }
+    if (node.children) {
+      return `${name}:{
+        ${node.children.map((n) => this.generateValidation(n))}
+      }`;
+    }
+    return `
+    ${name}: (value: ${node.tsType}) => string
+    `;
   }
   public forms = '';
   public generateFormsOutput() {
@@ -418,8 +446,16 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       (v) =>
         `${v.name}${v.optional ? '?' : ''}: ${v.tsType}${v.asList ? '[]' : ''}`
     )
-    .join(',\n')}
+    .map((s) => s.trim())
+    .join(';\n')}
   }
+  export interface Validate${pascalCase(baseName)} {
+  ${m.variables
+    .map((n) => this.generateValidation(n))
+    .map((s) => s.trim())
+    .join(';\n')}
+  }
+
   type ${baseName}Props = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
@@ -447,7 +483,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                 parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
                 depth: '0',
                 onChange: `(value) => {
-                  console.log('onChange ${v.name}', value)
                   setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
                 }`,
                 ...this.asPropString(v),

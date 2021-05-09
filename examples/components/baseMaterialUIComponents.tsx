@@ -68,7 +68,17 @@ export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
             {String(props.idx + 1)}
           </Avatar>
         </div>
-        <div style={{ flex: 1 }}>{props.children}</div>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>{props.children}</div>
+          <div>{props.removeButton}</div>
+        </div>
       </div>
     );
   },

@@ -100,7 +100,7 @@ export class ComponentComposer {
       export interface GQLReactFormButtonProps extends GQLReactFormStandardProps {
         onClick?: (e?: {preventDefault: () => any}) => any
       }
-      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string} & GQLReactFormStandardProps> {}
+      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string, onBlur: () => unknown, touched: boolean} & GQLReactFormStandardProps> {}
       export interface GQLFormStandardComponent<T extends GQLReactFormStandardProps = GQLReactFormStandardProps> extends React.FC<T> { }
       export interface GQLReactFormListItemProps extends GQLReactFormStandardProps {
         removeButton: JSX.Element|JSX.Element[]

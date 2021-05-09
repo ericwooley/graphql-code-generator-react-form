@@ -132,6 +132,8 @@ interface FormPrimeInput
       onChange: (value: number | string) => number | string;
       value?: number | string;
       label: string;
+      onBlur: () => unknown;
+      touched: boolean;
     } & GQLReactFormStandardProps
   > {}
 export interface GQLFormStandardComponent<
@@ -323,8 +325,16 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
   const scalar = 'String';
   const path = [parentPath, name].join('.');
   const InputComponent = useCustomizedComponent('input');
+  const [touched, setTouched] = React.useState(
+    value !== undefined && value !== null
+  );
+  const setTouchedTrue = React.useCallback(() => setTouched(true), [
+    setTouched,
+  ]);
   return (
     <InputComponent
+      onBlur={setTouchedTrue}
+      touched={touched}
       onChange={onChange as any}
       value={value === undefined || value === null ? '' : value}
       label={label}
@@ -351,8 +361,16 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
   const scalar = 'Int';
   const path = [parentPath, name].join('.');
   const InputComponent = useCustomizedComponent('input');
+  const [touched, setTouched] = React.useState(
+    value !== undefined && value !== null
+  );
+  const setTouchedTrue = React.useCallback(() => setTouched(true), [
+    setTouched,
+  ]);
   return (
     <InputComponent
+      onBlur={setTouchedTrue}
+      touched={touched}
       onChange={onChange as any}
       value={value === undefined || value === null ? '' : value}
       label={label}
@@ -703,6 +721,12 @@ export interface AddUserFormVariables {
   name: Scalars['String'];
   password?: Scalars['String'];
 }
+export interface ValidateAddUserForm {
+  email: (value: Scalars['String']) => string;
+  name: (value: Scalars['String']) => string;
+  password: (value: Scalars['String']) => string;
+}
+
 type AddUserFormProps = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
@@ -736,7 +760,6 @@ export const _AddUserForm = ({
         parentPath={'root'}
         depth={0}
         onChange={(value) => {
-          console.log('onChange email', value);
           setValue((oldVal) => ({ ...oldVal, ['email']: value }));
         }}
         scalarName={'String'}
@@ -749,7 +772,6 @@ export const _AddUserForm = ({
         parentPath={'root'}
         depth={0}
         onChange={(value) => {
-          console.log('onChange name', value);
           setValue((oldVal) => ({ ...oldVal, ['name']: value }));
         }}
         scalarName={'String'}
@@ -762,7 +784,6 @@ export const _AddUserForm = ({
         parentPath={'root'}
         depth={0}
         onChange={(value) => {
-          console.log('onChange password', value);
           setValue((oldVal) => ({ ...oldVal, ['password']: value }));
         }}
         scalarName={'String'}
@@ -791,6 +812,21 @@ export const addUserFromObjectDefaultValues = {
 export interface AddUserFromObjectFormVariables {
   user: UserInput;
 }
+export interface ValidateAddUserFromObjectForm {
+  user: {
+    id: (value: Scalars['Int']) => string;
+    name: (value: Scalars['String']) => string;
+    email: (value: Scalars['String']) => string;
+    password: (value: Scalars['String']) => string;
+    mother: (value: UserInput) => string;
+    father: (value: UserInput) => string;
+    friendsList: (value: UserInput[]) => string;
+    friendsChildren: (value: UserInput) => string;
+    followersList: (value: UserInput[]) => string;
+    followersChildren: (value: UserInput) => string;
+  };
+}
+
 type AddUserFromObjectFormProps = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
@@ -824,7 +860,6 @@ export const _AddUserFromObjectForm = ({
         parentPath={'root'}
         depth={0}
         onChange={(value) => {
-          console.log('onChange user', value);
           setValue((oldVal) => ({ ...oldVal, ['user']: value }));
         }}
         scalarName={'UserInput'}
@@ -855,6 +890,24 @@ export const addUsersFromListDefaultValues = {
 export interface AddUsersFromListFormVariables {
   users: UserInput[];
 }
+export interface ValidateAddUsersFromListForm {
+  usersList: (value: UserInput[]) => string;
+  usersChildren: {
+    users: {
+      id: (value: Scalars['Int']) => string;
+      name: (value: Scalars['String']) => string;
+      email: (value: Scalars['String']) => string;
+      password: (value: Scalars['String']) => string;
+      mother: (value: UserInput) => string;
+      father: (value: UserInput) => string;
+      friendsList: (value: UserInput[]) => string;
+      friendsChildren: (value: UserInput) => string;
+      followersList: (value: UserInput[]) => string;
+      followersChildren: (value: UserInput) => string;
+    };
+  };
+}
+
 type AddUsersFromListFormProps = React.DetailedHTMLProps<
   React.FormHTMLAttributes<HTMLFormElement>,
   HTMLFormElement
@@ -888,7 +941,6 @@ export const _AddUsersFromListForm = ({
         parentPath={'root'}
         depth={0}
         onChange={(value) => {
-          console.log('onChange users', value);
           setValue((oldVal) => ({ ...oldVal, ['users']: value }));
         }}
         scalarName={'UserInput'}
