@@ -306,6 +306,50 @@ export const defaultUserInputScalar = {
     return undefined;
   },
 };
+
+/**********************
+ * Validation Types
+ * *******************/
+export type StringValidationFn = (props: {
+  value: Scalars['String'];
+  touched: boolean;
+}) => string;
+export type IntValidationFn = (props: {
+  value: Scalars['Int'];
+  touched: boolean;
+}) => string;
+export type UserInputValidationFn = {
+  id?: (props: { value: Scalars['Int']; touched: boolean }) => string;
+  name: StringValidationFn;
+  email: StringValidationFn;
+  password: StringValidationFn;
+  mother?: (props: {
+    value: UserInput;
+    touched: boolean;
+  }) => UserInputValidationFn;
+  father: UserInputValidationFn;
+  friendsListValidationFN: {
+    list: (props: { value: UserInput[]; touched: boolean }) => string;
+    items: (
+      props: {
+        value: UserInput;
+        touched: boolean;
+      },
+      index: number
+    ) => string;
+  };
+  followers: UserInputValidationFnAsList;
+};
+export type UserInputValidationFnAsList = {
+  list: (props: { value: UserInput[]; touched: boolean }) => string;
+  items: (
+    props: {
+      value: UserInput;
+      touched: boolean;
+    },
+    index: number
+  ) => string;
+};
 /**********************
  * Scalar Form Fragments
  * *******************/
@@ -316,6 +360,7 @@ export interface StringFormInputPropTypes {
   value?: Maybe<Scalars['String']>;
   scalarName: string;
   name: string;
+  validate?: StringValidationFn;
   parentPath: string;
   depth: number;
   onChange: (value?: Scalars['String']) => any;
@@ -352,6 +397,7 @@ export interface IntFormInputPropTypes {
   value?: Maybe<Scalars['Int']>;
   scalarName: string;
   name: string;
+  validate?: IntValidationFn;
   parentPath: string;
   depth: number;
   onChange: (value?: Scalars['Int']) => any;
@@ -388,6 +434,7 @@ export interface UserInputFormInputPropTypes {
   value?: Maybe<UserInput>;
   scalarName: string;
   name: string;
+  validate?: UserInputValidationFn;
   parentPath: string;
   depth: number;
   onChange: (value?: UserInput) => any;
@@ -544,6 +591,7 @@ export interface UserInputFormInputAsListPropTypes {
   value?: Maybe<UserInput>[];
   scalarName: string;
   name: string;
+  validate?: UserInputValidationFnAsList;
   parentPath: string;
   depth: number;
   onChange: (value?: UserInput[]) => any;
@@ -722,9 +770,9 @@ export interface AddUserFormVariables {
   password?: Scalars['String'];
 }
 export interface ValidateAddUserForm {
-  email: (value: Scalars['String']) => string;
-  name: (value: Scalars['String']) => string;
-  password: (value: Scalars['String']) => string;
+  email: (props: { value: Scalars['String']; touched: boolean }) => string;
+  name: StringValidationFn;
+  password: StringValidationFn;
 }
 
 type AddUserFormProps = React.DetailedHTMLProps<
@@ -732,11 +780,13 @@ type AddUserFormProps = React.DetailedHTMLProps<
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFormVariables>;
+  validate?: ValidateAddUserForm;
   onSubmit: (values: AddUserFormVariables) => any;
 };
 export const _AddUserForm = ({
   initialValues = addUserDefaultValues,
   onSubmit,
+  validate,
   ...formProps
 }: AddUserFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
@@ -759,6 +809,7 @@ export const _AddUserForm = ({
         label={'Email'}
         parentPath={'root'}
         depth={0}
+        validate={validate ? validate['email'] : undefined}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['email']: value }));
         }}
@@ -771,6 +822,7 @@ export const _AddUserForm = ({
         label={'Name'}
         parentPath={'root'}
         depth={0}
+        validate={validate ? validate['name'] : undefined}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['name']: value }));
         }}
@@ -783,6 +835,7 @@ export const _AddUserForm = ({
         label={'Password'}
         parentPath={'root'}
         depth={0}
+        validate={validate ? validate['password'] : undefined}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['password']: value }));
         }}
@@ -814,16 +867,26 @@ export interface AddUserFromObjectFormVariables {
 }
 export interface ValidateAddUserFromObjectForm {
   user: {
-    id: (value: Scalars['Int']) => string;
-    name: (value: Scalars['String']) => string;
-    email: (value: Scalars['String']) => string;
-    password: (value: Scalars['String']) => string;
-    mother: (value: UserInput) => string;
-    father: (value: UserInput) => string;
-    friendsList: (value: UserInput[]) => string;
-    friendsChildren: (value: UserInput) => string;
-    followersList: (value: UserInput[]) => string;
-    followersChildren: (value: UserInput) => string;
+    id?: (props: { value: Scalars['Int']; touched: boolean }) => string;
+    name: StringValidationFn;
+    email: StringValidationFn;
+    password: StringValidationFn;
+    mother?: (props: {
+      value: UserInput;
+      touched: boolean;
+    }) => UserInputValidationFn;
+    father: UserInputValidationFn;
+    friendsListValidationFN: {
+      list: (props: { value: UserInput[]; touched: boolean }) => string;
+      items: (
+        props: {
+          value: UserInput;
+          touched: boolean;
+        },
+        index: number
+      ) => string;
+    };
+    followers: UserInputValidationFnAsList;
   };
 }
 
@@ -832,11 +895,13 @@ type AddUserFromObjectFormProps = React.DetailedHTMLProps<
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFromObjectFormVariables>;
+  validate?: ValidateAddUserFromObjectForm;
   onSubmit: (values: AddUserFromObjectFormVariables) => any;
 };
 export const _AddUserFromObjectForm = ({
   initialValues = addUserFromObjectDefaultValues,
   onSubmit,
+  validate,
   ...formProps
 }: AddUserFromObjectFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
@@ -859,6 +924,7 @@ export const _AddUserFromObjectForm = ({
         label={'User'}
         parentPath={'root'}
         depth={0}
+        validate={validate ? validate['user'] : undefined}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['user']: value }));
         }}
@@ -891,21 +957,7 @@ export interface AddUsersFromListFormVariables {
   users: UserInput[];
 }
 export interface ValidateAddUsersFromListForm {
-  usersList: (value: UserInput[]) => string;
-  usersChildren: {
-    users: {
-      id: (value: Scalars['Int']) => string;
-      name: (value: Scalars['String']) => string;
-      email: (value: Scalars['String']) => string;
-      password: (value: Scalars['String']) => string;
-      mother: (value: UserInput) => string;
-      father: (value: UserInput) => string;
-      friendsList: (value: UserInput[]) => string;
-      friendsChildren: (value: UserInput) => string;
-      followersList: (value: UserInput[]) => string;
-      followersChildren: (value: UserInput) => string;
-    };
-  };
+  users: UserInputValidationFnAsList;
 }
 
 type AddUsersFromListFormProps = React.DetailedHTMLProps<
@@ -913,11 +965,13 @@ type AddUsersFromListFormProps = React.DetailedHTMLProps<
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUsersFromListFormVariables>;
+  validate?: ValidateAddUsersFromListForm;
   onSubmit: (values: AddUsersFromListFormVariables) => any;
 };
 export const _AddUsersFromListForm = ({
   initialValues = addUsersFromListDefaultValues,
   onSubmit,
+  validate,
   ...formProps
 }: AddUsersFromListFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
@@ -940,6 +994,7 @@ export const _AddUsersFromListForm = ({
         label={'Users'}
         parentPath={'root'}
         depth={0}
+        validate={validate ? validate['users'] : undefined}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['users']: value }));
         }}
@@ -963,248 +1018,3 @@ export const AddUsersFromListForm = ({
     </InternalGQLReactFormContext.Provider>
   );
 };
-
-/***************************
- * MetaData Export
- * *************************/
-
-export const mutationsMetaData = [
-  {
-    name: 'addUser',
-    variables: [
-      {
-        accessChain: ['String'],
-        endedFromCycle: false,
-        scalarName: 'String',
-        name: 'email',
-        tsType: 'Scalars["String"]',
-        optional: false,
-        asList: false,
-        children: null,
-      },
-      {
-        accessChain: ['String'],
-        endedFromCycle: false,
-        scalarName: 'String',
-        name: 'name',
-        tsType: 'Scalars["String"]',
-        optional: false,
-        asList: false,
-        children: null,
-      },
-      {
-        accessChain: ['String'],
-        endedFromCycle: false,
-        scalarName: 'String',
-        name: 'password',
-        tsType: 'Scalars["String"]',
-        optional: true,
-        asList: false,
-        children: null,
-      },
-    ],
-  },
-  {
-    name: 'addUserFromObject',
-    variables: [
-      {
-        accessChain: ['UserInput'],
-        endedFromCycle: false,
-        scalarName: 'UserInput',
-        name: 'user',
-        tsType: 'UserInput',
-        optional: false,
-        asList: false,
-        children: [
-          {
-            accessChain: ['UserInput', 'Int'],
-            endedFromCycle: false,
-            scalarName: 'Int',
-            name: 'id',
-            tsType: 'Scalars["Int"]',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'String'],
-            endedFromCycle: false,
-            scalarName: 'String',
-            name: 'name',
-            tsType: 'Scalars["String"]',
-            optional: false,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'String'],
-            endedFromCycle: false,
-            scalarName: 'String',
-            name: 'email',
-            tsType: 'Scalars["String"]',
-            optional: false,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'String'],
-            endedFromCycle: false,
-            scalarName: 'String',
-            name: 'password',
-            tsType: 'Scalars["String"]',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'UserInput'],
-            endedFromCycle: true,
-            scalarName: 'UserInput',
-            name: 'mother',
-            tsType: 'UserInput',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'UserInput'],
-            endedFromCycle: true,
-            scalarName: 'UserInput',
-            name: 'father',
-            tsType: 'UserInput',
-            optional: true,
-            asList: false,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'UserInput'],
-            endedFromCycle: true,
-            scalarName: 'UserInput',
-            name: 'friends',
-            tsType: 'UserInput',
-            optional: false,
-            asList: true,
-            children: null,
-          },
-          {
-            accessChain: ['UserInput', 'UserInput'],
-            endedFromCycle: true,
-            scalarName: 'UserInput',
-            name: 'followers',
-            tsType: 'UserInput',
-            optional: true,
-            asList: true,
-            children: null,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'addUsersFromList',
-    variables: [
-      {
-        accessChain: [],
-        endedFromCycle: false,
-        scalarName: 'UserInput',
-        name: 'users',
-        tsType: 'UserInput',
-        optional: false,
-        asList: true,
-        children: [
-          {
-            accessChain: ['UserInput'],
-            endedFromCycle: false,
-            scalarName: 'UserInput',
-            name: 'users',
-            tsType: 'UserInput',
-            optional: true,
-            asList: false,
-            children: [
-              {
-                accessChain: ['UserInput', 'Int'],
-                endedFromCycle: false,
-                scalarName: 'Int',
-                name: 'id',
-                tsType: 'Scalars["Int"]',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'String'],
-                endedFromCycle: false,
-                scalarName: 'String',
-                name: 'name',
-                tsType: 'Scalars["String"]',
-                optional: false,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'String'],
-                endedFromCycle: false,
-                scalarName: 'String',
-                name: 'email',
-                tsType: 'Scalars["String"]',
-                optional: false,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'String'],
-                endedFromCycle: false,
-                scalarName: 'String',
-                name: 'password',
-                tsType: 'Scalars["String"]',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'UserInput'],
-                endedFromCycle: true,
-                scalarName: 'UserInput',
-                name: 'mother',
-                tsType: 'UserInput',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'UserInput'],
-                endedFromCycle: true,
-                scalarName: 'UserInput',
-                name: 'father',
-                tsType: 'UserInput',
-                optional: true,
-                asList: false,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'UserInput'],
-                endedFromCycle: true,
-                scalarName: 'UserInput',
-                name: 'friends',
-                tsType: 'UserInput',
-                optional: false,
-                asList: true,
-                children: null,
-              },
-              {
-                accessChain: ['UserInput', 'UserInput'],
-                endedFromCycle: true,
-                scalarName: 'UserInput',
-                name: 'followers',
-                tsType: 'UserInput',
-                optional: true,
-                asList: true,
-                children: null,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-];

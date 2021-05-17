@@ -11,6 +11,16 @@ export const AddUser = () => {
       {({ onSubmit, useInitialValues, useCustomComponents }) => {
         const formContent = (
           <AddUserForm
+            validate={{
+              email: ({ touched, value }) => {
+                if (!touched) return '';
+                if (!value.match(/.+@.+\..+/))
+                  return 'Email must be a valid email';
+                return '';
+              },
+              name: () => '',
+              password: () => '',
+            }}
             key={`user-form-${useInitialValues}`}
             initialValues={
               useInitialValues

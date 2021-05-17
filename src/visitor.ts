@@ -181,6 +181,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
       name: string,
+      validate?: ${metaData.scalarName}ValidationFn${
+      metaData.asList ? 'AsList' : ''
+    }
       parentPath: string,
       depth: number,
       onChange: (value?: ${metaData.tsType}${
@@ -401,28 +404,41 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
   `;
   }
+  private reusableValidations: { [key: string]: string } = {};
   private generateValidation(node: TypeNodeMetaData, name = node.name): string {
-    if (node.asList) {
-      return `
-        ${name}List: (value: ${
-        node.tsType
-      }[]) => string;${this.generateValidation(
-        {
-          ...node,
-          asList: false,
-        },
-        name + 'Children'
-      )}
-      `;
+    const validationName = `${node.scalarName}ValidationFn${
+      node.asList ? 'AsList' : ''
+    }`;
+    if (this.reusableValidations[validationName]) {
+      return `${name}: ${validationName}`;
     }
-    if (node.children) {
-      return `${name}:{
+    const props = `props: {
+      value: ${node.tsType}${node.asList ? '[]' : ''},
+      touched: boolean,
+    }`;
+    let validation = ``;
+    let key = `${name}`;
+    if (node.asList) {
+      key = `${name}ListValidationFN`;
+      validation = `{
+        list: (${props}) => string,
+        items: (props: {
+          value: ${node.tsType},
+          touched: boolean,
+        }, index: number) => string
+      }`;
+    } else if (node.endedFromCycle) {
+      validation = `(${props}) => ${validationName}`;
+    } else if (node.children) {
+      validation = `{
         ${node.children.map((n) => this.generateValidation(n))}
       }`;
+    } else {
+      key = name;
+      validation = `(${props}) => string`;
     }
-    return `
-    ${name}: (value: ${node.tsType}) => string
-    `;
+    this.reusableValidations[validationName] = validation;
+    return `${key}${node.optional ? '?' : ''}: ${validation}`;
   }
   public forms = '';
   public generateFormsOutput() {
@@ -461,11 +477,13 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   HTMLFormElement
   > & {
     initialValues?: Partial<${baseName}Variables>,
+    validate?: Validate${pascalCase(baseName)},
     onSubmit: (values: ${baseName}Variables)=> any,
   }
   export const _${baseName} = ({
     initialValues = ${camelCase(m.name + 'DefaultValues')},
     onSubmit,
+    validate,
     ...formProps}: ${baseName}Props) => {
     const [value, setValue]= React.useState(initialValues || {})
     ${this.cc.form.init}
@@ -482,6 +500,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                 label: JSON.stringify(sentenceCase(v.name)),
                 parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
                 depth: '0',
+                validate: `validate ? validate[${JSON.stringify(
+                  v.name
+                )}]: undefined`,
                 onChange: `(value) => {
                   setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
                 }`,
@@ -514,6 +535,13 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   ${Object.entries(this.defaultScalarValues)
     .map(([name, entry]) => `export const ${name} = ${entry}`)
     .join('\n')}
+
+/**********************
+ * Validation Types
+ * *******************/
+  ${Object.entries(this.reusableValidations)
+    .map(([name, entry]) => `export type ${name} = ${entry}`)
+    .join('\n')}
 /**********************
  * Scalar Form Fragments
  * *******************/
@@ -522,10 +550,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
 * forms Forms
 * *************************/
   ${this.forms}
-/***************************
- * MetaData Export
- * *************************/
-  ${this.generateMutationsMetaDataExport()}
-  `;
+`;
   }
 }

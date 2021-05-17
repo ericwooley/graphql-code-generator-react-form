@@ -3,9 +3,6 @@ import { makeStyles, Theme } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
-import { MutationsMetaData } from './mutationsMetaData';
 import { Schema } from './schema';
 
 interface TabPanelProps {
@@ -61,14 +58,10 @@ export default function DataTabs() {
           aria-label="simple tabs example"
         >
           <Tab label="Schema" {...a11yProps(0)} />
-          <Tab label="MetaData" {...a11yProps(1)} />
         </Tabs>
       </AppBar>
       <TabPanel value={value} index={0}>
         <Schema />
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <MutationsMetaData />
       </TabPanel>
     </div>
   );
