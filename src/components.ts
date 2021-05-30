@@ -100,7 +100,7 @@ export class ComponentComposer {
       export interface GQLReactFormButtonProps extends GQLReactFormStandardProps {
         onClick?: (e?: {preventDefault: () => any}) => any
       }
-      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string, onBlur: () => unknown, touched: boolean} & GQLReactFormStandardProps> {}
+      interface FormPrimeInput extends React.FC<{onChange: (value: number|string) => number|string, value?: number|string, label: string, onBlur: () => unknown, touched: boolean, error?:string} & GQLReactFormStandardProps> {}
       export interface GQLFormStandardComponent<T extends GQLReactFormStandardProps = GQLReactFormStandardProps> extends React.FC<T> { }
       export interface GQLReactFormListItemProps extends GQLReactFormStandardProps {
         removeButton: JSX.Element|JSX.Element[]
@@ -163,7 +163,7 @@ export class ComponentComposer {
         },
         submitButton: ((props: {text: string}) => <input type="submit" {...props} value={props.text} /> ),
         input: ((props) => {
-          const {path, scalar, name, depth} = props
+          const {path, scalar, name, depth, error} = props
           ${this.div.init}
           ${this.labelTextWrapper.init}
           const typeofValue = typeof props.value
@@ -176,7 +176,7 @@ export class ComponentComposer {
               {},
               `
               ${this.labelTextWrapper.render({}, `{props.label}`)}
-              <input value={props.value} type={props.value === undefined
+              <><input value={props.value} type={props.value === undefined
                 ? "string"
                 : typeofValue === 'string'
                 ? 'text'
@@ -185,6 +185,8 @@ export class ComponentComposer {
                 : ''
               } onChange={(e) =>
                 props.onChange(e.target.value)} />
+                {error}
+              </>
             `
             )}
             `

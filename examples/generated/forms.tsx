@@ -134,6 +134,7 @@ interface FormPrimeInput
       label: string;
       onBlur: () => unknown;
       touched: boolean;
+      error?: string;
     } & GQLReactFormStandardProps
   > {}
 export interface GQLFormStandardComponent<
@@ -216,7 +217,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
     <input type="submit" {...props} value={props.text} />
   ),
   input: (props) => {
-    const { path, scalar, name, depth } = props;
+    const { path, scalar, name, depth, error } = props;
     const DivComponent = useCustomizedComponent('div');
     const LabelTextWrapperComponent = useCustomizedComponent(
       'labelTextWrapper'
@@ -234,19 +235,22 @@ export const defaultReactFormContext: GQLReactFormContext = {
           >
             {props.label}
           </LabelTextWrapperComponent>
-          <input
-            value={props.value}
-            type={
-              props.value === undefined
-                ? 'string'
-                : typeofValue === 'string'
-                ? 'text'
-                : typeofValue === 'number'
-                ? 'number'
-                : ''
-            }
-            onChange={(e) => props.onChange(e.target.value)}
-          />
+          <>
+            <input
+              value={props.value}
+              type={
+                props.value === undefined
+                  ? 'string'
+                  : typeofValue === 'string'
+                  ? 'text'
+                  : typeofValue === 'number'
+                  ? 'number'
+                  : ''
+              }
+              onChange={(e) => props.onChange(e.target.value)}
+            />
+            {error}
+          </>
         </LabelComponent>
       </DivComponent>
     );
@@ -310,45 +314,17 @@ export const defaultUserInputScalar = {
 /**********************
  * Validation Types
  * *******************/
-export type StringValidationFn = (props: {
-  value: Scalars['String'];
-  touched: boolean;
-}) => string;
-export type IntValidationFn = (props: {
-  value: Scalars['Int'];
-  touched: boolean;
-}) => string;
-export type UserInputValidationFn = {
-  id?: (props: { value: Scalars['Int']; touched: boolean }) => string;
-  name: StringValidationFn;
-  email: StringValidationFn;
-  password: StringValidationFn;
-  mother?: (props: {
-    value: UserInput;
-    touched: boolean;
-  }) => UserInputValidationFn;
-  father: UserInputValidationFn;
-  friendsListValidationFN: {
-    list: (props: { value: UserInput[]; touched: boolean }) => string;
-    items: (
-      props: {
-        value: UserInput;
-        touched: boolean;
-      },
-      index: number
-    ) => string;
-  };
-  followers: UserInputValidationFnAsList;
-};
-export type UserInputValidationFnAsList = {
-  list: (props: { value: UserInput[]; touched: boolean }) => string;
-  items: (
-    props: {
-      value: UserInput;
-      touched: boolean;
-    },
-    index: number
-  ) => string;
+export type StringValidation = string;
+export type IntValidation = string;
+export type UserInputValidation = {
+  id?: string;
+  name: StringValidation;
+  email: StringValidation;
+  password: StringValidation;
+  mother?: UserInputValidation;
+  father: UserInputValidation;
+  friends: UserInputValidation[];
+  followers: UserInputValidation[];
 };
 /**********************
  * Scalar Form Fragments
@@ -357,27 +333,26 @@ export type UserInputValidationFnAsList = {
 export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
+  error?: StringValidation;
   value?: Maybe<Scalars['String']>;
   scalarName: string;
   name: string;
-  validate?: StringValidationFn;
   parentPath: string;
   depth: number;
   onChange: (value?: Scalars['String']) => any;
 }
 export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
-  const { parentPath, label, name, value, onChange, depth } = props;
-  const scalar = 'String';
-  const path = [parentPath, name].join('.');
-  const InputComponent = useCustomizedComponent('input');
-  const [touched, setTouched] = React.useState(
-    value !== undefined && value !== null
-  );
+  const { parentPath, label, name, value, onChange, depth, error } = props;
+  const [touched, setTouched] = React.useState(false);
   const setTouchedTrue = React.useCallback(() => setTouched(true), [
     setTouched,
   ]);
+  const scalar = 'String';
+  const path = [parentPath, name].join('.');
+  const InputComponent = useCustomizedComponent('input');
   return (
     <InputComponent
+      error={error}
       onBlur={setTouchedTrue}
       touched={touched}
       onChange={onChange as any}
@@ -394,27 +369,26 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
 export interface IntFormInputPropTypes {
   optional: boolean;
   label: string;
+  error?: IntValidation;
   value?: Maybe<Scalars['Int']>;
   scalarName: string;
   name: string;
-  validate?: IntValidationFn;
   parentPath: string;
   depth: number;
   onChange: (value?: Scalars['Int']) => any;
 }
 export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
-  const { parentPath, label, name, value, onChange, depth } = props;
-  const scalar = 'Int';
-  const path = [parentPath, name].join('.');
-  const InputComponent = useCustomizedComponent('input');
-  const [touched, setTouched] = React.useState(
-    value !== undefined && value !== null
-  );
+  const { parentPath, label, name, value, onChange, depth, error } = props;
+  const [touched, setTouched] = React.useState(false);
   const setTouchedTrue = React.useCallback(() => setTouched(true), [
     setTouched,
   ]);
+  const scalar = 'Int';
+  const path = [parentPath, name].join('.');
+  const InputComponent = useCustomizedComponent('input');
   return (
     <InputComponent
+      error={error}
       onBlur={setTouchedTrue}
       touched={touched}
       onChange={onChange as any}
@@ -431,17 +405,21 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
 export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
+  error?: UserInputValidation;
   value?: Maybe<UserInput>;
   scalarName: string;
   name: string;
-  validate?: UserInputValidationFn;
   parentPath: string;
   depth: number;
   onChange: (value?: UserInput) => any;
 }
 export const UserInputFormInput = React.memo(
   (props: UserInputFormInputPropTypes) => {
-    const { parentPath, label, name, value, onChange, depth } = props;
+    const { parentPath, label, name, value, onChange, depth, error } = props;
+    const [touched, setTouched] = React.useState(false);
+    const setTouchedTrue = React.useCallback(() => setTouched(true), [
+      setTouched,
+    ]);
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
     const DivComponent = useCustomizedComponent('div');
@@ -457,9 +435,10 @@ export const UserInputFormInput = React.memo(
       return (
         <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
           <ButtonComponent
-            onClick={() =>
-              onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)))
-            }
+            onClick={() => {
+              setTouchedTrue();
+              onChange(JSON.parse(JSON.stringify(defaultUserInputScalar)));
+            }}
             path={path}
             scalar={scalar}
             name={name}
@@ -487,6 +466,7 @@ export const UserInputFormInput = React.memo(
           {label}
         </LabelTextWrapperComponent>
         <IntFormInput
+          error={error?.['id']}
           depth={depth + 1}
           value={value?.id === null ? undefined : value?.id}
           scalarName={'Int'}
@@ -497,6 +477,7 @@ export const UserInputFormInput = React.memo(
           onChange={(newValue = 0) => onChange({ ...value, ['id']: newValue })}
         />
         <StringFormInput
+          error={error?.['name']}
           depth={depth + 1}
           value={value?.name === null ? undefined : value?.name}
           scalarName={'String'}
@@ -509,6 +490,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <StringFormInput
+          error={error?.['email']}
           depth={depth + 1}
           value={value?.email === null ? undefined : value?.email}
           scalarName={'String'}
@@ -521,6 +503,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <StringFormInput
+          error={error?.['password']}
           depth={depth + 1}
           value={value?.password === null ? undefined : value?.password}
           scalarName={'String'}
@@ -533,6 +516,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <UserInputFormInput
+          error={error?.['mother']}
           depth={depth + 1}
           value={value?.mother === null ? undefined : value?.mother}
           scalarName={'UserInput'}
@@ -545,6 +529,7 @@ export const UserInputFormInput = React.memo(
           ) => onChange({ ...value, ['mother']: newValue })}
         />
         <UserInputFormInput
+          error={error?.['father']}
           depth={depth + 1}
           value={value?.father === null ? undefined : value?.father}
           scalarName={'UserInput'}
@@ -557,6 +542,7 @@ export const UserInputFormInput = React.memo(
           ) => onChange({ ...value, ['father']: newValue })}
         />
         <UserInputFormInputAsList
+          error={error?.['friends']}
           depth={depth + 1}
           value={value?.friends === null ? undefined : value?.friends}
           scalarName={'UserInput'}
@@ -569,6 +555,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <UserInputFormInputAsList
+          error={error?.['followers']}
           depth={depth + 1}
           value={value?.followers === null ? undefined : value?.followers}
           scalarName={'UserInput'}
@@ -588,17 +575,21 @@ export const UserInputFormInput = React.memo(
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
+  error?: UserInputValidation[];
   value?: Maybe<UserInput>[];
   scalarName: string;
   name: string;
-  validate?: UserInputValidationFnAsList;
   parentPath: string;
   depth: number;
   onChange: (value?: UserInput[]) => any;
 }
 export const UserInputFormInputAsList = React.memo(
   (props: UserInputFormInputAsListPropTypes) => {
-    const { parentPath, label, name, value, onChange, depth } = props;
+    const { parentPath, label, name, value, onChange, depth, error } = props;
+    const [touched, setTouched] = React.useState(false);
+    const setTouchedTrue = React.useCallback(() => setTouched(true), [
+      setTouched,
+    ]);
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
     const AddButtonComponent = useCustomizedComponent('addButton');
@@ -722,6 +713,7 @@ export const UserInputFormInputAsList = React.memo(
                 name={String(index)}
                 parentPath={path}
                 depth={depth}
+                error={error?.[index]}
                 onChange={(
                   newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
                 ) => {
@@ -770,9 +762,9 @@ export interface AddUserFormVariables {
   password?: Scalars['String'];
 }
 export interface ValidateAddUserForm {
-  email: (props: { value: Scalars['String']; touched: boolean }) => string;
-  name: StringValidationFn;
-  password: StringValidationFn;
+  email: string;
+  name: StringValidation;
+  password: StringValidation;
 }
 
 type AddUserFormProps = React.DetailedHTMLProps<
@@ -780,7 +772,7 @@ type AddUserFormProps = React.DetailedHTMLProps<
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFormVariables>;
-  validate?: ValidateAddUserForm;
+  validate?: (value: Partial<AddUserFormVariables>) => ValidateAddUserForm;
   onSubmit: (values: AddUserFormVariables) => any;
 };
 export const _AddUserForm = ({
@@ -790,6 +782,9 @@ export const _AddUserForm = ({
   ...formProps
 }: AddUserFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
+  const [validationResults, setValidationResults] = React.useState(() =>
+    validate ? validate(initialValues) : ({} as ValidateAddUserForm)
+  );
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
   return (
@@ -809,7 +804,7 @@ export const _AddUserForm = ({
         label={'Email'}
         parentPath={'root'}
         depth={0}
-        validate={validate ? validate['email'] : undefined}
+        error={validationResults['email']}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['email']: value }));
         }}
@@ -822,7 +817,7 @@ export const _AddUserForm = ({
         label={'Name'}
         parentPath={'root'}
         depth={0}
-        validate={validate ? validate['name'] : undefined}
+        error={validationResults['name']}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['name']: value }));
         }}
@@ -835,7 +830,7 @@ export const _AddUserForm = ({
         label={'Password'}
         parentPath={'root'}
         depth={0}
-        validate={validate ? validate['password'] : undefined}
+        error={validationResults['password']}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['password']: value }));
         }}
@@ -867,26 +862,14 @@ export interface AddUserFromObjectFormVariables {
 }
 export interface ValidateAddUserFromObjectForm {
   user: {
-    id?: (props: { value: Scalars['Int']; touched: boolean }) => string;
-    name: StringValidationFn;
-    email: StringValidationFn;
-    password: StringValidationFn;
-    mother?: (props: {
-      value: UserInput;
-      touched: boolean;
-    }) => UserInputValidationFn;
-    father: UserInputValidationFn;
-    friendsListValidationFN: {
-      list: (props: { value: UserInput[]; touched: boolean }) => string;
-      items: (
-        props: {
-          value: UserInput;
-          touched: boolean;
-        },
-        index: number
-      ) => string;
-    };
-    followers: UserInputValidationFnAsList;
+    id?: string;
+    name: StringValidation;
+    email: StringValidation;
+    password: StringValidation;
+    mother?: UserInputValidation;
+    father: UserInputValidation;
+    friends: UserInputValidation[];
+    followers: UserInputValidation[];
   };
 }
 
@@ -895,7 +878,9 @@ type AddUserFromObjectFormProps = React.DetailedHTMLProps<
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFromObjectFormVariables>;
-  validate?: ValidateAddUserFromObjectForm;
+  validate?: (
+    value: Partial<AddUserFromObjectFormVariables>
+  ) => ValidateAddUserFromObjectForm;
   onSubmit: (values: AddUserFromObjectFormVariables) => any;
 };
 export const _AddUserFromObjectForm = ({
@@ -905,6 +890,9 @@ export const _AddUserFromObjectForm = ({
   ...formProps
 }: AddUserFromObjectFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
+  const [validationResults, setValidationResults] = React.useState(() =>
+    validate ? validate(initialValues) : ({} as ValidateAddUserFromObjectForm)
+  );
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
   return (
@@ -924,7 +912,7 @@ export const _AddUserFromObjectForm = ({
         label={'User'}
         parentPath={'root'}
         depth={0}
-        validate={validate ? validate['user'] : undefined}
+        error={validationResults['user']}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['user']: value }));
         }}
@@ -957,7 +945,7 @@ export interface AddUsersFromListFormVariables {
   users: UserInput[];
 }
 export interface ValidateAddUsersFromListForm {
-  users: UserInputValidationFnAsList;
+  users: UserInputValidation[];
 }
 
 type AddUsersFromListFormProps = React.DetailedHTMLProps<
@@ -965,7 +953,9 @@ type AddUsersFromListFormProps = React.DetailedHTMLProps<
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUsersFromListFormVariables>;
-  validate?: ValidateAddUsersFromListForm;
+  validate?: (
+    value: Partial<AddUsersFromListFormVariables>
+  ) => ValidateAddUsersFromListForm;
   onSubmit: (values: AddUsersFromListFormVariables) => any;
 };
 export const _AddUsersFromListForm = ({
@@ -975,6 +965,9 @@ export const _AddUsersFromListForm = ({
   ...formProps
 }: AddUsersFromListFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
+  const [validationResults, setValidationResults] = React.useState(() =>
+    validate ? validate(initialValues) : ({} as ValidateAddUsersFromListForm)
+  );
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
   return (
@@ -994,7 +987,7 @@ export const _AddUsersFromListForm = ({
         label={'Users'}
         parentPath={'root'}
         depth={0}
-        validate={validate ? validate['users'] : undefined}
+        error={validationResults['users']}
         onChange={(value) => {
           setValue((oldVal) => ({ ...oldVal, ['users']: value }));
         }}

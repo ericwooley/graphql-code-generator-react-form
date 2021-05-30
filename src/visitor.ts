@@ -178,12 +178,10 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     const componentPropTypes = `export interface ${componentKey}PropTypes {
       optional: boolean,
       label: string,
+      error?: ${metaData.scalarName}Validation${metaData.asList ? '[]' : ''},
       value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
       name: string,
-      validate?: ${metaData.scalarName}ValidationFn${
-      metaData.asList ? 'AsList' : ''
-    }
       parentPath: string,
       depth: number,
       onChange: (value?: ${metaData.tsType}${
@@ -192,7 +190,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     }`;
     const componentDefinitionHead = `export const ${componentKey} = React.memo((props: ${componentKey}PropTypes) => {`;
     let componentPreBody = [
-      `const {parentPath, label, name, value, onChange, depth } = props`,
+      `const {parentPath, label, name, value, onChange, depth, error } = props`,
+      `const [touched, setTouched] = React.useState(false)`,
+      `const setTouchedTrue = React.useCallback(() => setTouched(true), [setTouched])`,
       `const scalar = ${JSON.stringify(metaData.scalarName)}`,
       `const path = [parentPath, name].join('.')`,
     ];
@@ -203,9 +203,11 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
           {},
           this.cc.button.render(
             {
-              onClick: `() => onChange(${this.getDefaultValueStringForTypeNodeMetaData(
-                metaData
-              )})
+              onClick: `() =>{
+                setTouchedTrue()
+                onChange(${this.getDefaultValueStringForTypeNodeMetaData(
+                  metaData
+                )})}
           `,
             },
             `Add {label}`
@@ -214,6 +216,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       }`,
     ];
     const componentDefinitionTail = `})`;
+
+    // Render the list component, and each child as it's own item.
     if (metaData.asList) {
       const actualScalarMetaData = metaData.children?.[0]
         ? metaData.children?.[0]
@@ -299,6 +303,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                   parentPath: `path`,
                   name: `String(index)`,
                   depth: 'depth',
+                  error: 'error?.[index]',
                   onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
                     actualScalarMetaData
                   )}) => {
@@ -318,7 +323,10 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     )}
     )`,
       ];
-    } else if (metaData.endedFromCycle) {
+    }
+
+    // In this case, there is already a component rendered for this, but this one needs to be here optionally.
+    else if (metaData.endedFromCycle) {
       componentPreBody.push(
         this.cc.div.init,
         this.cc.button.init,
@@ -327,14 +335,19 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       componentBody.push(
         `return (
           ${this.cc.div.render(
-            {},
+            {
+              error: `error[${JSON.stringify(metaData.name)}]`,
+            },
             [
               this.cc.labelTextWrapper.render({}, `{label}`),
               this.cc.button.render({}, `Add {label}`),
             ].join('\n')
           )}`
       );
-    } else if (metaData.children) {
+    }
+
+    // an scalar that requires customization, as it has children
+    else if (metaData.children) {
       const tagName = `${pascalCase(metaData.name)}Component`;
       componentPreBody.push(
         this.cc.div.init,
@@ -353,6 +366,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             ${metaData.children
               .map((md) =>
                 this.renderComponentFor(md, {
+                  error: `error?.[${JSON.stringify(md.name)}]`,
                   depth: 'depth+1',
                   value: `value?.${md.name} === null? undefined : value?.${md.name}`,
                   ...this.asPropString(md),
@@ -370,11 +384,10 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     } else {
       componentPreBody.push(this.cc.input.init);
       componentBody = [
-        `const [touched, setTouched] = React.useState(value !== undefined && value !== null)`,
-        `const setTouchedTrue = React.useCallback(() => setTouched(true), [setTouched])`,
         `return (
         ${this.cc.input.render(
           {
+            error: 'error',
             onBlur: 'setTouchedTrue',
             touched: 'touched',
             onChange: 'onChange as any',
@@ -406,36 +419,24 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   }
   private reusableValidations: { [key: string]: string } = {};
   private generateValidation(node: TypeNodeMetaData, name = node.name): string {
-    const validationName = `${node.scalarName}ValidationFn${
-      node.asList ? 'AsList' : ''
-    }`;
+    const validationName = `${node.scalarName}Validation`;
     if (this.reusableValidations[validationName]) {
-      return `${name}: ${validationName}`;
+      return `${name}: ${validationName}${node.asList ? '[]' : ''}`;
     }
-    const props = `props: {
-      value: ${node.tsType}${node.asList ? '[]' : ''},
-      touched: boolean,
-    }`;
     let validation = ``;
     let key = `${name}`;
     if (node.asList) {
-      key = `${name}ListValidationFN`;
-      validation = `{
-        list: (${props}) => string,
-        items: (props: {
-          value: ${node.tsType},
-          touched: boolean,
-        }, index: number) => string
-      }`;
+      key = `${name}ListValidation`;
+      validation = `${validationName}[]`;
     } else if (node.endedFromCycle) {
-      validation = `(${props}) => ${validationName}`;
+      validation = `${validationName}`;
     } else if (node.children) {
       validation = `{
         ${node.children.map((n) => this.generateValidation(n))}
       }`;
     } else {
       key = name;
-      validation = `(${props}) => string`;
+      validation = `string`;
     }
     this.reusableValidations[validationName] = validation;
     return `${key}${node.optional ? '?' : ''}: ${validation}`;
@@ -477,7 +478,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   HTMLFormElement
   > & {
     initialValues?: Partial<${baseName}Variables>,
-    validate?: Validate${pascalCase(baseName)},
+    validate?: (value: Partial<${baseName}Variables>) => Validate${pascalCase(
+          baseName
+        )},
     onSubmit: (values: ${baseName}Variables)=> any,
   }
   export const _${baseName} = ({
@@ -486,6 +489,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     validate,
     ...formProps}: ${baseName}Props) => {
     const [value, setValue]= React.useState(initialValues || {})
+    const [validationResults, setValidationResults] = React.useState(() => validate ? validate(initialValues) : {} as Validate${pascalCase(
+      baseName
+    )})
     ${this.cc.form.init}
     ${this.cc.submitButton.init}
     return (
@@ -500,9 +506,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                 label: JSON.stringify(sentenceCase(v.name)),
                 parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
                 depth: '0',
-                validate: `validate ? validate[${JSON.stringify(
-                  v.name
-                )}]: undefined`,
+                error: `validationResults[${JSON.stringify(v.name)}]`,
                 onChange: `(value) => {
                   setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
                 }`,
