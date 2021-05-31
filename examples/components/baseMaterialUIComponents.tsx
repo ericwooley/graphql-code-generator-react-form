@@ -105,7 +105,9 @@ export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
   input: (props) => {
     return (
       <Box m={2}>
+        <div style={{ color: 'red' }}>Here: {props.error}</div>
         <TextField
+          error={!!props.error}
           type={'text'}
           fullWidth
           variant="outlined"

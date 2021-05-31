@@ -11,15 +11,14 @@ export const AddUser = () => {
       {({ onSubmit, useInitialValues, useCustomComponents }) => {
         const formContent = (
           <AddUserForm
-            validate={{
-              email: ({ touched, value }) => {
-                if (!touched) return '';
-                if (!value.match(/.+@.+\..+/))
-                  return 'Email must be a valid email';
-                return '';
-              },
-              name: () => '',
-              password: () => '',
+            validate={(values) => {
+              return {
+                email: values?.email?.match(/.+@.+\..+/)
+                  ? ''
+                  : 'Email must be a valid email',
+                name: '',
+                password: '',
+              };
             }}
             key={`user-form-${useInitialValues}`}
             initialValues={
@@ -47,7 +46,10 @@ export const AddUser = () => {
                           ? 'password'
                           : 'text'
                       }
+                      error={props.touched && !!props.error}
+                      helperText={props.error}
                       fullWidth
+                      onBlur={props.onBlur}
                       variant="outlined"
                       label={props.label}
                       value={props.value}

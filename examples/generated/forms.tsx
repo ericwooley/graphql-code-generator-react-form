@@ -217,7 +217,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
     <input type="submit" {...props} value={props.text} />
   ),
   input: (props) => {
-    const { path, scalar, name, depth, error } = props;
+    const { path, scalar, name, depth, error, touched, onBlur } = props;
     const DivComponent = useCustomizedComponent('div');
     const LabelTextWrapperComponent = useCustomizedComponent(
       'labelTextWrapper'
@@ -247,9 +247,20 @@ export const defaultReactFormContext: GQLReactFormContext = {
                   ? 'number'
                   : ''
               }
+              onBlur={onBlur}
               onChange={(e) => props.onChange(e.target.value)}
             />
-            {error}
+            {!!error && !!touched && (
+              <DivComponent
+                className={'gql-form-generator-error'}
+                path={path}
+                scalar={scalar}
+                name={name}
+                depth={depth}
+              >
+                {error}
+              </DivComponent>
+            )}
           </>
         </LabelComponent>
       </DivComponent>
@@ -806,7 +817,11 @@ export const _AddUserForm = ({
         depth={0}
         error={validationResults['email']}
         onChange={(value) => {
-          setValue((oldVal) => ({ ...oldVal, ['email']: value }));
+          setValue((oldVal) => {
+            const newValue = { ...oldVal, ['email']: value };
+            if (validate) setValidationResults(validate(newValue));
+            return newValue;
+          });
         }}
         scalarName={'String'}
         name={'email'}
@@ -819,7 +834,11 @@ export const _AddUserForm = ({
         depth={0}
         error={validationResults['name']}
         onChange={(value) => {
-          setValue((oldVal) => ({ ...oldVal, ['name']: value }));
+          setValue((oldVal) => {
+            const newValue = { ...oldVal, ['name']: value };
+            if (validate) setValidationResults(validate(newValue));
+            return newValue;
+          });
         }}
         scalarName={'String'}
         name={'name'}
@@ -832,7 +851,11 @@ export const _AddUserForm = ({
         depth={0}
         error={validationResults['password']}
         onChange={(value) => {
-          setValue((oldVal) => ({ ...oldVal, ['password']: value }));
+          setValue((oldVal) => {
+            const newValue = { ...oldVal, ['password']: value };
+            if (validate) setValidationResults(validate(newValue));
+            return newValue;
+          });
         }}
         scalarName={'String'}
         name={'password'}
@@ -914,7 +937,11 @@ export const _AddUserFromObjectForm = ({
         depth={0}
         error={validationResults['user']}
         onChange={(value) => {
-          setValue((oldVal) => ({ ...oldVal, ['user']: value }));
+          setValue((oldVal) => {
+            const newValue = { ...oldVal, ['user']: value };
+            if (validate) setValidationResults(validate(newValue));
+            return newValue;
+          });
         }}
         scalarName={'UserInput'}
         name={'user'}
@@ -989,7 +1016,11 @@ export const _AddUsersFromListForm = ({
         depth={0}
         error={validationResults['users']}
         onChange={(value) => {
-          setValue((oldVal) => ({ ...oldVal, ['users']: value }));
+          setValue((oldVal) => {
+            const newValue = { ...oldVal, ['users']: value };
+            if (validate) setValidationResults(validate(newValue));
+            return newValue;
+          });
         }}
         scalarName={'UserInput'}
         name={'users'}

@@ -22,3 +22,7 @@ a {
   padding: 5px;
   border: 2px solid rgb(200, 200, 200);
 }
+
+.gql-form-generator-error {
+  color: red;
+}

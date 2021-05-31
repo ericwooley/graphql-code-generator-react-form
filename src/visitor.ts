@@ -508,7 +508,12 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                 depth: '0',
                 error: `validationResults[${JSON.stringify(v.name)}]`,
                 onChange: `(value) => {
-                  setValue(oldVal => ({...oldVal, ['${v.name}']: value}))
+                  setValue(oldVal => {
+                    const newValue = ({...oldVal, ['${v.name}']: value})
+                    if(validate)
+                      setValidationResults(validate(newValue))
+                    return newValue
+                  })
                 }`,
                 ...this.asPropString(v),
               })

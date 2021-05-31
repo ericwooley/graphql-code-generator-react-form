@@ -163,7 +163,7 @@ export class ComponentComposer {
         },
         submitButton: ((props: {text: string}) => <input type="submit" {...props} value={props.text} /> ),
         input: ((props) => {
-          const {path, scalar, name, depth, error} = props
+          const {path, scalar, name, depth, error, touched, onBlur} = props
           ${this.div.init}
           ${this.labelTextWrapper.init}
           const typeofValue = typeof props.value
@@ -183,9 +183,14 @@ export class ComponentComposer {
                 : typeofValue === 'number'
                 ? 'number'
                 : ''
-              } onChange={(e) =>
+              } onBlur={onBlur} onChange={(e) =>
                 props.onChange(e.target.value)} />
-                {error}
+                {!!error && !!touched && ${this.div.render(
+                  {
+                    className: JSON.stringify('gql-form-generator-error'),
+                  },
+                  '{error}'
+                )}}
               </>
             `
             )}

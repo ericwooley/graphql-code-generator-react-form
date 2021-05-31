@@ -35,13 +35,22 @@ export default function Todo() {
         {[
           {
             title: 'Validation',
-            inProgress: true,
+            done: 90,
           },
-        ].map(({ title, inProgress }) => {
+          {
+            title: 'Enums',
+            done: 0,
+          },
+          {
+            title: 'Split into modules for context & forms.',
+            done: 0,
+          },
+        ].map(({ title, done }) => {
           return (
-            <Typography key={title}>
-              {title + ` (${inProgress ? 'in progress' : 'not started'})`}
-            </Typography>
+            <Typography key={title}>{`${title}: ${String(done).padStart(
+              2,
+              '0'
+            )}%`}</Typography>
           );
         })}
       </List>
