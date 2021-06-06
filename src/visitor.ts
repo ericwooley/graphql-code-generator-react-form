@@ -466,7 +466,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     .map((s) => s.trim())
     .join(';\n')}
   }
-  export interface Validate${pascalCase(baseName)} {
+  export interface Validate${pascalCase(
+    baseName
+  )} extends IGenericFormValidationResult {
   ${m.variables
     .map((n) => this.generateValidation(n))
     .map((s) => s.trim())
@@ -519,7 +521,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
               })
             )
             .join('\n    ')}
-          <${this.cc.submitButton.tagName} text="submit" />
+          <${
+            this.cc.submitButton.tagName
+          } isValid={isValidFromFormResult(validationResults)} text="submit" />
         </${this.cc.form.tagName}>
     )
   }

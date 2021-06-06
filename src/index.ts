@@ -15,6 +15,7 @@ import { LoadedFragment } from '@graphql-codegen/visitor-plugin-common';
 import { ReactFormsVisitor } from './visitor';
 import { ReactFormsRawPluginConfig } from './config';
 import { extname } from 'path';
+import { validationFNSource } from './static';
 
 export const plugin: PluginFunction<
   ReactFormsRawPluginConfig,
@@ -49,7 +50,9 @@ export const plugin: PluginFunction<
   visitor.generateFormsOutput();
   return {
     prepend: visitor.formsImports(),
-    content: [visitor.utilities(), visitor.sdkContent].join('\n'),
+    content: [validationFNSource, visitor.utilities(), visitor.sdkContent].join(
+      '\n'
+    ),
   };
 };
 

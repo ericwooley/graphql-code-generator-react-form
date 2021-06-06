@@ -98,6 +98,29 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
   allUsers: Array<Maybe<{ __typename?: 'User' } & Pick<User, 'id'>>>;
 };
 
+export interface IGenericFormValidationResult {
+  [key: string]:
+    | string
+    | IGenericFormValidationResult
+    | IGenericFormValidationResult[];
+}
+export const isValidFromFormResult = (
+  obj: IGenericFormValidationResult
+): boolean => {
+  console.log('validating', obj);
+  const result = Object.values(obj).reduce((isValid: boolean, val) => {
+    if (!isValid) return false;
+    if (typeof val === 'string') return val.length === 0;
+    if (Array.isArray(val))
+      return (
+        val.find((nestedVal) => !isValidFromFormResult(nestedVal)) === undefined
+      );
+    return isValidFromFormResult(val);
+  }, true);
+  console.log('result', result);
+  return result;
+};
+
 /**************************
  * utilities
  *************************/
@@ -165,7 +188,7 @@ export interface GQLReactFormContext {
   removeButton: GQLFormStandardComponent<GQLReactFormButtonProps>;
   listWrapper: GQLFormStandardComponent<GQLReactFormListWrapperProps>;
   listItem: GQLFormStandardComponent<GQLReactFormListItemProps>;
-  submitButton: React.FC<{ text: string }>;
+  submitButton: React.FC<{ text: string; isValid: boolean }>;
   input: FormPrimeInput;
   UserInput?: React.FC<UserInputFormInputPropTypes>;
 }
@@ -772,7 +795,7 @@ export interface AddUserFormVariables {
   name: Scalars['String'];
   password?: Scalars['String'];
 }
-export interface ValidateAddUserForm {
+export interface ValidateAddUserForm extends IGenericFormValidationResult {
   email: string;
   name: StringValidation;
   password: StringValidation;
@@ -861,7 +884,10 @@ export const _AddUserForm = ({
         name={'password'}
         optional={true}
       />
-      <SubmitButtonComponent text="submit" />
+      <SubmitButtonComponent
+        isValid={isValidFromFormResult(validationResults)}
+        text="submit"
+      />
     </FormComponent>
   );
 };
@@ -883,7 +909,8 @@ export const addUserFromObjectDefaultValues = {
 export interface AddUserFromObjectFormVariables {
   user: UserInput;
 }
-export interface ValidateAddUserFromObjectForm {
+export interface ValidateAddUserFromObjectForm
+  extends IGenericFormValidationResult {
   user: {
     id?: string;
     name: StringValidation;
@@ -947,7 +974,10 @@ export const _AddUserFromObjectForm = ({
         name={'user'}
         optional={false}
       />
-      <SubmitButtonComponent text="submit" />
+      <SubmitButtonComponent
+        isValid={isValidFromFormResult(validationResults)}
+        text="submit"
+      />
     </FormComponent>
   );
 };
@@ -971,7 +1001,8 @@ export const addUsersFromListDefaultValues = {
 export interface AddUsersFromListFormVariables {
   users: UserInput[];
 }
-export interface ValidateAddUsersFromListForm {
+export interface ValidateAddUsersFromListForm
+  extends IGenericFormValidationResult {
   users: UserInputValidation[];
 }
 
@@ -1026,7 +1057,10 @@ export const _AddUsersFromListForm = ({
         name={'users'}
         optional={false}
       />
-      <SubmitButtonComponent text="submit" />
+      <SubmitButtonComponent
+        isValid={isValidFromFormResult(validationResults)}
+        text="submit"
+      />
     </FormComponent>
   );
 };

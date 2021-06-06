@@ -122,7 +122,7 @@ export class ComponentComposer {
         removeButton: GQLFormStandardComponent<GQLReactFormButtonProps>,
         listWrapper: GQLFormStandardComponent<GQLReactFormListWrapperProps>,
         listItem: GQLFormStandardComponent<GQLReactFormListItemProps>,
-        submitButton: React.FC<{text: string}>
+        submitButton: React.FC<{text: string, isValid: boolean}>
         input: FormPrimeInput,
         ${dynamicComponentTypeList
           .map(

@@ -97,7 +97,13 @@ export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
 
   submitButton: (props) => (
     <Box m={2}>
-      <Button fullWidth variant="contained" color="primary" type="submit">
+      <Button
+        disabled={!props.isValid}
+        fullWidth
+        variant="contained"
+        color="primary"
+        type="submit"
+      >
         {props.text}
       </Button>
     </Box>
@@ -105,7 +111,6 @@ export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
   input: (props) => {
     return (
       <Box m={2}>
-        <div style={{ color: 'red' }}>Here: {props.error}</div>
         <TextField
           error={!!props.error}
           type={'text'}
