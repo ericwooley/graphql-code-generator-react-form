@@ -112,7 +112,8 @@ export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
     return (
       <Box m={2}>
         <TextField
-          error={!!props.error}
+          error={props.touched && !!props.error}
+          helperText={props.error}
           type={'text'}
           fullWidth
           variant="outlined"

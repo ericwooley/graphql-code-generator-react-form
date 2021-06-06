@@ -100,19 +100,25 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
 
 export interface IGenericFormValidationResult {
   [key: string]:
+    | undefined
     | string
     | IGenericFormValidationResult
-    | IGenericFormValidationResult[];
+    | (IGenericFormValidationResult | string)[];
 }
 export const isValidFromFormResult = (
   obj: IGenericFormValidationResult
 ): boolean => {
   return Object.values(obj).reduce((isValid: boolean, val) => {
     if (!isValid) return false;
+    if (val === undefined) return true;
     if (typeof val === 'string') return val.length === 0;
     if (Array.isArray(val))
       return (
-        val.find((nestedVal) => !isValidFromFormResult(nestedVal)) === undefined
+        val.find((nestedVal) =>
+          typeof nestedVal === 'string'
+            ? nestedVal
+            : !isValidFromFormResult(nestedVal)
+        ) === undefined
       );
     return isValidFromFormResult(val);
   }, true);
@@ -347,16 +353,18 @@ export const defaultUserInputScalar = {
  * *******************/
 export type StringValidation = string;
 export type IntValidation = string;
-export type UserInputValidation = {
-  id?: string;
-  name: StringValidation;
-  email: StringValidation;
-  password: StringValidation;
-  mother?: UserInputValidation;
-  father: UserInputValidation;
-  friends: UserInputValidation[];
-  followers: UserInputValidation[];
-};
+export type UserInputValidation =
+  | {
+      id?: string;
+      name: StringValidation;
+      email: StringValidation;
+      password?: StringValidation;
+      mother: UserInputValidation;
+      father?: UserInputValidation;
+      friends: UserInputValidation[] | string;
+      followers?: UserInputValidation[] | string;
+    }
+  | string;
 /**********************
  * Scalar Form Fragments
  * *******************/
@@ -364,7 +372,7 @@ export type UserInputValidation = {
 export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
-  error?: StringValidation;
+  error?: StringValidation | string;
   value?: Maybe<Scalars['String']>;
   scalarName: string;
   name: string;
@@ -400,7 +408,7 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
 export interface IntFormInputPropTypes {
   optional: boolean;
   label: string;
-  error?: IntValidation;
+  error?: IntValidation | string;
   value?: Maybe<Scalars['Int']>;
   scalarName: string;
   name: string;
@@ -436,7 +444,7 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
 export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
-  error?: UserInputValidation;
+  error?: UserInputValidation | string;
   value?: Maybe<UserInput>;
   scalarName: string;
   name: string;
@@ -497,7 +505,7 @@ export const UserInputFormInput = React.memo(
           {label}
         </LabelTextWrapperComponent>
         <IntFormInput
-          error={error?.['id']}
+          error={typeof error === 'string' ? undefined : error?.['id']}
           depth={depth + 1}
           value={value?.id === null ? undefined : value?.id}
           scalarName={'Int'}
@@ -508,7 +516,7 @@ export const UserInputFormInput = React.memo(
           onChange={(newValue = 0) => onChange({ ...value, ['id']: newValue })}
         />
         <StringFormInput
-          error={error?.['name']}
+          error={typeof error === 'string' ? undefined : error?.['name']}
           depth={depth + 1}
           value={value?.name === null ? undefined : value?.name}
           scalarName={'String'}
@@ -521,7 +529,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <StringFormInput
-          error={error?.['email']}
+          error={typeof error === 'string' ? undefined : error?.['email']}
           depth={depth + 1}
           value={value?.email === null ? undefined : value?.email}
           scalarName={'String'}
@@ -534,7 +542,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <StringFormInput
-          error={error?.['password']}
+          error={typeof error === 'string' ? undefined : error?.['password']}
           depth={depth + 1}
           value={value?.password === null ? undefined : value?.password}
           scalarName={'String'}
@@ -547,7 +555,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <UserInputFormInput
-          error={error?.['mother']}
+          error={typeof error === 'string' ? undefined : error?.['mother']}
           depth={depth + 1}
           value={value?.mother === null ? undefined : value?.mother}
           scalarName={'UserInput'}
@@ -560,7 +568,7 @@ export const UserInputFormInput = React.memo(
           ) => onChange({ ...value, ['mother']: newValue })}
         />
         <UserInputFormInput
-          error={error?.['father']}
+          error={typeof error === 'string' ? undefined : error?.['father']}
           depth={depth + 1}
           value={value?.father === null ? undefined : value?.father}
           scalarName={'UserInput'}
@@ -573,7 +581,7 @@ export const UserInputFormInput = React.memo(
           ) => onChange({ ...value, ['father']: newValue })}
         />
         <UserInputFormInputAsList
-          error={error?.['friends']}
+          error={typeof error === 'string' ? undefined : error?.['friends']}
           depth={depth + 1}
           value={value?.friends === null ? undefined : value?.friends}
           scalarName={'UserInput'}
@@ -586,7 +594,7 @@ export const UserInputFormInput = React.memo(
           }
         />
         <UserInputFormInputAsList
-          error={error?.['followers']}
+          error={typeof error === 'string' ? undefined : error?.['followers']}
           depth={depth + 1}
           value={value?.followers === null ? undefined : value?.followers}
           scalarName={'UserInput'}
@@ -606,7 +614,7 @@ export const UserInputFormInput = React.memo(
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
-  error?: UserInputValidation[];
+  error?: UserInputValidation[] | string;
   value?: Maybe<UserInput>[];
   scalarName: string;
   name: string;
@@ -744,7 +752,7 @@ export const UserInputFormInputAsList = React.memo(
                 name={String(index)}
                 parentPath={path}
                 depth={depth}
-                error={error?.[index]}
+                error={typeof error === 'string' ? undefined : error?.[index]}
                 onChange={(
                   newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
                 ) => {
@@ -795,7 +803,7 @@ export interface AddUserFormVariables {
 export interface ValidateAddUserForm extends IGenericFormValidationResult {
   email: string;
   name: StringValidation;
-  password: StringValidation;
+  password?: StringValidation;
 }
 
 type AddUserFormProps = React.DetailedHTMLProps<
@@ -835,7 +843,11 @@ export const _AddUserForm = ({
         label={'Email'}
         parentPath={'root'}
         depth={0}
-        error={validationResults['email']}
+        error={
+          typeof validationResults === 'string'
+            ? undefined
+            : validationResults['email']
+        }
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['email']: value };
@@ -852,7 +864,11 @@ export const _AddUserForm = ({
         label={'Name'}
         parentPath={'root'}
         depth={0}
-        error={validationResults['name']}
+        error={
+          typeof validationResults === 'string'
+            ? undefined
+            : validationResults['name']
+        }
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['name']: value };
@@ -869,7 +885,11 @@ export const _AddUserForm = ({
         label={'Password'}
         parentPath={'root'}
         depth={0}
-        error={validationResults['password']}
+        error={
+          typeof validationResults === 'string'
+            ? undefined
+            : validationResults['password']
+        }
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['password']: value };
@@ -908,16 +928,18 @@ export interface AddUserFromObjectFormVariables {
 }
 export interface ValidateAddUserFromObjectForm
   extends IGenericFormValidationResult {
-  user: {
-    id?: string;
-    name: StringValidation;
-    email: StringValidation;
-    password: StringValidation;
-    mother?: UserInputValidation;
-    father: UserInputValidation;
-    friends: UserInputValidation[];
-    followers: UserInputValidation[];
-  };
+  user:
+    | {
+        id?: string;
+        name: StringValidation;
+        email: StringValidation;
+        password?: StringValidation;
+        mother: UserInputValidation;
+        father?: UserInputValidation;
+        friends: UserInputValidation[] | string;
+        followers?: UserInputValidation[] | string;
+      }
+    | string;
 }
 
 type AddUserFromObjectFormProps = React.DetailedHTMLProps<
@@ -959,7 +981,11 @@ export const _AddUserFromObjectForm = ({
         label={'User'}
         parentPath={'root'}
         depth={0}
-        error={validationResults['user']}
+        error={
+          typeof validationResults === 'string'
+            ? undefined
+            : validationResults['user']
+        }
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['user']: value };
@@ -1000,7 +1026,7 @@ export interface AddUsersFromListFormVariables {
 }
 export interface ValidateAddUsersFromListForm
   extends IGenericFormValidationResult {
-  users: UserInputValidation[];
+  users: UserInputValidation[] | string;
 }
 
 type AddUsersFromListFormProps = React.DetailedHTMLProps<
@@ -1042,7 +1068,11 @@ export const _AddUsersFromListForm = ({
         label={'Users'}
         parentPath={'root'}
         depth={0}
-        error={validationResults['users']}
+        error={
+          typeof validationResults === 'string'
+            ? undefined
+            : validationResults['users']
+        }
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['users']: value };

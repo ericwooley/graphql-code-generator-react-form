@@ -178,7 +178,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     const componentPropTypes = `export interface ${componentKey}PropTypes {
       optional: boolean,
       label: string,
-      error?: ${metaData.scalarName}Validation${metaData.asList ? '[]' : ''},
+      error?: ${metaData.scalarName}Validation${
+      metaData.asList ? '[]' : ''
+    }|string,
       value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
       name: string,
@@ -303,7 +305,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                   parentPath: `path`,
                   name: `String(index)`,
                   depth: 'depth',
-                  error: 'error?.[index]',
+                  error:
+                    'typeof error ==="string" ? undefined : error?.[index]',
                   onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
                     actualScalarMetaData
                   )}) => {
@@ -366,7 +369,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             ${metaData.children
               .map((md) =>
                 this.renderComponentFor(md, {
-                  error: `error?.[${JSON.stringify(md.name)}]`,
+                  error: `typeof error === 'string'? undefined : error?.[${JSON.stringify(
+                    md.name
+                  )}]`,
                   depth: 'depth+1',
                   value: `value?.${md.name} === null? undefined : value?.${md.name}`,
                   ...this.asPropString(md),
@@ -421,25 +426,27 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   private generateValidation(node: TypeNodeMetaData, name = node.name): string {
     const validationName = `${node.scalarName}Validation`;
     if (this.reusableValidations[validationName]) {
-      return `${name}: ${validationName}${node.asList ? '[]' : ''}`;
+      return `${name}${node.optional ? '?' : ''}: ${validationName}${
+        node.asList ? '[]|string' : ''
+      }`;
     }
     let validation = ``;
     let key = `${name}`;
     if (node.asList) {
-      key = `${name}ListValidation`;
-      validation = `${validationName}[]`;
+      key = `${name}ListValidation${node.optional ? '?' : ''}`;
+      validation = `(${validationName}|string)[] | string`;
     } else if (node.endedFromCycle) {
       validation = `${validationName}`;
     } else if (node.children) {
       validation = `{
         ${node.children.map((n) => this.generateValidation(n))}
-      }`;
+      }|string`;
     } else {
-      key = name;
+      key = `${name}${node.optional ? '?' : ''}`;
       validation = `string`;
     }
     this.reusableValidations[validationName] = validation;
-    return `${key}${node.optional ? '?' : ''}: ${validation}`;
+    return `${key}: ${validation}`;
   }
   public forms = '';
   public generateFormsOutput() {
@@ -508,7 +515,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                 label: JSON.stringify(sentenceCase(v.name)),
                 parentPath: JSON.stringify('root'), //JSON.stringify(v.name),
                 depth: '0',
-                error: `validationResults[${JSON.stringify(v.name)}]`,
+                error: `typeof validationResults === 'string'? undefined:validationResults[${JSON.stringify(
+                  v.name
+                )}]`,
                 onChange: `(value) => {
                   setValue(oldVal => {
                     const newValue = ({...oldVal, ['${v.name}']: value})
