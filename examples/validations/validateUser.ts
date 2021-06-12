@@ -6,8 +6,11 @@ export const validateUser = (user: UserInput): UserInputValidation => {
     father: user.father ? validateUser(user.father) : '',
     mother: user.mother ? validateUser(user.mother) : 'Mother is required.',
     name: user.name.length > 2 ? '' : 'Name  must be at least 2 characters.',
-    friends: user.friends.map((user) =>
-      user ? validateUser(user) : 'friend is required'
-    ),
+    friends: {
+      __meta: user.friends.length ? '' : 'You must have friends',
+      list: user.friends.map((user) =>
+        user ? validateUser(user) : 'friend is required'
+      ),
+    },
   };
 };

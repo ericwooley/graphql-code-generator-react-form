@@ -179,9 +179,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     const componentPropTypes = `export interface ${componentKey}PropTypes {
       optional: boolean,
       label: string,
-      error?: ${metaData.scalarName}Validation${
-      metaData.asList ? '[]' : ''
-    }|string,
+      error?: ${this.validationName(metaData)},
 
       value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
@@ -310,8 +308,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                   parentPath: `path`,
                   name: `String(index)`,
                   depth: 'depth',
-                  error:
-                    'typeof error ==="string" ? undefined : error?.[index]',
+                  error: 'error?.list?.[index]',
+                  // 'typeof error ==="string" ? undefined : error?.[index]',
                   onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
                     actualScalarMetaData
                   )}) => {
@@ -428,7 +426,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   `;
   }
   private validationName = (node: TypeNodeMetaData) =>
-    `${node.scalarName}Validation`;
+    `${node.scalarName}${node.asList ? 'List' : ''}Validation`;
   private reusableValidations: { [key: string]: string } = {};
 
   private generateValidation(node: TypeNodeMetaData, name = node.name): string {
@@ -436,15 +434,18 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     let extraValidation = ``;
 
     if (this.reusableValidations[validationName]) {
-      return `${name}${node.optional ? '?' : ''}: ${validationName}${
-        node.asList ? '[]|string' : ''
-      }${extraValidation}`;
+      return `${name}${
+        node.optional ? '?' : ''
+      }: ${validationName}${extraValidation}`;
     }
     let validation = ``;
     let key = `${name}`;
     if (node.asList) {
-      key = `${name}ListValidation${node.optional ? '?' : ''}`;
-      validation = `{meta?:string, list: (${validationName}|string)[] | string}`;
+      key = `${name}${node.optional ? '?' : ''}`;
+      validation = `{__meta?:string, list: ${this.validationName({
+        ...node,
+        asList: false,
+      })}[] }`;
     } else if (node.endedFromCycle) {
       validation = `${validationName}`;
     } else if (node.children) {

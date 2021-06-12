@@ -362,10 +362,14 @@ export type UserInputValidation =
       password?: StringValidation;
       mother: UserInputValidation;
       father?: UserInputValidation;
-      friends: UserInputValidation[] | string;
-      followers?: UserInputValidation[] | string;
+      friends: { __meta?: string; list: UserInputValidation[] };
+      followers?: UserInputListValidation;
     }
   | string;
+export type UserInputListValidation = {
+  __meta?: string;
+  list: UserInputValidation[];
+};
 /**********************
  * Scalar Form Fragments
  * *******************/
@@ -373,7 +377,7 @@ export type UserInputValidation =
 export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
-  error?: StringValidation | string;
+  error?: StringValidation;
 
   value?: Maybe<Scalars['String']>;
   scalarName: string;
@@ -410,7 +414,7 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
 export interface IntFormInputPropTypes {
   optional: boolean;
   label: string;
-  error?: IntValidation | string;
+  error?: IntValidation;
 
   value?: Maybe<Scalars['Int']>;
   scalarName: string;
@@ -447,7 +451,7 @@ export const IntFormInput = React.memo((props: IntFormInputPropTypes) => {
 export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
-  error?: UserInputValidation | string;
+  error?: UserInputValidation;
 
   value?: Maybe<UserInput>;
   scalarName: string;
@@ -618,7 +622,7 @@ export const UserInputFormInput = React.memo(
 export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
-  error?: UserInputValidation[] | string;
+  error?: UserInputListValidation;
 
   value?: Maybe<UserInput>[];
   scalarName: string;
@@ -760,7 +764,7 @@ export const UserInputFormInputAsList = React.memo(
                 name={String(index)}
                 parentPath={path}
                 depth={depth}
-                error={typeof error === 'string' ? undefined : error?.[index]}
+                error={error?.list?.[index]}
                 onChange={(
                   newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
                 ) => {
@@ -945,8 +949,8 @@ export interface ValidateAddUserFromObjectForm
         password?: StringValidation;
         mother: UserInputValidation;
         father?: UserInputValidation;
-        friends: UserInputValidation[] | string;
-        followers?: UserInputValidation[] | string;
+        friends: { __meta?: string; list: UserInputValidation[] };
+        followers?: UserInputListValidation;
       }
     | string;
 }
@@ -1035,7 +1039,7 @@ export interface AddUsersFromListFormVariables {
 }
 export interface ValidateAddUsersFromListForm
   extends IGenericFormValidationResult {
-  users: UserInputValidation[] | string;
+  users: UserInputListValidation;
 }
 
 type AddUsersFromListFormProps = React.DetailedHTMLProps<
