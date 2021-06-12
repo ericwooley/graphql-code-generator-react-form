@@ -181,6 +181,13 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       error?: ${metaData.scalarName}Validation${
       metaData.asList ? '[]' : ''
     }|string,
+    ${
+      metaData.asList
+        ? `listError?: string,`
+        : metaData.children || metaData.endedFromCycle
+        ? `metaError?: string`
+        : ''
+    }
       value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
       name: string,

@@ -377,6 +377,7 @@ export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
   error?: StringValidation | string;
+
   value?: Maybe<Scalars['String']>;
   scalarName: string;
   name: string;
@@ -413,6 +414,7 @@ export interface IntFormInputPropTypes {
   optional: boolean;
   label: string;
   error?: IntValidation | string;
+
   value?: Maybe<Scalars['Int']>;
   scalarName: string;
   name: string;
@@ -449,6 +451,7 @@ export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
   error?: UserInputValidation | string;
+  metaError?: string;
   value?: Maybe<UserInput>;
   scalarName: string;
   name: string;
@@ -619,6 +622,7 @@ export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
   error?: UserInputValidation[] | string;
+  listError?: string;
   value?: Maybe<UserInput>[];
   scalarName: string;
   name: string;
