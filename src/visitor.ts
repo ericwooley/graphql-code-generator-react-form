@@ -422,13 +422,30 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   export const mutationsMetaData = ${JSON.stringify(this._mutations, null, 2)}
   `;
   }
+  private validationName = (node: TypeNodeMetaData) =>
+    `${node.scalarName}Validation`;
+  private nodeMetaDataValidationKeyGenerator = (
+    node: TypeNodeMetaData,
+    propertyName: string = node.name
+  ) =>
+    `${propertyName}__${this.validationName(node)}${
+      node.asList ? 'List' : ''
+    }Error?: string`;
   private reusableValidations: { [key: string]: string } = {};
+
   private generateValidation(node: TypeNodeMetaData, name = node.name): string {
-    const validationName = `${node.scalarName}Validation`;
+    const validationName = this.validationName(node);
+    let extraValidation = ``;
+    if (node.asList || node.children || node.endedFromCycle) {
+      extraValidation = `,${this.nodeMetaDataValidationKeyGenerator(
+        node,
+        name
+      )}`;
+    }
     if (this.reusableValidations[validationName]) {
       return `${name}${node.optional ? '?' : ''}: ${validationName}${
         node.asList ? '[]|string' : ''
-      }`;
+      }${extraValidation}`;
     }
     let validation = ``;
     let key = `${name}`;
@@ -446,7 +463,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       validation = `string`;
     }
     this.reusableValidations[validationName] = validation;
-    return `${key}: ${validation}`;
+    return `${key}: ${validation}${extraValidation}`;
   }
   public forms = '';
   public generateFormsOutput() {

@@ -360,9 +360,13 @@ export type UserInputValidation =
       email: StringValidation;
       password?: StringValidation;
       mother: UserInputValidation;
+      mother__UserInputValidationError?: string;
       father?: UserInputValidation;
+      father__UserInputValidationError?: string;
       friends: UserInputValidation[] | string;
+      friends__UserInputValidationListError?: string;
       followers?: UserInputValidation[] | string;
+      followers__UserInputValidationListError?: string;
     }
   | string;
 /**********************
@@ -935,11 +939,16 @@ export interface ValidateAddUserFromObjectForm
         email: StringValidation;
         password?: StringValidation;
         mother: UserInputValidation;
+        mother__UserInputValidationError?: string;
         father?: UserInputValidation;
+        father__UserInputValidationError?: string;
         friends: UserInputValidation[] | string;
+        friends__UserInputValidationListError?: string;
         followers?: UserInputValidation[] | string;
+        followers__UserInputValidationListError?: string;
       }
     | string;
+  user__UserInputValidationError?: string;
 }
 
 type AddUserFromObjectFormProps = React.DetailedHTMLProps<
@@ -1027,6 +1036,7 @@ export interface AddUsersFromListFormVariables {
 export interface ValidateAddUsersFromListForm
   extends IGenericFormValidationResult {
   users: UserInputValidation[] | string;
+  users__UserInputValidationListError?: string;
 }
 
 type AddUsersFromListFormProps = React.DetailedHTMLProps<
