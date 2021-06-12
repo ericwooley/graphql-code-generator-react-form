@@ -355,18 +355,15 @@ export type StringValidation = string;
 export type IntValidation = string;
 export type UserInputValidation =
   | {
+      __meta?: string;
       id?: string;
       name: StringValidation;
       email: StringValidation;
       password?: StringValidation;
       mother: UserInputValidation;
-      mother__UserInputValidationError?: string;
       father?: UserInputValidation;
-      father__UserInputValidationError?: string;
       friends: UserInputValidation[] | string;
-      friends__UserInputValidationListError?: string;
       followers?: UserInputValidation[] | string;
-      followers__UserInputValidationListError?: string;
     }
   | string;
 /**********************
@@ -451,7 +448,7 @@ export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
   error?: UserInputValidation | string;
-  metaError?: string;
+
   value?: Maybe<UserInput>;
   scalarName: string;
   name: string;
@@ -622,7 +619,7 @@ export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
   error?: UserInputValidation[] | string;
-  listError?: string;
+
   value?: Maybe<UserInput>[];
   scalarName: string;
   name: string;
@@ -938,21 +935,17 @@ export interface ValidateAddUserFromObjectForm
   extends IGenericFormValidationResult {
   user:
     | {
+        __meta?: string;
         id?: string;
         name: StringValidation;
         email: StringValidation;
         password?: StringValidation;
         mother: UserInputValidation;
-        mother__UserInputValidationError?: string;
         father?: UserInputValidation;
-        father__UserInputValidationError?: string;
         friends: UserInputValidation[] | string;
-        friends__UserInputValidationListError?: string;
         followers?: UserInputValidation[] | string;
-        followers__UserInputValidationListError?: string;
       }
     | string;
-  user__UserInputValidationError?: string;
 }
 
 type AddUserFromObjectFormProps = React.DetailedHTMLProps<
@@ -1040,7 +1033,6 @@ export interface AddUsersFromListFormVariables {
 export interface ValidateAddUsersFromListForm
   extends IGenericFormValidationResult {
   users: UserInputValidation[] | string;
-  users__UserInputValidationListError?: string;
 }
 
 type AddUsersFromListFormProps = React.DetailedHTMLProps<

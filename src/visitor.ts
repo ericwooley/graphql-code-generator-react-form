@@ -162,7 +162,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   }
   renderComponentFor(
     metaData: TypeNodeMetaData,
-    props: { [key: string]: string } & {
+    props: { [key: string]: string | undefined } & {
       value: string;
       label: string;
       parentPath: string;
@@ -172,6 +172,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       metaData.scalarName + 'FormInput' + (metaData.asList ? 'AsList' : '')
     );
     const componentRenderString = `<${componentKey} ${Object.entries(props)
+      .filter(([, propValue]) => propValue !== undefined)
       .map(([propName, propValue]) => `${propName}={${propValue}}`)
       .join(' ')} />`;
     if (this._typeComponentMap[componentKey]) return componentRenderString;
@@ -181,13 +182,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       error?: ${metaData.scalarName}Validation${
       metaData.asList ? '[]' : ''
     }|string,
-    ${
-      metaData.asList
-        ? `listError?: string,`
-        : metaData.children || metaData.endedFromCycle
-        ? `metaError?: string`
-        : ''
-    }
+
       value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
       name: string,
@@ -437,18 +432,13 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   ) =>
     `${propertyName}__${this.validationName(node)}${
       node.asList ? 'List' : ''
-    }Error?: string`;
+    }Error`;
   private reusableValidations: { [key: string]: string } = {};
 
   private generateValidation(node: TypeNodeMetaData, name = node.name): string {
     const validationName = this.validationName(node);
     let extraValidation = ``;
-    if (node.asList || node.children || node.endedFromCycle) {
-      extraValidation = `,${this.nodeMetaDataValidationKeyGenerator(
-        node,
-        name
-      )}`;
-    }
+
     if (this.reusableValidations[validationName]) {
       return `${name}${node.optional ? '?' : ''}: ${validationName}${
         node.asList ? '[]|string' : ''
@@ -458,11 +448,12 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     let key = `${name}`;
     if (node.asList) {
       key = `${name}ListValidation${node.optional ? '?' : ''}`;
-      validation = `(${validationName}|string)[] | string`;
+      validation = `{meta?:string, list: (${validationName}|string)[] | string}`;
     } else if (node.endedFromCycle) {
       validation = `${validationName}`;
     } else if (node.children) {
       validation = `{
+        __meta?:string,
         ${node.children.map((n) => this.generateValidation(n))}
       }|string`;
     } else {
