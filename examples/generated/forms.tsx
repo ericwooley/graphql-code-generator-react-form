@@ -647,6 +647,7 @@ export const UserInputFormInputAsList = React.memo(
       (value || []).map((v) => ({ id: uniqueId('friends'), value: v }))
     );
     const addItem = () => {
+      setTouched(true);
       valueMapRef.current = [
         ...valueMapRef.current,
         {
@@ -663,6 +664,7 @@ export const UserInputFormInputAsList = React.memo(
       );
     };
     const insertItem = (index: number) => {
+      setTouched(true);
       valueMapRef.current = [
         ...valueMapRef.current.slice(0, index),
         {
@@ -680,6 +682,7 @@ export const UserInputFormInputAsList = React.memo(
       );
     };
     const removeItem = (index: number) => {
+      setTouched(true);
       valueMapRef.current = [
         ...valueMapRef.current.slice(0, index),
         ...valueMapRef.current.slice(index + 1),

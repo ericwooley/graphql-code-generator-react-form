@@ -243,12 +243,14 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         )}), value: v})))`,
 
         `const addItem=() => {
+          setTouched(true);
           valueMapRef.current = [...valueMapRef.current, {id: uniqueId('${name}'), value: ${defaultValueString}} ];
           onChange(valueMapRef.current.map(i => i.value === null ? ${this.getDefaultValueStringForTypeNodeMetaData(
             actualScalarMetaData
           )}: i.value))
         }`,
         `const insertItem=(index: number) =>  {
+            setTouched(true);
             valueMapRef.current = [
               ...valueMapRef.current.slice(0, index),
               {id: uniqueId('${name}'), value: ${defaultValueString}},
@@ -258,6 +260,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             )}: i.value))
         }`,
         `const removeItem=(index: number) => {
+          setTouched(true);
           valueMapRef.current = [...valueMapRef.current.slice(0, index), ...valueMapRef.current.slice(index+1) ]
           onChange(valueMapRef.current.map(i => i.value === null ? ${this.getDefaultValueStringForTypeNodeMetaData(
             actualScalarMetaData
@@ -426,13 +429,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   }
   private validationName = (node: TypeNodeMetaData) =>
     `${node.scalarName}Validation`;
-  private nodeMetaDataValidationKeyGenerator = (
-    node: TypeNodeMetaData,
-    propertyName: string = node.name
-  ) =>
-    `${propertyName}__${this.validationName(node)}${
-      node.asList ? 'List' : ''
-    }Error`;
   private reusableValidations: { [key: string]: string } = {};
 
   private generateValidation(node: TypeNodeMetaData, name = node.name): string {
