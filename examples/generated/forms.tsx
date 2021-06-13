@@ -182,6 +182,7 @@ export interface GQLReactFormScalarWrapperProps
   extends GQLReactFormStandardProps {
   error?: string;
   touched: boolean;
+  label: string;
 }
 
 export interface GQLReactFormContext {
@@ -252,14 +253,34 @@ export const defaultReactFormContext: GQLReactFormContext = {
   },
   scalarWrapper: (props: GQLReactFormScalarWrapperProps) => {
     const DivComponent = useCustomizedComponent('div');
+    const LabelComponent = useCustomizedComponent('label');
+    const LabelTextWrapperComponent = useCustomizedComponent(
+      'labelTextWrapper'
+    );
     const ErrorComponent = useCustomizedComponent('error');
-    const { path, name, scalar, depth, ...divProps } = props;
+    const { path, name, scalar, depth, label } = props;
     return (
-      <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
+      <DivComponent
+        className={'mutationFormNested'}
+        path={path}
+        scalar={scalar}
+        name={name}
+        depth={depth}
+      >
+        <LabelComponent path={path} scalar={scalar} name={name} depth={depth}>
+          <LabelTextWrapperComponent
+            path={path}
+            scalar={scalar}
+            name={name}
+            depth={depth}
+          >
+            {label}
+          </LabelTextWrapperComponent>
+        </LabelComponent>
         <ErrorComponent path={path} scalar={scalar} name={name} depth={depth}>
           {props.touched && props.error}
         </ErrorComponent>
-        <div {...divProps}>{props.children}</div>
+        {props.children}
       </DivComponent>
     );
   },
@@ -272,9 +293,14 @@ export const defaultReactFormContext: GQLReactFormContext = {
       </li>
     );
   },
-  submitButton: (props: { text: string }) => (
-    <input type="submit" {...props} value={props.text} />
-  ),
+  submitButton: ({
+    text,
+    isValid,
+    ...props
+  }: {
+    text: string;
+    isValid: boolean;
+  }) => <input disabled={!isValid} type="submit" {...props} value={text} />,
   input: (props) => {
     const { path, scalar, name, depth, error, touched, onBlur } = props;
     const DivComponent = useCustomizedComponent('div');
@@ -508,9 +534,6 @@ export const UserInputFormInput = React.memo(
     const DivComponent = useCustomizedComponent('div');
     const ScalarWrapperComponent = useCustomizedComponent('scalarWrapper');
     const ButtonComponent = useCustomizedComponent('button');
-    const LabelTextWrapperComponent = useCustomizedComponent(
-      'labelTextWrapper'
-    );
 
     const UserComponent = useCustomizedComponent(scalar);
     if (UserComponent) return <UserComponent {...props} />;
@@ -538,19 +561,12 @@ export const UserInputFormInput = React.memo(
         className={'mutationFormNested'}
         touched={touched}
         error={metaError}
+        label={label}
         path={path}
         scalar={scalar}
         name={name}
         depth={depth}
       >
-        <LabelTextWrapperComponent
-          path={path}
-          scalar={scalar}
-          name={name}
-          depth={depth}
-        >
-          {label}
-        </LabelTextWrapperComponent>
         <IntFormInput
           error={typeof error === 'string' ? undefined : error?.['id']}
           depth={depth + 1}
@@ -560,7 +576,10 @@ export const UserInputFormInput = React.memo(
           optional={true}
           label={'Id'}
           parentPath={path}
-          onChange={(newValue = 0) => onChange({ ...value, ['id']: newValue })}
+          onChange={(newValue = 0) => {
+            setTouched(true);
+            onChange({ ...value, ['id']: newValue });
+          }}
         />
         <StringFormInput
           error={typeof error === 'string' ? undefined : error?.['name']}
@@ -571,9 +590,10 @@ export const UserInputFormInput = React.memo(
           optional={false}
           label={'Name'}
           parentPath={path}
-          onChange={(newValue = '') =>
-            onChange({ ...value, ['name']: newValue })
-          }
+          onChange={(newValue = '') => {
+            setTouched(true);
+            onChange({ ...value, ['name']: newValue });
+          }}
         />
         <StringFormInput
           error={typeof error === 'string' ? undefined : error?.['email']}
@@ -584,9 +604,10 @@ export const UserInputFormInput = React.memo(
           optional={false}
           label={'Email'}
           parentPath={path}
-          onChange={(newValue = '') =>
-            onChange({ ...value, ['email']: newValue })
-          }
+          onChange={(newValue = '') => {
+            setTouched(true);
+            onChange({ ...value, ['email']: newValue });
+          }}
         />
         <StringFormInput
           error={typeof error === 'string' ? undefined : error?.['password']}
@@ -597,9 +618,10 @@ export const UserInputFormInput = React.memo(
           optional={true}
           label={'Password'}
           parentPath={path}
-          onChange={(newValue = '') =>
-            onChange({ ...value, ['password']: newValue })
-          }
+          onChange={(newValue = '') => {
+            setTouched(true);
+            onChange({ ...value, ['password']: newValue });
+          }}
         />
         <UserInputFormInput
           error={typeof error === 'string' ? undefined : error?.['mother']}
@@ -612,7 +634,10 @@ export const UserInputFormInput = React.memo(
           parentPath={path}
           onChange={(
             newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
-          ) => onChange({ ...value, ['mother']: newValue })}
+          ) => {
+            setTouched(true);
+            onChange({ ...value, ['mother']: newValue });
+          }}
         />
         <UserInputFormInput
           error={typeof error === 'string' ? undefined : error?.['father']}
@@ -625,7 +650,10 @@ export const UserInputFormInput = React.memo(
           parentPath={path}
           onChange={(
             newValue = JSON.parse(JSON.stringify(defaultUserInputScalar))
-          ) => onChange({ ...value, ['father']: newValue })}
+          ) => {
+            setTouched(true);
+            onChange({ ...value, ['father']: newValue });
+          }}
         />
         <UserInputFormInputAsList
           error={typeof error === 'string' ? undefined : error?.['friends']}
@@ -636,9 +664,10 @@ export const UserInputFormInput = React.memo(
           optional={false}
           label={'Friends'}
           parentPath={path}
-          onChange={(newValue = []) =>
-            onChange({ ...value, ['friends']: newValue })
-          }
+          onChange={(newValue = []) => {
+            setTouched(true);
+            onChange({ ...value, ['friends']: newValue });
+          }}
         />
         <UserInputFormInputAsList
           error={typeof error === 'string' ? undefined : error?.['followers']}
@@ -649,9 +678,10 @@ export const UserInputFormInput = React.memo(
           optional={true}
           label={'Followers'}
           parentPath={path}
-          onChange={(newValue = []) =>
-            onChange({ ...value, ['followers']: newValue })
-          }
+          onChange={(newValue = []) => {
+            setTouched(true);
+            onChange({ ...value, ['followers']: newValue });
+          }}
         />
       </ScalarWrapperComponent>
     );
@@ -884,6 +914,7 @@ export const _AddUserForm = ({
   );
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
+  const isValid = isValidFromFormResult(validationResults);
   return (
     <FormComponent
       scalar=""
@@ -891,6 +922,7 @@ export const _AddUserForm = ({
       depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
+        if (!isValid) return false;
         onSubmit(value as any);
       }}
       {...formProps}
@@ -959,10 +991,7 @@ export const _AddUserForm = ({
         name={'password'}
         optional={true}
       />
-      <SubmitButtonComponent
-        isValid={isValidFromFormResult(validationResults)}
-        text="submit"
-      />
+      <SubmitButtonComponent isValid={isValid} text="submit" />
     </FormComponent>
   );
 };
@@ -1023,6 +1052,7 @@ export const _AddUserFromObjectForm = ({
   );
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
+  const isValid = isValidFromFormResult(validationResults);
   return (
     <FormComponent
       scalar=""
@@ -1030,6 +1060,7 @@ export const _AddUserFromObjectForm = ({
       depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
+        if (!isValid) return false;
         onSubmit(value as any);
       }}
       {...formProps}
@@ -1056,10 +1087,7 @@ export const _AddUserFromObjectForm = ({
         name={'user'}
         optional={false}
       />
-      <SubmitButtonComponent
-        isValid={isValidFromFormResult(validationResults)}
-        text="submit"
-      />
+      <SubmitButtonComponent isValid={isValid} text="submit" />
     </FormComponent>
   );
 };
@@ -1110,6 +1138,7 @@ export const _AddUsersFromListForm = ({
   );
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
+  const isValid = isValidFromFormResult(validationResults);
   return (
     <FormComponent
       scalar=""
@@ -1117,6 +1146,7 @@ export const _AddUsersFromListForm = ({
       depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
+        if (!isValid) return false;
         onSubmit(value as any);
       }}
       {...formProps}
@@ -1143,10 +1173,7 @@ export const _AddUsersFromListForm = ({
         name={'users'}
         optional={false}
       />
-      <SubmitButtonComponent
-        isValid={isValidFromFormResult(validationResults)}
-        text="submit"
-      />
+      <SubmitButtonComponent isValid={isValid} text="submit" />
     </FormComponent>
   );
 };

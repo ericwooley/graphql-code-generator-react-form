@@ -362,7 +362,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         this.cc.div.init,
         this.cc.scalarWrapper.init,
         this.cc.button.init,
-        this.cc.labelTextWrapper.init,
         `
         const ${tagName} = useCustomizedComponent(scalar)
         if(${tagName}) return <${tagName} {...props} />
@@ -374,9 +373,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
             className: JSON.stringify(this.nestedFormClassName),
             touched: 'touched',
             error: 'metaError',
+            label: 'label',
           },
           `
-            ${this.cc.labelTextWrapper.render({}, `{label}`)}
             ${metaData.children
               .map((md) =>
                 this.renderComponentFor(md, {
@@ -390,7 +389,10 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                   parentPath: `path`,
                   onChange: `(newValue = ${this.getDefaultValueStringForTypeNodeMetaData(
                     md
-                  )}) => onChange({...value, ['${md.name}']: newValue})`,
+                  )}) => {
+                    setTouched(true);
+                    onChange({...value, ['${md.name}']: newValue})
+                  }`,
                 })
               )
               .join('\n  ')}
@@ -523,9 +525,11 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     )})
     ${this.cc.form.init}
     ${this.cc.submitButton.init}
+    const isValid = isValidFromFormResult(validationResults)
     return (
         <${this.cc.form.tagName} scalar="" name="" depth={0} onSubmit={(e) => {
           e?.preventDefault?.()
+          if(!isValid) return false
           onSubmit(value as any)
         }} {...formProps} path="">
           ${m.variables
@@ -550,9 +554,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
               })
             )
             .join('\n    ')}
-          <${
-            this.cc.submitButton.tagName
-          } isValid={isValidFromFormResult(validationResults)} text="submit" />
+          <${this.cc.submitButton.tagName} isValid={isValid} text="submit" />
         </${this.cc.form.tagName}>
     )
   }

@@ -121,7 +121,8 @@ export class ComponentComposer {
 
       export interface GQLReactFormScalarWrapperProps extends GQLReactFormStandardProps {
         error?: string
-        touched: boolean
+        touched: boolean,
+        label: string
       }
 
       export interface GQLReactFormContext {
@@ -180,14 +181,23 @@ export class ComponentComposer {
         },
         scalarWrapper: (props: GQLReactFormScalarWrapperProps) => {
           ${this.div.init}
+          ${this.label.init}
+          ${this.labelTextWrapper.init}
           ${this.error.init}
-          const {path, name, scalar, depth, ...divProps} = props
+          const {path, name, scalar, depth, label} = props
           return ${this.div.render(
-            {},
-            `${this.error.render(
+            {
+              className: JSON.stringify('mutationFormNested'),
+            },
+            `
+            ${this.label.render(
+              {},
+              this.labelTextWrapper.render({}, `{label}`)
+            )}
+            ${this.error.render(
               {},
               `{props.touched && props.error}`
-            )}<div {...divProps}>{props.children}</div>`
+            )}{props.children}`
           )}
         },
         listItem: (props: GQLReactFormListItemProps) => {
@@ -199,7 +209,7 @@ export class ComponentComposer {
             </li>
           )
         },
-        submitButton: ((props: {text: string}) => <input type="submit" {...props} value={props.text} /> ),
+        submitButton: (({text, isValid, ...props}: {text: string, isValid: boolean}) => <input disabled={!isValid} type="submit" {...props} value={text} /> ),
         input: ((props) => {
           const {path, scalar, name, depth, error, touched, onBlur} = props
           ${this.div.init}
