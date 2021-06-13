@@ -180,7 +180,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       optional: boolean,
       label: string,
       error?: ${this.validationName(metaData)},
-
       value?: Maybe<${metaData.tsType}${metaData.asList ? '>[]' : '>'},
       scalarName: string,
       name: string,
@@ -229,6 +228,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       );
       const name = metaData.name;
       componentPreBody.push(
+        // TODO: this needs to happen on regular scalar as well
+        `const metaError = error !== undefined ? typeof error === 'string' ? error : error.__meta : '';`,
         this.cc.addButton.init,
         this.cc.removeButton.init,
         this.cc.listItem.init,
@@ -278,6 +279,8 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     {label && ${this.cc.labelTextWrapper.render({}, `{label}`)}}
     ${this.cc.listWrapper.render(
       {
+        error: 'metaError',
+        touched: 'touched',
         totalInList: 'valueMapRef.current.length',
       },
       `

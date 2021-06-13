@@ -22,6 +22,9 @@ export class ComponentComposer {
       tagName,
     };
   }
+  get error() {
+    return this.generateComponentRenderer('error');
+  }
   get form() {
     return this.generateComponentRenderer('form');
   }
@@ -110,11 +113,14 @@ export class ComponentComposer {
       export interface GQLReactFormListWrapperProps extends GQLReactFormStandardProps {
         // idx: number
         totalInList: number
+        error?: string
+        touched: boolean
       }
 
       export interface GQLReactFormContext {
         form: GQLFormStandardComponent< GQLReactFormStandardProps&{onSubmit: (e?: {preventDefault?: () => any}) => any} >,
         div: GQLFormStandardComponent,
+        error: GQLFormStandardComponent,
         label: GQLFormStandardComponent,
         labelTextWrapper: GQLFormStandardComponent,
         button: GQLFormStandardComponent<GQLReactFormButtonProps>,
@@ -137,6 +143,7 @@ export class ComponentComposer {
       export const defaultReactFormContext: GQLReactFormContext = {
         form: 'form' as any,
         ${this.generatePassthroughComponent('div')},
+        ${this.generatePassthroughComponent('error', 'div')},
         ${this.generatePassthroughComponent('label')},
         ${this.generatePassthroughComponent('labelTextWrapper', 'h4')},
         ${this.generatePassthroughComponent('button', 'button', {
@@ -151,7 +158,18 @@ export class ComponentComposer {
           extra: 'onClick={e => {e.preventDefault(); props.onClick?.()}}',
           propTypes: 'GQLReactFormButtonProps',
         })},
-        ${this.generatePassthroughComponent('listWrapper', 'ol')},
+        listWrapper: (props: GQLReactFormListWrapperProps) => {
+          ${this.div.init}
+          ${this.error.init}
+          const {path, name, scalar, depth} = props
+          return ${this.div.render(
+            {},
+            `${this.error.render(
+              {},
+              `{props.touched && props.error}`
+            )}<ol>{props.children}</ol>`
+          )}
+        },
         listItem: (props: GQLReactFormListItemProps) => {
           return (
             <li>

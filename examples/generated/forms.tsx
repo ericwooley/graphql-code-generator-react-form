@@ -175,6 +175,8 @@ export interface GQLReactFormListWrapperProps
   extends GQLReactFormStandardProps {
   // idx: number
   totalInList: number;
+  error?: string;
+  touched: boolean;
 }
 
 export interface GQLReactFormContext {
@@ -184,6 +186,7 @@ export interface GQLReactFormContext {
     }
   >;
   div: GQLFormStandardComponent;
+  error: GQLFormStandardComponent;
   label: GQLFormStandardComponent;
   labelTextWrapper: GQLFormStandardComponent;
   button: GQLFormStandardComponent<GQLReactFormButtonProps>;
@@ -198,6 +201,7 @@ export interface GQLReactFormContext {
 export const defaultReactFormContext: GQLReactFormContext = {
   form: 'form' as any,
   div: ({ ...props }: GQLReactFormStandardProps) => <div {...props} />,
+  error: ({ ...props }: GQLReactFormStandardProps) => <div {...props} />,
   label: ({ ...props }: GQLReactFormStandardProps) => <label {...props} />,
   labelTextWrapper: ({ ...props }: GQLReactFormStandardProps) => (
     <h4 {...props} />
@@ -229,7 +233,19 @@ export const defaultReactFormContext: GQLReactFormContext = {
       }}
     />
   ),
-  listWrapper: ({ ...props }: GQLReactFormStandardProps) => <ol {...props} />,
+  listWrapper: (props: GQLReactFormListWrapperProps) => {
+    const DivComponent = useCustomizedComponent('div');
+    const ErrorComponent = useCustomizedComponent('error');
+    const { path, name, scalar, depth } = props;
+    return (
+      <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
+        <ErrorComponent path={path} scalar={scalar} name={name} depth={depth}>
+          {props.touched && props.error}
+        </ErrorComponent>
+        <ol>{props.children}</ol>
+      </DivComponent>
+    );
+  },
   listItem: (props: GQLReactFormListItemProps) => {
     return (
       <li>
@@ -378,7 +394,6 @@ export interface StringFormInputPropTypes {
   optional: boolean;
   label: string;
   error?: StringValidation;
-
   value?: Maybe<Scalars['String']>;
   scalarName: string;
   name: string;
@@ -415,7 +430,6 @@ export interface IntFormInputPropTypes {
   optional: boolean;
   label: string;
   error?: IntValidation;
-
   value?: Maybe<Scalars['Int']>;
   scalarName: string;
   name: string;
@@ -452,7 +466,6 @@ export interface UserInputFormInputPropTypes {
   optional: boolean;
   label: string;
   error?: UserInputValidation;
-
   value?: Maybe<UserInput>;
   scalarName: string;
   name: string;
@@ -623,7 +636,6 @@ export interface UserInputFormInputAsListPropTypes {
   optional: boolean;
   label: string;
   error?: UserInputListValidation;
-
   value?: Maybe<UserInput>[];
   scalarName: string;
   name: string;
@@ -640,6 +652,12 @@ export const UserInputFormInputAsList = React.memo(
     ]);
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
+    const metaError =
+      error !== undefined
+        ? typeof error === 'string'
+          ? error
+          : error.__meta
+        : '';
     const AddButtonComponent = useCustomizedComponent('addButton');
     const RemoveButtonComponent = useCustomizedComponent('removeButton');
     const ListItemComponent = useCustomizedComponent('listItem');
@@ -719,6 +737,8 @@ export const UserInputFormInputAsList = React.memo(
           </LabelTextWrapperComponent>
         )}
         <ListWrapperComponent
+          error={metaError}
+          touched={touched}
           totalInList={valueMapRef.current.length}
           path={path}
           scalar={scalar}
