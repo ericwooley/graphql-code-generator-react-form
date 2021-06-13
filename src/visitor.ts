@@ -228,7 +228,6 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       );
       const name = metaData.name;
       componentPreBody.push(
-        // TODO: this needs to happen on regular scalar as well
         `const metaError = error !== undefined ? typeof error === 'string' ? error : error.__meta : '';`,
         this.cc.addButton.init,
         this.cc.removeButton.init,
@@ -359,7 +358,9 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     else if (metaData.children) {
       const tagName = `${pascalCase(metaData.name)}Component`;
       componentPreBody.push(
+        `const metaError = error !== undefined ? typeof error === 'string' ? error : error.__meta : '';`,
         this.cc.div.init,
+        this.cc.scalarWrapper.init,
         this.cc.button.init,
         this.cc.labelTextWrapper.init,
         `
@@ -368,8 +369,12 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         `
       );
       componentBody.push(
-        `return ${this.cc.div.render(
-          { className: JSON.stringify(this.nestedFormClassName) },
+        `return ${this.cc.scalarWrapper.render(
+          {
+            className: JSON.stringify(this.nestedFormClassName),
+            touched: 'touched',
+            error: 'metaError',
+          },
           `
             ${this.cc.labelTextWrapper.render({}, `{label}`)}
             ${metaData.children

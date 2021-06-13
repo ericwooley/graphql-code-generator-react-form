@@ -173,8 +173,13 @@ export interface GQLReactFormListItemProps extends GQLReactFormStandardProps {
 }
 export interface GQLReactFormListWrapperProps
   extends GQLReactFormStandardProps {
-  // idx: number
   totalInList: number;
+  error?: string;
+  touched: boolean;
+}
+
+export interface GQLReactFormScalarWrapperProps
+  extends GQLReactFormStandardProps {
   error?: string;
   touched: boolean;
 }
@@ -193,6 +198,7 @@ export interface GQLReactFormContext {
   addButton: GQLFormStandardComponent<GQLReactFormButtonProps>;
   removeButton: GQLFormStandardComponent<GQLReactFormButtonProps>;
   listWrapper: GQLFormStandardComponent<GQLReactFormListWrapperProps>;
+  scalarWrapper: GQLFormStandardComponent<GQLReactFormScalarWrapperProps>;
   listItem: GQLFormStandardComponent<GQLReactFormListItemProps>;
   submitButton: React.FC<{ text: string; isValid: boolean }>;
   input: FormPrimeInput;
@@ -200,13 +206,11 @@ export interface GQLReactFormContext {
 }
 export const defaultReactFormContext: GQLReactFormContext = {
   form: 'form' as any,
-  div: ({ ...props }: GQLReactFormStandardProps) => <div {...props} />,
-  error: ({ ...props }: GQLReactFormStandardProps) => <div {...props} />,
-  label: ({ ...props }: GQLReactFormStandardProps) => <label {...props} />,
-  labelTextWrapper: ({ ...props }: GQLReactFormStandardProps) => (
-    <h4 {...props} />
-  ),
-  button: ({ ...props }: GQLReactFormButtonProps) => (
+  div: (props: GQLReactFormStandardProps) => <div {...props} />,
+  error: (props: GQLReactFormStandardProps) => <div {...props} />,
+  label: (props: GQLReactFormStandardProps) => <label {...props} />,
+  labelTextWrapper: (props: GQLReactFormStandardProps) => <h4 {...props} />,
+  button: (props: GQLReactFormButtonProps) => (
     <button
       {...props}
       onClick={(e) => {
@@ -215,7 +219,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
       }}
     />
   ),
-  addButton: ({ ...props }: GQLReactFormButtonProps) => (
+  addButton: (props: GQLReactFormButtonProps) => (
     <button
       {...props}
       onClick={(e) => {
@@ -224,7 +228,7 @@ export const defaultReactFormContext: GQLReactFormContext = {
       }}
     />
   ),
-  removeButton: ({ ...props }: GQLReactFormButtonProps) => (
+  removeButton: (props: GQLReactFormButtonProps) => (
     <button
       {...props}
       onClick={(e) => {
@@ -236,13 +240,26 @@ export const defaultReactFormContext: GQLReactFormContext = {
   listWrapper: (props: GQLReactFormListWrapperProps) => {
     const DivComponent = useCustomizedComponent('div');
     const ErrorComponent = useCustomizedComponent('error');
-    const { path, name, scalar, depth } = props;
+    const { path, name, scalar, depth, ...olProps } = props;
     return (
       <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
         <ErrorComponent path={path} scalar={scalar} name={name} depth={depth}>
           {props.touched && props.error}
         </ErrorComponent>
-        <ol>{props.children}</ol>
+        <ol {...olProps}>{props.children}</ol>
+      </DivComponent>
+    );
+  },
+  scalarWrapper: (props: GQLReactFormScalarWrapperProps) => {
+    const DivComponent = useCustomizedComponent('div');
+    const ErrorComponent = useCustomizedComponent('error');
+    const { path, name, scalar, depth, ...divProps } = props;
+    return (
+      <DivComponent path={path} scalar={scalar} name={name} depth={depth}>
+        <ErrorComponent path={path} scalar={scalar} name={name} depth={depth}>
+          {props.touched && props.error}
+        </ErrorComponent>
+        <div {...divProps}>{props.children}</div>
       </DivComponent>
     );
   },
@@ -482,7 +499,14 @@ export const UserInputFormInput = React.memo(
     ]);
     const scalar = 'UserInput';
     const path = [parentPath, name].join('.');
+    const metaError =
+      error !== undefined
+        ? typeof error === 'string'
+          ? error
+          : error.__meta
+        : '';
     const DivComponent = useCustomizedComponent('div');
+    const ScalarWrapperComponent = useCustomizedComponent('scalarWrapper');
     const ButtonComponent = useCustomizedComponent('button');
     const LabelTextWrapperComponent = useCustomizedComponent(
       'labelTextWrapper'
@@ -510,8 +534,10 @@ export const UserInputFormInput = React.memo(
       );
     }
     return (
-      <DivComponent
+      <ScalarWrapperComponent
         className={'mutationFormNested'}
+        touched={touched}
+        error={metaError}
         path={path}
         scalar={scalar}
         name={name}
@@ -627,7 +653,7 @@ export const UserInputFormInput = React.memo(
             onChange({ ...value, ['followers']: newValue })
           }
         />
-      </DivComponent>
+      </ScalarWrapperComponent>
     );
   }
 );

@@ -46,6 +46,9 @@ export class ComponentComposer {
   get listWrapper() {
     return this.generateComponentRenderer('listWrapper');
   }
+  get scalarWrapper() {
+    return this.generateComponentRenderer('scalarWrapper');
+  }
   get labelTextWrapper() {
     return this.generateComponentRenderer('labelTextWrapper');
   }
@@ -66,7 +69,7 @@ export class ComponentComposer {
       propTypes = 'GQLReactFormStandardProps',
     }: { extra?: string; propTypes?: string } = {}
   ) {
-    return `${name}: ({...props}: ${propTypes}) => <${componentType} {...props} ${extra}/>`;
+    return `${name}: (props: ${propTypes}) => <${componentType} {...props} ${extra}/>`;
   }
   public generateContext(typeComponentMap: { [key: string]: any }) {
     const dynamicComponentTypeList = Object.keys(typeComponentMap)
@@ -111,8 +114,12 @@ export class ComponentComposer {
         idx: number
       }
       export interface GQLReactFormListWrapperProps extends GQLReactFormStandardProps {
-        // idx: number
         totalInList: number
+        error?: string
+        touched: boolean
+      }
+
+      export interface GQLReactFormScalarWrapperProps extends GQLReactFormStandardProps {
         error?: string
         touched: boolean
       }
@@ -127,6 +134,7 @@ export class ComponentComposer {
         addButton: GQLFormStandardComponent<GQLReactFormButtonProps>,
         removeButton: GQLFormStandardComponent<GQLReactFormButtonProps>,
         listWrapper: GQLFormStandardComponent<GQLReactFormListWrapperProps>,
+        scalarWrapper: GQLFormStandardComponent<GQLReactFormScalarWrapperProps>,
         listItem: GQLFormStandardComponent<GQLReactFormListItemProps>,
         submitButton: React.FC<{text: string, isValid: boolean}>
         input: FormPrimeInput,
@@ -161,13 +169,25 @@ export class ComponentComposer {
         listWrapper: (props: GQLReactFormListWrapperProps) => {
           ${this.div.init}
           ${this.error.init}
-          const {path, name, scalar, depth} = props
+          const {path, name, scalar, depth, ...olProps} = props
           return ${this.div.render(
             {},
             `${this.error.render(
               {},
               `{props.touched && props.error}`
-            )}<ol>{props.children}</ol>`
+            )}<ol {...olProps}>{props.children}</ol>`
+          )}
+        },
+        scalarWrapper: (props: GQLReactFormScalarWrapperProps) => {
+          ${this.div.init}
+          ${this.error.init}
+          const {path, name, scalar, depth, ...divProps} = props
+          return ${this.div.render(
+            {},
+            `${this.error.render(
+              {},
+              `{props.touched && props.error}`
+            )}<div {...divProps}>{props.children}</div>`
           )}
         },
         listItem: (props: GQLReactFormListItemProps) => {
