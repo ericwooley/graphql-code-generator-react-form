@@ -416,8 +416,8 @@ export type UserInputValidation =
   | {
       __meta?: string;
       id?: string;
-      name: StringValidation;
-      email: StringValidation;
+      name?: StringValidation;
+      email?: StringValidation;
       password?: StringValidation;
       mother: UserInputValidation;
       father?: UserInputValidation;
@@ -889,8 +889,8 @@ export interface AddUserFormVariables {
   password?: Scalars['String'];
 }
 export interface ValidateAddUserForm extends IGenericFormValidationResult {
-  email: string;
-  name: StringValidation;
+  email?: string;
+  name?: StringValidation;
   password?: StringValidation;
 }
 
@@ -899,7 +899,10 @@ type AddUserFormProps = React.DetailedHTMLProps<
   HTMLFormElement
 > & {
   initialValues?: Partial<AddUserFormVariables>;
-  validate?: (value: Partial<AddUserFormVariables>) => ValidateAddUserForm;
+  validate?: (
+    value: Partial<AddUserFormVariables>,
+    options: { submitAttempted: boolean }
+  ) => ValidateAddUserForm;
   onSubmit: (values: AddUserFormVariables) => any;
 };
 export const _AddUserForm = ({
@@ -910,11 +913,19 @@ export const _AddUserForm = ({
 }: AddUserFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
   const [validationResults, setValidationResults] = React.useState(() =>
-    validate ? validate(initialValues) : ({} as ValidateAddUserForm)
+    validate
+      ? validate(initialValues, { submitAttempted: false })
+      : ({} as ValidateAddUserForm)
   );
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
   const isValid = isValidFromFormResult(validationResults);
+  const triggerSubmit = React.useCallback(() => {
+    setSubmitAttempted(true);
+    if (!isValid) return false;
+    onSubmit(value as any);
+  }, [isValid]);
   return (
     <FormComponent
       scalar=""
@@ -922,8 +933,7 @@ export const _AddUserForm = ({
       depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
-        if (!isValid) return false;
-        onSubmit(value as any);
+        return triggerSubmit();
       }}
       {...formProps}
       path=""
@@ -941,7 +951,8 @@ export const _AddUserForm = ({
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['email']: value };
-            if (validate) setValidationResults(validate(newValue));
+            if (validate)
+              setValidationResults(validate(newValue, { submitAttempted }));
             return newValue;
           });
         }}
@@ -962,7 +973,8 @@ export const _AddUserForm = ({
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['name']: value };
-            if (validate) setValidationResults(validate(newValue));
+            if (validate)
+              setValidationResults(validate(newValue, { submitAttempted }));
             return newValue;
           });
         }}
@@ -983,7 +995,8 @@ export const _AddUserForm = ({
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['password']: value };
-            if (validate) setValidationResults(validate(newValue));
+            if (validate)
+              setValidationResults(validate(newValue, { submitAttempted }));
             return newValue;
           });
         }}
@@ -1019,8 +1032,8 @@ export interface ValidateAddUserFromObjectForm
     | {
         __meta?: string;
         id?: string;
-        name: StringValidation;
-        email: StringValidation;
+        name?: StringValidation;
+        email?: StringValidation;
         password?: StringValidation;
         mother: UserInputValidation;
         father?: UserInputValidation;
@@ -1036,7 +1049,8 @@ type AddUserFromObjectFormProps = React.DetailedHTMLProps<
 > & {
   initialValues?: Partial<AddUserFromObjectFormVariables>;
   validate?: (
-    value: Partial<AddUserFromObjectFormVariables>
+    value: Partial<AddUserFromObjectFormVariables>,
+    options: { submitAttempted: boolean }
   ) => ValidateAddUserFromObjectForm;
   onSubmit: (values: AddUserFromObjectFormVariables) => any;
 };
@@ -1048,11 +1062,19 @@ export const _AddUserFromObjectForm = ({
 }: AddUserFromObjectFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
   const [validationResults, setValidationResults] = React.useState(() =>
-    validate ? validate(initialValues) : ({} as ValidateAddUserFromObjectForm)
+    validate
+      ? validate(initialValues, { submitAttempted: false })
+      : ({} as ValidateAddUserFromObjectForm)
   );
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
   const isValid = isValidFromFormResult(validationResults);
+  const triggerSubmit = React.useCallback(() => {
+    setSubmitAttempted(true);
+    if (!isValid) return false;
+    onSubmit(value as any);
+  }, [isValid]);
   return (
     <FormComponent
       scalar=""
@@ -1060,8 +1082,7 @@ export const _AddUserFromObjectForm = ({
       depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
-        if (!isValid) return false;
-        onSubmit(value as any);
+        return triggerSubmit();
       }}
       {...formProps}
       path=""
@@ -1079,7 +1100,8 @@ export const _AddUserFromObjectForm = ({
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['user']: value };
-            if (validate) setValidationResults(validate(newValue));
+            if (validate)
+              setValidationResults(validate(newValue, { submitAttempted }));
             return newValue;
           });
         }}
@@ -1113,7 +1135,7 @@ export interface AddUsersFromListFormVariables {
 }
 export interface ValidateAddUsersFromListForm
   extends IGenericFormValidationResult {
-  users: UserInputListValidation;
+  users?: UserInputListValidation;
 }
 
 type AddUsersFromListFormProps = React.DetailedHTMLProps<
@@ -1122,7 +1144,8 @@ type AddUsersFromListFormProps = React.DetailedHTMLProps<
 > & {
   initialValues?: Partial<AddUsersFromListFormVariables>;
   validate?: (
-    value: Partial<AddUsersFromListFormVariables>
+    value: Partial<AddUsersFromListFormVariables>,
+    options: { submitAttempted: boolean }
   ) => ValidateAddUsersFromListForm;
   onSubmit: (values: AddUsersFromListFormVariables) => any;
 };
@@ -1134,11 +1157,19 @@ export const _AddUsersFromListForm = ({
 }: AddUsersFromListFormProps) => {
   const [value, setValue] = React.useState(initialValues || {});
   const [validationResults, setValidationResults] = React.useState(() =>
-    validate ? validate(initialValues) : ({} as ValidateAddUsersFromListForm)
+    validate
+      ? validate(initialValues, { submitAttempted: false })
+      : ({} as ValidateAddUsersFromListForm)
   );
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const FormComponent = useCustomizedComponent('form');
   const SubmitButtonComponent = useCustomizedComponent('submitButton');
   const isValid = isValidFromFormResult(validationResults);
+  const triggerSubmit = React.useCallback(() => {
+    setSubmitAttempted(true);
+    if (!isValid) return false;
+    onSubmit(value as any);
+  }, [isValid]);
   return (
     <FormComponent
       scalar=""
@@ -1146,8 +1177,7 @@ export const _AddUsersFromListForm = ({
       depth={0}
       onSubmit={(e) => {
         e?.preventDefault?.();
-        if (!isValid) return false;
-        onSubmit(value as any);
+        return triggerSubmit();
       }}
       {...formProps}
       path=""
@@ -1165,7 +1195,8 @@ export const _AddUsersFromListForm = ({
         onChange={(value) => {
           setValue((oldVal) => {
             const newValue = { ...oldVal, ['users']: value };
-            if (validate) setValidationResults(validate(newValue));
+            if (validate)
+              setValidationResults(validate(newValue, { submitAttempted }));
             return newValue;
           });
         }}

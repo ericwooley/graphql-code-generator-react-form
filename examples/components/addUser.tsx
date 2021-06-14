@@ -11,13 +11,18 @@ export const AddUser = () => {
       {({ onSubmit, useInitialValues, useCustomComponents }) => {
         const formContent = (
           <AddUserForm
-            validate={(values) => {
+            validate={(values, { submitAttempted }) => {
               return {
                 email: values?.email?.match(/.+@.+\..+/)
                   ? ''
                   : 'Email must be a valid email',
                 name: '',
-                password: '',
+                password:
+                  values.password?.match(
+                    /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).*$/
+                  ) && values.password.length >= 8
+                    ? ''
+                    : 'Password must be 8 characters, have 1 number, 1 capital, and 1 symbol',
               };
             }}
             key={`user-form-${useInitialValues}`}

@@ -444,9 +444,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     let extraValidation = ``;
 
     if (this.reusableValidations[validationName]) {
-      return `${name}${
-        node.optional ? '?' : ''
-      }: ${validationName}${extraValidation}`;
+      return `${name}?: ${validationName}${extraValidation}`;
     }
     let validation = ``;
     let key = `${name}`;
@@ -464,7 +462,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
         ${node.children.map((n) => this.generateValidation(n))}
       }|string`;
     } else {
-      key = `${name}${node.optional ? '?' : ''}`;
+      key = `${name}?`;
       validation = `string`;
     }
     this.reusableValidations[validationName] = validation;
@@ -509,7 +507,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
   HTMLFormElement
   > & {
     initialValues?: Partial<${baseName}Variables>,
-    validate?: (value: Partial<${baseName}Variables>) => Validate${pascalCase(
+    validate?: (value: Partial<${baseName}Variables>, options: {submitAttempted: boolean}) => Validate${pascalCase(
           baseName
         )},
     onSubmit: (values: ${baseName}Variables)=> any,
@@ -520,17 +518,22 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     validate,
     ...formProps}: ${baseName}Props) => {
     const [value, setValue]= React.useState(initialValues || {})
-    const [validationResults, setValidationResults] = React.useState(() => validate ? validate(initialValues) : {} as Validate${pascalCase(
+    const [validationResults, setValidationResults] = React.useState(() => validate ? validate(initialValues, {submitAttempted: false}) : {} as Validate${pascalCase(
       baseName
     )})
+    const [submitAttempted, setSubmitAttempted] = React.useState(false)
     ${this.cc.form.init}
     ${this.cc.submitButton.init}
     const isValid = isValidFromFormResult(validationResults)
+    const triggerSubmit = React.useCallback(() => {
+      setSubmitAttempted(true)
+      if(!isValid) return false
+      onSubmit(value as any)
+    }, [isValid])
     return (
         <${this.cc.form.tagName} scalar="" name="" depth={0} onSubmit={(e) => {
           e?.preventDefault?.()
-          if(!isValid) return false
-          onSubmit(value as any)
+          return triggerSubmit()
         }} {...formProps} path="">
           ${m.variables
             .map((v) =>
@@ -546,7 +549,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
                   setValue(oldVal => {
                     const newValue = ({...oldVal, ['${v.name}']: value})
                     if(validate)
-                      setValidationResults(validate(newValue))
+                      setValidationResults(validate(newValue, {submitAttempted}))
                     return newValue
                   })
                 }`,
