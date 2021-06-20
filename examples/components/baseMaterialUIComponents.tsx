@@ -7,11 +7,15 @@ import {
   TextField,
   useTheme,
 } from '@material-ui/core';
+import { Alert } from '@material-ui/lab';
 import {
   GQLReactFormContext,
   GQLReactFormButtonProps,
 } from '../generated/forms';
 
+const ErrorText = (props: { children: React.ReactNode }) => (
+  <Alert severity="error">{props.children}</Alert>
+);
 const BaseButton = ({
   onClick,
   children,
@@ -33,6 +37,7 @@ const BaseButton = ({
   );
 };
 export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
+  error: (props) => <ErrorText>{props.children}</ErrorText>,
   addButton: (props) => (
     <BaseButton {...props} onClick={props.onClick}>
       Add {props.name}
@@ -40,6 +45,7 @@ export const baseMaterialUIComponents: Partial<GQLReactFormContext> = {
   ),
   listWrapper: (props) => (
     <Paper elevation={1} style={{ padding: 4, margin: 4 }}>
+      {!!props.error && <ErrorText>{props.error}</ErrorText>}
       {props.children}
     </Paper>
   ),

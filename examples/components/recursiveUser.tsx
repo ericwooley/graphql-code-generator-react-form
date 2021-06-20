@@ -37,6 +37,18 @@ export const RecursiveUserExample = () => {
       {({ onSubmit, useInitialValues, useCustomComponents }) => {
         const content = (
           <AddUsersFromListForm
+            validate={(v) => ({
+              __meta: v.users?.length
+                ? v.users.length >= 5
+                  ? 'You must have less than 5 users'
+                  : ''
+                : 'You must have a user',
+              users: {
+                __meta: v.users?.find((u) => u.name.includes('Dwight'))
+                  ? 'Dwight can not be in the list'
+                  : '',
+              },
+            })}
             customComponents={
               useCustomComponents
                 ? {

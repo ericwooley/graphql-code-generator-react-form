@@ -450,7 +450,7 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
     let key = `${name}`;
     if (node.asList) {
       key = `${name}${node.optional ? '?' : ''}`;
-      validation = `{__meta?:string, list: ${this.validationName({
+      validation = `{__meta?:string, list?: ${this.validationName({
         ...node,
         asList: false,
       })}[] }`;
@@ -530,11 +530,20 @@ export class ReactFormsVisitor extends ClientSideBaseVisitor<
       if(!isValid) return false
       onSubmit(value as any)
     }, [isValid])
+    const depth = 0;
+    const path = '';
+    const scalar = '__root__'
+    const name = '';
+    ${this.cc.error.init}
     return (
         <${this.cc.form.tagName} scalar="" name="" depth={0} onSubmit={(e) => {
           e?.preventDefault?.()
           return triggerSubmit()
         }} {...formProps} path="">
+          {!!validationResults?.__meta && ${this.cc.error.render(
+            {},
+            `{validationResults?.__meta}`
+          )}}
           ${m.variables
             .map((v) =>
               this.renderComponentFor(v, {

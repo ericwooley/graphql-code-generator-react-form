@@ -99,6 +99,7 @@ export type UsersQuery = { __typename?: 'QueryRoot' } & {
 };
 
 export interface IGenericFormValidationResult {
+  __meta?: string;
   [key: string]:
     | undefined
     | string
@@ -421,13 +422,13 @@ export type UserInputValidation =
       password?: StringValidation;
       mother: UserInputValidation;
       father?: UserInputValidation;
-      friends: { __meta?: string; list: UserInputValidation[] };
+      friends: { __meta?: string; list?: UserInputValidation[] };
       followers?: UserInputListValidation;
     }
   | string;
 export type UserInputListValidation = {
   __meta?: string;
-  list: UserInputValidation[];
+  list?: UserInputValidation[];
 };
 /**********************
  * Scalar Form Fragments
@@ -926,6 +927,11 @@ export const _AddUserForm = ({
     if (!isValid) return false;
     onSubmit(value as any);
   }, [isValid]);
+  const depth = 0;
+  const path = '';
+  const scalar = '__root__';
+  const name = '';
+  const ErrorComponent = useCustomizedComponent('error');
   return (
     <FormComponent
       scalar=""
@@ -938,6 +944,11 @@ export const _AddUserForm = ({
       {...formProps}
       path=""
     >
+      {!!validationResults?.__meta && (
+        <ErrorComponent path={path} scalar={scalar} name={name} depth={depth}>
+          {validationResults?.__meta}
+        </ErrorComponent>
+      )}
       <StringFormInput
         value={value?.email}
         label={'Email'}
@@ -1037,7 +1048,7 @@ export interface ValidateAddUserFromObjectForm
         password?: StringValidation;
         mother: UserInputValidation;
         father?: UserInputValidation;
-        friends: { __meta?: string; list: UserInputValidation[] };
+        friends: { __meta?: string; list?: UserInputValidation[] };
         followers?: UserInputListValidation;
       }
     | string;
@@ -1075,6 +1086,11 @@ export const _AddUserFromObjectForm = ({
     if (!isValid) return false;
     onSubmit(value as any);
   }, [isValid]);
+  const depth = 0;
+  const path = '';
+  const scalar = '__root__';
+  const name = '';
+  const ErrorComponent = useCustomizedComponent('error');
   return (
     <FormComponent
       scalar=""
@@ -1087,6 +1103,11 @@ export const _AddUserFromObjectForm = ({
       {...formProps}
       path=""
     >
+      {!!validationResults?.__meta && (
+        <ErrorComponent path={path} scalar={scalar} name={name} depth={depth}>
+          {validationResults?.__meta}
+        </ErrorComponent>
+      )}
       <UserInputFormInput
         value={value?.user}
         label={'User'}
@@ -1170,6 +1191,11 @@ export const _AddUsersFromListForm = ({
     if (!isValid) return false;
     onSubmit(value as any);
   }, [isValid]);
+  const depth = 0;
+  const path = '';
+  const scalar = '__root__';
+  const name = '';
+  const ErrorComponent = useCustomizedComponent('error');
   return (
     <FormComponent
       scalar=""
@@ -1182,6 +1208,11 @@ export const _AddUsersFromListForm = ({
       {...formProps}
       path=""
     >
+      {!!validationResults?.__meta && (
+        <ErrorComponent path={path} scalar={scalar} name={name} depth={depth}>
+          {validationResults?.__meta}
+        </ErrorComponent>
+      )}
       <UserInputFormInputAsList
         value={value?.users}
         label={'Users'}

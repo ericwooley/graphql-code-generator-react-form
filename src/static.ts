@@ -1,5 +1,6 @@
 export const validationFNSource = `
 export interface IGenericFormValidationResult {
+  __meta?:string;
   [key: string]:
     | undefined
     | string
