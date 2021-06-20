@@ -34,10 +34,6 @@ export default function Todo() {
       <List component="nav" aria-label="secondary mailbox folders">
         {[
           {
-            title: 'Validation (edge cases)',
-            done: 95,
-          },
-          {
             title: 'Enums',
             done: 0,
           },
