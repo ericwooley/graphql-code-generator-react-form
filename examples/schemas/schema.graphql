@@ -15,6 +15,7 @@ input UserInput {
   father: UserInput
   friends: [UserInput]!
   followers: [UserInput]
+  role: UserRole!
 }
 
 type QueryRoot {
@@ -37,4 +38,10 @@ schema {
   query: QueryRoot
   subscription: SubscriptionRoot
   mutation: MutationRoot
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  SCRUB
 }

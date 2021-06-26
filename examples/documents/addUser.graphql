@@ -1,6 +1,17 @@
-mutation addUser($email: String!, $name: String!, $password: String) {
+mutation addUser(
+  $email: String!
+  $name: String!
+  $password: String
+  $role: UserRole!
+) {
   addUser(
-    user: { friends: [], email: $email, name: $name, password: $password }
+    user: {
+      friends: []
+      email: $email
+      name: $name
+      password: $password
+      role: $role
+    }
   ) {
     id
   }

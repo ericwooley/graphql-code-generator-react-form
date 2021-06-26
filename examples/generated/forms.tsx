@@ -64,12 +64,20 @@ export type UserInput = {
   father?: Maybe<UserInput>;
   friends: Array<Maybe<UserInput>>;
   followers?: Maybe<Array<Maybe<UserInput>>>;
+  role: UserRole;
 };
+
+export enum UserRole {
+  Admin = 'ADMIN',
+  User = 'USER',
+  Scrub = 'SCRUB',
+}
 
 export type AddUserMutationVariables = Exact<{
   email: Scalars['String'];
   name: Scalars['String'];
   password?: Maybe<Scalars['String']>;
+  role: UserRole;
 }>;
 
 export type AddUserMutation = { __typename?: 'MutationRoot' } & {
@@ -204,6 +212,7 @@ export interface GQLReactFormContext {
   listItem: GQLFormStandardComponent<GQLReactFormListItemProps>;
   submitButton: React.FC<{ text: string; isValid: boolean }>;
   input: FormPrimeInput;
+  UserRole?: React.FC<UserRoleFormInputPropTypes>;
   UserInput?: React.FC<UserInputFormInputPropTypes>;
 }
 export const defaultReactFormContext: GQLReactFormContext = {
@@ -374,6 +383,7 @@ function useCustomizedComponent<T extends keyof GQLReactFormContext>(
 /**********************
  * Default Values
  * *******************/
+export const defaultUserRoleScalar = {};
 export const defaultUserInputScalar = {
   get id(): Scalars['Int'] | undefined {
     return JSON.parse(JSON.stringify(0));
@@ -406,12 +416,19 @@ export const defaultUserInputScalar = {
   get followers(): UserInput[] | undefined {
     return undefined;
   },
+
+  get role(): UserRole {
+    return JSON.parse(
+      JSON.stringify(JSON.parse(JSON.stringify(defaultUserRoleScalar)))
+    );
+  },
 };
 
 /**********************
  * Validation Types
  * *******************/
 export type StringValidation = string;
+export type UserRoleValidation = string;
 export type IntValidation = string;
 export type UserInputValidation =
   | {
@@ -424,6 +441,7 @@ export type UserInputValidation =
       father?: UserInputValidation;
       friends: { __meta?: string; list?: UserInputValidation[] };
       followers?: UserInputListValidation;
+      role?: UserRoleValidation;
     }
   | string;
 export type UserInputListValidation = {
@@ -469,6 +487,44 @@ export const StringFormInput = React.memo((props: StringFormInputPropTypes) => {
     ></InputComponent>
   );
 });
+
+export interface UserRoleFormInputPropTypes {
+  optional: boolean;
+  label: string;
+  error?: UserRoleValidation;
+  value?: Maybe<UserRole>;
+  scalarName: string;
+  name: string;
+  parentPath: string;
+  depth: number;
+  onChange: (value?: UserRole) => any;
+}
+export const UserRoleFormInput = React.memo(
+  (props: UserRoleFormInputPropTypes) => {
+    const { parentPath, label, name, value, onChange, depth, error } = props;
+    const [touched, setTouched] = React.useState(false);
+    const setTouchedTrue = React.useCallback(() => setTouched(true), [
+      setTouched,
+    ]);
+    const scalar = 'UserRole';
+    const path = [parentPath, name].join('.');
+    const InputComponent = useCustomizedComponent('input');
+    return (
+      <InputComponent
+        error={error}
+        onBlur={setTouchedTrue}
+        touched={touched}
+        onChange={onChange as any}
+        value={value === undefined || value === null ? '' : value}
+        label={label}
+        path={path}
+        scalar={scalar}
+        name={name}
+        depth={depth}
+      ></InputComponent>
+    );
+  }
+);
 
 export interface IntFormInputPropTypes {
   optional: boolean;
@@ -684,6 +740,22 @@ export const UserInputFormInput = React.memo(
             onChange({ ...value, ['followers']: newValue });
           }}
         />
+        <UserRoleFormInput
+          error={typeof error === 'string' ? undefined : error?.['role']}
+          depth={depth + 1}
+          value={value?.role === null ? undefined : value?.role}
+          scalarName={'UserRole'}
+          name={'role'}
+          optional={false}
+          label={'Role'}
+          parentPath={path}
+          onChange={(
+            newValue = JSON.parse(JSON.stringify(defaultUserRoleScalar))
+          ) => {
+            setTouched(true);
+            onChange({ ...value, ['role']: newValue });
+          }}
+        />
       </ScalarWrapperComponent>
     );
   }
@@ -882,17 +954,20 @@ export const addUserDefaultValues = {
   email: '',
   name: '',
   password: '',
+  role: JSON.parse(JSON.stringify(defaultUserRoleScalar)),
 };
 
 export interface AddUserFormVariables {
   email: Scalars['String'];
   name: Scalars['String'];
   password?: Scalars['String'];
+  role: UserRole;
 }
 export interface ValidateAddUserForm extends IGenericFormValidationResult {
   email?: string;
   name?: StringValidation;
   password?: StringValidation;
+  role?: string;
 }
 
 type AddUserFormProps = React.DetailedHTMLProps<
@@ -1015,6 +1090,28 @@ export const _AddUserForm = ({
         name={'password'}
         optional={true}
       />
+      <UserRoleFormInput
+        value={value?.role}
+        label={'Role'}
+        parentPath={'root'}
+        depth={0}
+        error={
+          typeof validationResults === 'string'
+            ? undefined
+            : validationResults['role']
+        }
+        onChange={(value) => {
+          setValue((oldVal) => {
+            const newValue = { ...oldVal, ['role']: value };
+            if (validate)
+              setValidationResults(validate(newValue, { submitAttempted }));
+            return newValue;
+          });
+        }}
+        scalarName={'UserRole'}
+        name={'role'}
+        optional={false}
+      />
       <SubmitButtonComponent isValid={isValid} text="submit" />
     </FormComponent>
   );
@@ -1050,6 +1147,7 @@ export interface ValidateAddUserFromObjectForm
         father?: UserInputValidation;
         friends: { __meta?: string; list?: UserInputValidation[] };
         followers?: UserInputListValidation;
+        role?: UserRoleValidation;
       }
     | string;
 }

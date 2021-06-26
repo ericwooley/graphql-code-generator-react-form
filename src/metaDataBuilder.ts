@@ -9,6 +9,8 @@ import {
   GraphQLList,
   GraphQLNonNull,
   isNamedType,
+  isEnumType,
+  GraphQLEnumType,
 } from 'graphql';
 import { TypeMap } from 'graphql/type/schema';
 export const PrimitiveMaps: {
@@ -29,6 +31,8 @@ export function varDefToVar(
 }
 
 export interface TypeNodeMetaData {
+  isEnum?: boolean;
+  enumOptions?: string[];
   accessChain: string[];
   endedFromCycle: boolean;
   name: string;
@@ -38,7 +42,25 @@ export interface TypeNodeMetaData {
   children?: Array<TypeNodeMetaData> | null;
   asList: boolean;
 }
-
+export function enumToTypeNodeMetaData(
+  typeDef: GraphQLEnumType,
+  name: string,
+  types: TypeMap,
+  depth: number,
+  parentTree: string[]
+): TypeNodeMetaData {
+  const tsType = typeDef.name;
+  return {
+    accessChain: [...parentTree, typeDef.name],
+    endedFromCycle: false,
+    scalarName: typeDef.name,
+    name,
+    tsType,
+    optional: true,
+    asList: false,
+    children: null,
+  };
+}
 export function namedTypeToTypeNodeMetaData(
   typeDef: GraphQLNamedType & {
     // seems like this is only for enums
@@ -56,6 +78,9 @@ export function namedTypeToTypeNodeMetaData(
   parentTree: string[]
 ): TypeNodeMetaData {
   let tsType = typeDef.name;
+  if (isEnumType(typeDef)) {
+    return enumToTypeNodeMetaData(typeDef, name, types, depth, parentTree);
+  }
   const optional = true;
   let children: TypeNodeMetaData[] | null = null;
   let endedFromCycle = false;

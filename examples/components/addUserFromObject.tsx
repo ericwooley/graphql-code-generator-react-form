@@ -3,6 +3,7 @@ import {
   AddUserFromObjectForm,
   AddUserFromObjectFormVariables,
   GQLReactFormContext,
+  UserRole,
 } from '../generated/forms';
 import addUserFromObjectDocument from '../documents/addUserFromObject.graphql';
 import { ExampleContent } from './exampleContent';
@@ -30,6 +31,7 @@ export const AddUserFromObject = () => {
                       email: 'object@user.com',
                       friends: [],
                       name: 'object user',
+                      role: UserRole.Admin,
                     },
                   }
                 : undefined
