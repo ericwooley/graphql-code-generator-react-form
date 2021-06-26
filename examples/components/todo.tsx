@@ -35,7 +35,7 @@ export default function Todo() {
         {[
           {
             title: 'Enums',
-            done: 0,
+            done: 50,
           },
           {
             title: 'Split into modules for context & forms.',
